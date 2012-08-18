@@ -205,7 +205,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					break;
 				case 1: //aggressive
 					var xd=c.p[0].x-fp.x, yd=c.p[0].y-fp.y;
-					var ang = Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
+					var ang = (xd==0||yd==0)?0:Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
 					ang = (xd>=0?(yd>=0?269+ang:179+ang):(yd>=0?(ang==0?0:ang):89+ang));
 					var nwDir = Math.round(ang/90);
 					nwDir = nwDir==4?0:nwDir;
@@ -233,8 +233,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				case 2: //economical
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
 					var nwDir = c.d!=dL.v?((dL.v!==-1&&!inval(dL.v))?dL.v:dL.h):((dL.h!==-1&&!inval(dL.h))?dL.h:dL.v);
+					var xd=c.p[0].x-npkd.p.x, yd=c.p[0].y-npkd.p.y;
+					var ang = (xd==0||yd==0)?0:Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
+					ang = (xd>=0?(yd>=0?269+ang:179+ang):(yd>=0?(ang==0?0:ang):89+ang));
+					var nwDir2 = Math.round(ang/90);
+					nwDir2 = nwDir2==4?0:nwDir2;
+					var clDir = Math.floor(ang/90)==nwDir?Math.ceil(ang/90):Math.floor(ang/90);
+					clDir = clDir==4?0:clDir;
 					if (nwDir!==-1&&!inval(nwDir))
 						nDir = nwDir;
+					else if (!inval(nwDir2))
+						nDir = nwDir2;
+					else if (!inval(clDir))
+						nDir = clDir;
 					else {
 						var cDir = [];
 						if (nwDir!==-1){
@@ -248,7 +259,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							if (!inval(cDir[i])) dList.push({d:cDir[i],c:ppD(cDir[i])});
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
-						console.log(nDir);
 					}
 					break;
 			}

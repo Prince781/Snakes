@@ -9,7 +9,7 @@ A list of features to implement:
 * Infinite levels (**todo**)
 * Pickups and other items (**mostly**)
 * Player lives (**done**)
-* Fully challenging aggressive and defensive enemy AI (**mostly**)
+* Fully challenging aggressive and defensive enemy AI (**done**)
 * Introductive tutorial (**todo**)
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
