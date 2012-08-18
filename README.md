@@ -1,7 +1,7 @@
 Snakes
 ======
 
-A minimalistic 2D game, modelled somewhat after the original 1970 arcade video game, Snake.
+A minimalistic 2D game using HTML5, modelled somewhat after the original 1970 arcade video game, Snake.
 
 Some history of the game can be found at http://en.wikipedia.org/wiki/Snake_%28video_game%29
 
@@ -14,7 +14,7 @@ A list of features to implement:
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
 * Game state management (between pausing, playing, etc...) (**mostly**)
-* More fluid Pause Menu UI (**work in progress**)
+* More fluid Pause Menu UI (**done**)
 * Music?
 * More sound effects?
 * Level barriers/walls?
