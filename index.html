@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Snakes: The Game</title>
+<link rel="StyleSheet" type="text/css" href="style.css">
+<script type="text/javascript" src="http://bumbuu.com/files/js/scrije.lib.js"></script>
+<script type="text/javascript" src="js/game.js"></script>
+<script type="text/javascript" src="js/main.js"></script>
+</head>
+<body>
+	<div id="main_container">
+		<div id="main_topbar">
+			<div id="mtbar_left">SNAKES</div>
+			<div id="mtbar_right">The Game</div>
+		</div>
+		<div id="main_mid">
+			<div id="main_game">
+				<audio id="mga" preload>
+					<source src="snd/str_ambience.ogg" type="audio/ogg">
+					<source src="snd/str_ambience.mp3" type="audio/mpeg">
+				</audio>
+				<audio id="mga2" preload>
+					<source src="snd/str_ambience.ogg" type="audio/ogg">
+					<source src="snd/str_ambience.mp3" type="audio/mpeg">
+				</audio>
+				<audio id="mga3" preload>
+					<source src="snd/pickup.ogg" type="audio/ogg">
+					<source src="snd/pickup.mp3" type="audio/mpeg">
+				</audio>
+				<canvas id="mg_canvas" width="800" height="494"></canvas>
+				<div id="mg_mm">
+					<div id="mg_np"> <!--player name div -->
+						<div id="mg_np_t">Player Name</div>
+						<div id="mg_np_d">
+							Enter your preferred username below. This will be used to identify you on the leaderboards.
+						</div>
+						<div id="mg_np_d_e">A serious error has occurred.</div>
+						<input id="mg_np_dun" type="text">
+						<div id="mg_np_dc">Okay</div>
+					</div>
+					<div id="mg_mmi"><!--inside main menu-->
+						<div class="mg_mmb" id="mg_mmpn">Play Now</div>
+						<div class="mg_mmb" id="mg_mms">Settings</div>
+						<div class="mg_mmb_bt" id="mg_mmb_bt_hlp">Help</div>
+						<div class="mg_mmb_bt" id="mg_mmb_bt_lbd">Leaderboards</div>
+					</div>
+					<div id="mg_sd"> <!--settings div-->
+						<div id="mg_sd_cb">Close</div>
+						<div id="mg_sd_t">Settings</div>
+						<div class="mg_sd_s" id="mg_sd_1">
+							<div id="md_sd_inun_ntf">
+								<img src="img/md_sd_inun_ntf_pnt.png">
+								<div></div>
+								<span></span>
+							</div>
+							<div class="mg_sd_lb">Name</div>
+							<input id="mg_sd_inun" class="md_sd_in" type="text">
+							<div class="mg_sd_lb" style="margin-top: 10px;">Color</div>
+							<div id="mg_sd_cl">
+								<div id="mg_sd_cl_l">
+								</div>
+								<div id="mg_sd_cl_r">
+									<div class="mg_sd_cl_h">
+										<div class="md_sd_sll">r</div>
+										<div class="md_sd_sl" id="md_sd_sl_cr" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+									</div>
+									<div class="mg_sd_cl_h">
+										<div class="md_sd_sll">g</div>
+										<div class="md_sd_sl" id="md_sd_sl_cg" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+									</div>
+									<div class="mg_sd_cl_h">
+										<div class="md_sd_sll">b</div>
+										<div class="md_sd_sl" id="md_sd_sl_cb" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+									</div>
+								</div>
+							</div>
+							<div class="mg_sd_lb" style="margin-top: 10px;">Controls</div>
+							<div id="mg_sd_cn">
+								<div class="mg_sd_cnk" id="mg_sd_cnk_1" style="margin-left: auto; margin-right: auto;">W</div>
+								<div class="mg_sd_cnk" id="mg_sd_cnk_2" style="margin-left: 47px; float: left; clear: none;">A</div>
+								<div class="mg_sd_cnk" id="mg_sd_cnk_3" style="margin-left: 5px; float: left; clear: none;">S</div>
+								<div class="mg_sd_cnk" id="mg_sd_cnk_4" style="margin-left: 5px; float: left; clear: none;">D</div>
+								<div id="mg_sd_cnb">
+									<div class="mg_sd_cnko" id="mg_sd_cnkoa">Arrow Keys</div>
+									<div class="mg_sd_cnko" id="mg_sd_cnkow" style="float: right;">WASD Keys</div>
+								</div>
+							</div>
+							<div class="mg_sd_lb" style="margin-top: 10px;">Volume</div>
+							<div class="mg_sd_snh">
+								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Ambience</div>
+								<div class="md_sd_sl" type="mg_snd" id="mg_sd_snda" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+							</div>
+							<div class="mg_sd_snh">
+								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Music</div>
+								<div class="md_sd_sl" type="mg_snd" id="mg_sd_sndm" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+							</div>
+							<div class="mg_sd_snh">
+								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Effects</div>
+								<div class="md_sd_sl" type="mg_snd" id="mg_sd_snde" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+							</div>
+						</div>
+						<!--
+						<div class="mg_sd_s" id="mg_sd_2">
+							
+						</div>
+						-->
+					</div>
+					<div id="mg_pd"><!-- pause div -->
+						<div id="mg_pd_i">
+							<div class="mg_pd_bt" id="mgpdbt_st">Settings</div>
+							<div class="mg_pd_bt" id="mgpdbt_lb">Leaderboards</div>
+							<div class="mg_pd_bt" id="mgpdbt_hlp">Help</div>
+							<div class="mg_pd_bt" id="mgpdbt_qt">Quit</div>
+						</div>					
+					</div>
+				</div>
+			</div>
+			<div id="mm_descr">
+				What is Snakes?<br>
+				Snakes is a simple game involving the dexterity of the player's fingers as he or she tries to navigate their creature through an empty void, dotted by only a few items. The point of the game is to eat the items and grow to longer sizes, although the game's difficulty increases as a result of this size growth. Anyway, as a result of a challenge, and some holiday spirit, I took it upon myself to make a version of the classic, albeit with some...touches...of my own, completely coded in HTML, JavaScript, and CSS. It also uses the <span style="font-family: Courier, Monospace;">&lt;canvas&gt;</span> tag element to render the main portion of the game. <br><br>
+				After some coding, and a little ingenuity, I've somewhat managed to make something...playable. Give it a try, and be sure to tell me what you think about it.
+			</div>
+			<div id="mm_play">Play Snakes</div>
+		</div>
+		<div id="main_bbar">
+			<div id="mbb_right">By Princeton Ferro</div>
+		</div>
+	</div>
+</body>
+</html>
