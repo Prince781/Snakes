@@ -14,6 +14,7 @@ A list of features to implement:
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
 * Game state management (between pausing, playing, etc...) (**mostly**)
+* More fluid Pause Menu UI (**work in progress**)
 * Music?
 * More sound effects?
 * Level barriers/walls?
