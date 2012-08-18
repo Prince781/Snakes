@@ -178,7 +178,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			 * 1 - aggressive; will try to limit moves of player
 			 * 2 - economical; will try to find shortest available path to nearest pickups
 			*************/
-			mode=gThis.g.st=="init"?(npkd?2:(gThis.g.pl.dy?0:1)):0;
+			var fp = typeof gThis.g.pl.p[0] == "undefined" ? false : gThis.g.pl.p[0];
+			var dir = gThis.g.pl.d;
+			mode=gThis.g.st=="init"?(npkd?2:((gThis.g.pl.dy||!fp)?0:1)):0;
 			c.m = mode;
 			//console.log("Current mode: "+["default","aggressive","economical"][c.m]);
 			var nDir = -1;
@@ -193,15 +195,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						pList.push(p[i]);
 				return pList.length;
 			}
-			var fp = gThis.g.pl.p[0];
-			var dir = gThis.g.pl.d;
 			switch(mode){
 				case 0: //default
 					var dList=[];
 					for (var d1=0; d1<4; d1++)
 						if (!inval(d1)) dList.push({d:d1,c:ppD(d1)});
 					if (endangered) nDir=$_.assort(dList,true,"c")[0].d;
-					else nDir = !inval(c.d)?(Mathf.rand(0,100)>90?Mathf.randVal(dList).d:c.d):Mathf.randVal(dList).d;
+					else if (dList.length>0) nDir = !inval(c.d)?(Mathf.rand(0,100)>90?Mathf.randVal(dList).d:c.d):Mathf.randVal(dList).d;
 					break;
 				case 1: //aggressive
 					var xd=c.p[0].x-fp.x, yd=c.p[0].y-fp.y;
@@ -248,10 +248,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							if (!inval(cDir[i])) dList.push({d:cDir[i],c:ppD(cDir[i])});
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
+						console.log(nDir);
 					}
 					break;
 			}
-			return nDir; //
+			return nDir;
 		}
 	};
 	this.cnv = {}; //the game's canvas. MUST be defined before initialization
