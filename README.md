@@ -1,9 +1,9 @@
-Snakes
-======
+#Snakes
+----------------------------
 
 A minimalistic 2D game using HTML5, modelled somewhat after the original 1970 arcade video game, Snake.
 
-Some history of the game can be found at http://en.wikipedia.org/wiki/Snake_%28video_game%29
+Some history of the game can be found [here](http://en.wikipedia.org/wiki/Snake_%28video_game%29)
 
 A list of features to implement:
 * Infinite levels (**todo**)
