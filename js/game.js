@@ -122,7 +122,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			var pkd = [];
 			//calculate the nearest distance of a pickup
 			for (var i=0; i<gThis.g.pk.length; i++)
-				if (gThis.g.pk.t!==1) //avoid poison
+				if (gThis.g.pk[i].t!==1) //avoid poison
 					pkd.push({
 						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
 						p: {
@@ -231,6 +231,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					break;
 				case 2: //economical
+					/*
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
 					var nwDir = c.d!=dL.v?((dL.v!==-1&&!inval(dL.v))?dL.v:dL.h):((dL.h!==-1&&!inval(dL.h))?dL.h:dL.v);
 					var xd=c.p[0].x-npkd.p.x, yd=c.p[0].y-npkd.p.y;
@@ -260,6 +261,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
 					}
+					*/
 					break;
 			}
 			return nDir;
@@ -478,12 +480,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				f: false, //whether or not the item is fading
 				ft: 0, //the time of fading
 				t: pType
-					/********************
-					 * Pickup types are:
-					 * 0 - normal
-					 * 1 - poison
-					 * 2 - life
-					*********************/
+				/********************
+				 * Pickup types are:
+				 * 0 - normal
+				 * 1 - poison
+				 * 2 - life
+				*********************/
 			});
 			return true;
 		},
@@ -943,18 +945,50 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							i--;
 							continue;
 						} else gThis.g.pk[i].c.a = 1-Math.pow((gThis.g.gt-gThis.g.pk[i].ft)/500,2);
-					} else if (gThis.g.gt-gThis.g.pk[i].i >= 1400 && gThis.g.st != "paused")//render the fading in and out of the pickup
-						gThis.g.pk[i].c.a = Math.abs(Math.sin((gThis.g.gt-gThis.g.pk[i].i/700)*3.141));
+					} else if (gThis.g.gt-gThis.g.pk[i].i > 1000 && gThis.g.st != "paused")//render the fading in and out of the pickup
+						gThis.g.pk[i].c.a = Math.abs(Math.sin((gThis.g.gt-gThis.g.pk[i].i/500)*3.141));
 					var cl = gThis.g.pk[i].c;
+					var pk = { x: bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, y: bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5 };
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
-					cx.strokeStyle = "rgba(0,0,0,0)";
-					cx.fillRoundedRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x+1, bd.os().y1+bd.ps(gThis.g.pk[i].p).y+1, 8, 8, 5);
-					var pkrg = cx.createRadialGradient(bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 2, bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 16);
-					pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")");
-					pkrg.addColorStop(0.2,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3)+")");
-					pkrg.addColorStop(1,"rgba("+cl.r+","+cl.g+","+cl.b+",0)");
-					cx.fillStyle=pkrg;
-					cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
+					if (gThis.g.pk[i].t==0){ //normal
+						cx.strokeStyle = "rgba(0,0,0,0)";
+						//cx.fillRoundedRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x+1, bd.os().y1+bd.ps(gThis.g.pk[i].p).y+1, 8, 8, 5);
+						cx.beginPath();
+						cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
+						cx.fill();
+						cx.closePath();
+						var pkrg = cx.createRadialGradient(
+							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
+							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
+							2, 
+							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
+							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
+							16
+						);
+						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")");
+						pkrg.addColorStop(0.2,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3)+")");
+						pkrg.addColorStop(1,"rgba("+cl.r+","+cl.g+","+cl.b+",0)");
+						cx.fillStyle=pkrg;
+						cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
+					} else if (gThis.g.pk[i].t==1){ //poison
+						cx.beginPath();
+						cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
+						cx.fill();
+						cx.closePath();
+						cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
+						cx.lineWidth = 1;
+						for (var r=8; r<=16; r+=4){
+							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16))+")";
+							cx.beginPath();
+							cx.arc(pk.x, pk.y, r, 0.618*Math.PI, 1.382*Math.PI, false);
+							cx.stroke();
+							cx.closePath();
+							cx.beginPath();
+							cx.arc(pk.x, pk.y, r, 0.382*Math.PI, 1.618*Math.PI, true);
+							cx.stroke();
+							cx.closePath();
+						}
+					}
 				}
 				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused"){ //move the player, if the interval time is long enough...
 					gThis.g.pl.lu = gThis.g.gt;
