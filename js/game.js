@@ -234,29 +234,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					break;
 				case 2: //economical
-					var df = { x: c.p[0].x-npkd.p.x, y: c.p[0].y-npkd.p.y };
-					var dv = df.y<0?2:(df.y==0?-1:0);
-					var dh = df.x<0?1:(df.x==0?-1:3);
-					console.log("DH is: "+dh+" is DF.x: "+df.x);
-					var nwDir = (inval(dv)?(dv==-1?(inval(dh)?Mathf.randVal([inval(0)?2:0,inval(2)?0:2]):dh):(dh==-1?Mathf.randVal([inval(1)?3:1,inval(3)?1:3]):(c.d==dh?dh:[2,3,0,1][dh]))):(inval(dh)?dv:(c.d==dv?dh:dv)));
-					nDir = nwDir;
-					console.log(nDir);
-					/*
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
 					var nwDir = c.d!=dL.v?((dL.v!==-1&&!inval(dL.v))?dL.v:dL.h):((dL.h!==-1&&!inval(dL.h))?dL.h:dL.v);
-					var xd=c.p[0].x-npkd.p.x, yd=c.p[0].y-npkd.p.y;
-					var ang = (xd==0||yd==0)?0:Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
-					ang = (xd>=0?(yd>=0?269+ang:179+ang):(yd>=0?(ang==0?0:ang):89+ang));
-					var nwDir2 = Math.round(ang/90);
-					nwDir2 = nwDir2==4?0:nwDir2;
-					var clDir = Math.floor(ang/90)==nwDir?Math.ceil(ang/90):Math.floor(ang/90);
-					clDir = clDir==4?0:clDir;
 					if (nwDir!==-1&&!inval(nwDir))
 						nDir = nwDir;
-					else if (!inval(nwDir2))
-						nDir = nwDir2;
-					else if (!inval(clDir))
-						nDir = clDir;
 					else {
 						var cDir = [];
 						if (nwDir!==-1){
@@ -265,13 +246,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 						var dList = [];
 						for (var d1=0; d1<4; d1++)
-							if (!inval(d1)&&d1!==cDir[0]&&d1!==cDir[1]) dList.push({d:d1,c:ppD(d1)});
+							if (!inval(d1)&&d1!==-1&&d1!==cDir[0]&&d1!==cDir[1]) dList.push({d:d1,c:ppD(d1)});
 						for (var i=0; i<cDir.length; i++)
 							if (!inval(cDir[i])) dList.push({d:cDir[i],c:ppD(cDir[i])});
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
 					}
-					*/
 					break;
 			}
 			return nDir;
