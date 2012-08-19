@@ -121,16 +121,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		nextDir: function(c){ //the modified version of ai.nextDir
 			var pkd = [];
 			//calculate the nearest distance of a pickup
-			for (var i=0; i<gThis.g.pk.length; i++){
-				pkd.push({
-					d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
-					p: {
-						x: gThis.g.pk[i].p.x,
-						y: gThis.g.pk[i].p.y
-					},
-					i: i
-				});
-			}
+			for (var i=0; i<gThis.g.pk.length; i++)
+				if (gThis.g.pk.t!==1) //avoid poison
+					pkd.push({
+						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
+						p: {
+							x: gThis.g.pk[i].p.x,
+							y: gThis.g.pk[i].p.y
+						},
+						i: i
+					});
 			var npkd = pkd.length>=1 ? $_.assort(pkd,true,"d")[0] : false; //the nearest pickup
 			var endangered = false;
 			var pCrds = {
@@ -450,8 +450,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		lpa: 0, //the last time a pickup was added
 		ap: function(){ //function to add a new pickup to the game
 			var pc = [];
-			for (var i=5; i<bd.gd().x-5; i++){
-				for (var j=5; j<bd.gd().y-5; j++){
+			for (var i=1; i<bd.gd().x-1; i++){
+				for (var j=1; j<bd.gd().y-1; j++){
 					var conflict = false;
 					for (var k=0; k<gThis.g.en.length; k++){
 						for (var l=0; l<gThis.g.en[k].p.length; l++)
@@ -465,17 +465,25 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
+			var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>95?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
-					r: Mathf.rand(25,255),
-					g: Mathf.rand(25,255),
-					b: Mathf.rand(25,255),
+					r: Mathf.rand(25,230),
+					g: Mathf.rand(25,230),
+					b: Mathf.rand(25,230),
 					a: 0
 				},
 				i: gThis.g.gt, //the time of instantiation
 				f: false, //whether or not the item is fading
-				ft: 0 //the time of fading
+				ft: 0, //the time of fading
+				t: pType
+					/********************
+					 * Pickup types are:
+					 * 0 - normal
+					 * 1 - poison
+					 * 2 - life
+					*********************/
 			});
 			return true;
 		},
@@ -569,11 +577,28 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				n: "", //the name of the player
 				lu: gThis.g.gt, //the last time the player's position was updated
 				l: len, //the length of the player
+				pn: { //poison info, if the player is poisoned
+					p: false, //whether or not the player is poisoned
+					pt: function(){ //poison time interval, for player, to decrease length
+						return (gThis.g.pl.pn.p&&!gThis.g.pl.dy)?Math.round(1+10*Math.pow(gThis.g.pl.lv,-gThis.g.pl.lv/20)):false;
+					},
+					lpt: gThis.g.gt, //last poison time
+					af: function(){ //affect
+						if (!gThis.g.pl.pn.p||(gThis.g.gt-gThis.g.pl.pn.lpt)<gThis.g.pl.pn.pt()||gThis.g.pl.dy) return false;
+						gThis.g.pl.pn.lpt = gThis.g.gt;
+						gThis.g.pl.l--;
+						if (gThis.g.pl.l==0){ //kill player
+							gThis.g.pl.dy = true;
+							gThis.g.pl.dt = gThis.g.gt;
+						}
+					}
+				},
 				dy: false, //whether or not the player is dying
 				dt: false, //the time (timestamp) when dying was initiated
 				irs: false, //whether or not the player is resurrecting
 				rt: 0, //the time of resurrection
 				rs: function(){ //resurrect the player after a death
+					gThis.g.pl.d = -1;
 					gThis.g.pl.irs = true;
 					gThis.g.pl.dy = false;
 					gThis.g.pl.p.splice(0,gThis.g.pl.p.length); //remove every point
@@ -611,7 +636,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 					}
 					for (var d=0; d<=3; d++) room(d);
+					
+					console.log($_.assort(dList,false,"d")[0].t);
 					gThis.g.pl.d = $_.assort(dList,false,"d")[0].t;
+					//console.log("Heading in "+["up","right","down","left"][gThis.g.pl.d]+" direction, which has "+$_.assort(dList,false,"d")[0].t+" distance.");
 				},
 				hm: false, //whether or not the player has decided to move
 				mv: function(d){ //function to move the player according to direction
@@ -894,15 +922,18 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 						}
 					}
-					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused"){
+					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused" && !gThis.g.pk[i].f){
 						gThis.g.pl.s+=20; //increase the player's score
 						gThis.g.pl.l+=5; //increase the player's length
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						$get("mga3").currentTime = 0;
 						$get("mga3").play(); //play a sound
-					} else if (eg.g && gThis.g.st != "paused"){ //if an enemy took the pickup instad
+					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instad
 						gThis.g.en[eg.e].l+=5; //increase the enemy's length
+						gThis.g.pk[i].f = true; //set the item to fade away
+						gThis.g.pk[i].ft = gThis.g.gt;
+					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 					}
