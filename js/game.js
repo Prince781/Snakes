@@ -95,13 +95,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						x: Mathf.rand(20,bd.gd().x-20),
 						y: Mathf.rand(20,bd.gd().y-20)
 					};
+					
 					var frst = pnts[0];
+					/*
 					for (var i=1; i<=len-1; i++){
 						pnts.push({ //add the other coordinates to the creature's coordinate list
 							x: frst.x-([0,i,0,-i][rDir]), //note: these values are the REVERSE of any normal ones,
 							y: frst.y-([i,0,-i,0][rDir])  //as point 0 shall be the starting point of the enemy
 						});									 //hence, the -, instead of a +
 					}
+					*/
 					return pnts;
 				})(),
 				lu: 0,//(gThis.g.st == "init" ? gThis.g.gt : (new Date()).getTime()),
@@ -231,6 +234,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					break;
 				case 2: //economical
+					var df = { x: c.p[0].x-npkd.p.x, y: c.p[0].y-npkd.p.y };
+					var dv = df.y<0?2:(df.y==0?-1:0);
+					var dh = df.x<0?1:(df.x==0?-1:3);
+					console.log("DH is: "+dh+" is DF.x: "+df.x);
+					var nwDir = (inval(dv)?(dv==-1?(inval(dh)?Mathf.randVal([inval(0)?2:0,inval(2)?0:2]):dh):(dh==-1?Mathf.randVal([inval(1)?3:1,inval(3)?1:3]):(c.d==dh?dh:[2,3,0,1][dh]))):(inval(dh)?dv:(c.d==dv?dh:dv)));
+					nDir = nwDir;
+					console.log(nDir);
 					/*
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
 					var nwDir = c.d!=dL.v?((dL.v!==-1&&!inval(dL.v))?dL.v:dL.h):((dL.h!==-1&&!inval(dL.h))?dL.h:dL.v);
@@ -925,12 +935,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 					}
 					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused" && !gThis.g.pk[i].f){
-						gThis.g.pl.s+=20; //increase the player's score
-						gThis.g.pl.l+=5; //increase the player's length
-						gThis.g.pk[i].f = true; //set the item to fade away
-						gThis.g.pk[i].ft = gThis.g.gt;
-						$get("mga3").currentTime = 0;
-						$get("mga3").play(); //play a sound
+						switch (gThis.g.pk[i].t){
+							case 0: //pickup
+								gThis.g.pl.s+=20; //increase the player's score
+								gThis.g.pl.l+=5; //increase the player's length
+								gThis.g.pk[i].f = true; //set the item to fade away
+								gThis.g.pk[i].ft = gThis.g.gt;
+								$get("mga3").currentTime = 0;
+								$get("mga3").play(); //play a sound
+							case 1: //poison
+								gThis.g.pl.pn.p = true; 
+						}
 					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instad
 						gThis.g.en[eg.e].l+=5; //increase the enemy's length
 						gThis.g.pk[i].f = true; //set the item to fade away
@@ -989,6 +1004,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.closePath();
 						}
 					}
+				}
+				if (gThis.g.pl.pn.p&&(gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt())){ //if the player is poisoned
+					gThis.g.pl.pn.lpt = gThis.g.gt;
+					gThis.g.pl.pn.af(); //affect it
 				}
 				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused"){ //move the player, if the interval time is long enough...
 					gThis.g.pl.lu = gThis.g.gt;
