@@ -110,7 +110,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				lu: 0,//(gThis.g.st == "init" ? gThis.g.gt : (new Date()).getTime()),
 				dy: false, //whether or not the enemy is dying
 				dc: 0,
-				l: len //the length of the creature
+				l: len, //the length of the enemy
+				pn: { //poison info for enemy
+					p: false, //poisoned?
+					ipt: 0, //initial poison time
+					lpt: 0, //last poison time
+					pt: Mathf.rand(80,200)*10 //interval for poison time
+				}
 			};
 		},
 		nextPos: function(c){ //where c is the input enemy
@@ -457,7 +463,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>95?1:0); //the type of pickup
+			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>95?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
@@ -572,13 +578,18 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				pn: { //poison info, if the player is poisoned
 					p: false, //whether or not the player is poisoned
 					pt: function(){ //poison time interval, for player, to decrease length
-						return (gThis.g.pl.pn.p&&!gThis.g.pl.dy)?Math.round(1+10*Math.pow(gThis.g.pl.lv,-gThis.g.pl.lv/20)):false;
+						return (gThis.g.pl.pn.p&&!gThis.g.pl.dy)?Math.round(1+1000*Math.pow(gThis.g.pl.lv,-gThis.g.pl.lv/20)):false;
 					},
+					ipt: gThis.g.gt, //initial poison time
 					lpt: gThis.g.gt, //last poison time
 					af: function(){ //affect
-						if (!gThis.g.pl.pn.p||(gThis.g.gt-gThis.g.pl.pn.lpt)<gThis.g.pl.pn.pt()||gThis.g.pl.dy) return false;
+						console.log("Next affecting time in "+(gThis.g.pl.pn.pt()/1000)+" seconds.");
+						if (!gThis.g.pl.pn.p||gThis.g.gt-gThis.g.pl.pn.lpt<gThis.g.pl.pn.pt()||gThis.g.pl.dy) return false;
+						gThis.g.pl.pn.lpt = gThis.g.gt;
+						console.log("Affecting! Current length is: "+gThis.g.pl.l);
 						gThis.g.pl.pn.lpt = gThis.g.gt;
 						gThis.g.pl.l--;
+						console.log("New length is: "+gThis.g.pl.l);
 						if (gThis.g.pl.l==0){ //kill player
 							gThis.g.pl.dy = true;
 							gThis.g.pl.dt = gThis.g.gt;
@@ -629,7 +640,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					for (var d=0; d<=3; d++) room(d);
 					
-					console.log($_.assort(dList,false,"d")[0].t);
+					//console.log($_.assort(dList,false,"d")[0].t);
 					gThis.g.pl.d = $_.assort(dList,false,"d")[0].t;
 					//console.log("Heading in "+["up","right","down","left"][gThis.g.pl.d]+" direction, which has "+$_.assort(dList,false,"d")[0].t+" distance.");
 				},
@@ -649,10 +660,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						x:gThis.g.pl.p[0].x+[0,1,0,-1][gThis.g.pl.qd],
 						y:gThis.g.pl.p[0].y+[-1,0,1,0][gThis.g.pl.qd]
 					};
-					gThis.g.pl.p.splice(0,0,coord);
 					var conflict = false;
 					for (var a=1; a<gThis.g.pl.p.length; a++){
-						if (gThis.g.pl.p[0].x==gThis.g.pl.p[a].x && gThis.g.pl.p[0].y==gThis.g.pl.p[a].y){
+						if (coord.x==gThis.g.pl.p[a].x && coord.y==gThis.g.pl.p[a].y){
 							conflict = true;
 							break;
 						}
@@ -660,17 +670,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					for (var a=0; a<gThis.g.en.length; a++){
 						var en = gThis.g.en[a];
 						for (var b=0; b<en.p.length; b++){
-							if (gThis.g.pl.p[0].x==en.p[b].x && gThis.g.pl.p[0].y==en.p[b].y){
+							if (coord.x==en.p[b].x && coord.y==en.p[b].y){
 								conflict = true;
 								break;
 							}
 						}
 					}
-					if (gThis.g.pl.p[0].x<0||gThis.g.pl.p[0].x>bd.gd().x||gThis.g.pl.p[0].y<0||gThis.g.pl.p[0].y>bd.gd().y) conflict = true;
+					if (coord.x<0||coord.x>bd.gd().x||coord.y<0||coord.y>bd.gd().y) conflict = true;
 					if (conflict){
 						gThis.g.pl.dy = true;
 						gThis.g.pl.dt = gThis.g.gt;
-					}
+					} else gThis.g.pl.p.splice(0,0,coord);
 				},
 				lv: 3 //the amount of lives left in the player
 			};
@@ -919,15 +929,26 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							case 0: //pickup
 								gThis.g.pl.s+=20; //increase the player's score
 								gThis.g.pl.l+=5; //increase the player's length
-								gThis.g.pk[i].f = true; //set the item to fade away
-								gThis.g.pk[i].ft = gThis.g.gt;
-								$get("mga3").currentTime = 0;
-								$get("mga3").play(); //play a sound
+								break;
 							case 1: //poison
 								gThis.g.pl.pn.p = true; 
+								gThis.g.pl.pn.ipt = gThis.g.gt;
+								break;
 						}
-					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instad
-						gThis.g.en[eg.e].l+=5; //increase the enemy's length
+						gThis.g.pk[i].f = true; //set the item to fade away
+						gThis.g.pk[i].ft = gThis.g.gt;
+						$get("mga3").currentTime = 0;
+						$get("mga3").play(); //play a sound
+					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
+						switch (gThis.g.pk[i].t){
+							case 0: //pickup
+								gThis.g.en[eg.e].l+=5; //increase the enemy's length
+								break;
+							case 1: //poison
+								gThis.g.en[eg.e].pn.p = true;
+								gThis.g.en[eg.e].pn.ipt = gThis.g.gt;
+								break;
+						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){
@@ -985,15 +1006,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 					}
 				}
-				if (gThis.g.pl.pn.p&&(gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt())){ //if the player is poisoned
-					gThis.g.pl.pn.lpt = gThis.g.gt;
-					gThis.g.pl.pn.af(); //affect it
-				}
-				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused"){ //move the player, if the interval time is long enough...
+				if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt()&&gThis.g.gt-gThis.g.pl.pn.ipt<5000)
+					gThis.g.pl.pn.af(); //affect the player, if poisoned
+				else if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.ipt>=5000) gThis.g.pl.pn.p = false;
+				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused"){ //update the player
 					gThis.g.pl.lu = gThis.g.gt;
-					gThis.g.pl.pf(); //add an additional coordinate to the player
+					gThis.g.pl.pf(); //update the player's coordinates
 					gThis.g.pl.d = gThis.g.pl.qd;
-					if (gThis.g.pl.p.length > gThis.g.pl.l) gThis.g.pl.p.splice(gThis.g.pl.p.length-1, 1);
+					if (gThis.g.pl.p.length > gThis.g.pl.l) //sychronize player length with array length
+						gThis.g.pl.p.splice(gThis.g.pl.p.length-(gThis.g.pl.p.length-gThis.g.pl.l), gThis.g.pl.p.length-gThis.g.pl.l);
 				} else if (gThis.g.pl.dy && !gThis.g.pl.irs){ //if the player is dying
 					if (gThis.g.gt-gThis.g.pl.dt <= 500) gThis.g.pl.c.a = 1-Math.pow((gThis.g.gt-gThis.g.pl.dt)/500,2);
 					else {
@@ -1011,11 +1032,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 				}
 				var pcl = gThis.g.pl.c;
-				for (var i=0; i<gThis.g.pl.p.length; i++){
+				for (var i=0; i<gThis.g.pl.p.length; i++){ //render the player
 					var p = gThis.g.pl.p[i];
 					cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+pcl.a+")";
 					cx.strokeStyle = "rgba(0,0,0,0)";
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
+				}
+				if (gThis.g.pl.pn.p){ //poison rendering
+					
 				}
 				for (var i=0; i<gThis.g.en.length; i++){ //render all of the enemies
 					if ((gThis.g.gt-gThis.g.en[i].lu >= 50 || gThis.g.en[i].dy) && gThis.g.st != "paused"){ //don't perform if the enemy's position has been updated recently, or if it is dying
@@ -1023,7 +1047,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							gThis.g.en[i].lu = gThis.g.gt; //set the last update time
 							gThis.g.en[i].d = ai.nextDir(gThis.g.en[i]); //generate next direction, based on the AI
 						}
-						if (![1,1,1,1][(gThis.g.en[i].d)]){ //if there are no more directions
+						if (gThis.g.en[i].pn.p&&gThis.g.gt-gThis.g.en[i].pn.lpt>gThis.g.en[i].pn.pt&&!gThis.g.en[i].dy){ //if the enemy is poisoned
+							gThis.g.en[i].pn.lpt = gThis.g.gt;
+							gThis.g.en[i].l--;
+							if (gThis.g.en[i].l <= 0){
+								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
+								gThis.g.en[i].dy = true;
+							}								
+						} else if (gThis.g.gt-gThis.g.en[i].pn.ipt>5000) //if time is up
+							gThis.g.en[i].pn.p = false;
+						if (![1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if there are no more directions
 							if (!gThis.g.en[i].dy){
 								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
 								gThis.g.en[i].dy = true; //set the dying attribute to be true
@@ -1035,10 +1068,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								i--;
 								continue;
 							}
-						} else {
+						} else if (!gThis.g.en[i].dy){
 							gThis.g.en[i].p.splice(0, 0, ai.nextPos(gThis.g.en[i])); //create a new position
-							if (gThis.g.en[i].p.length > gThis.g.en[i].l)
-								gThis.g.en[i].p.splice(gThis.g.en[i].p.length-1, 1); //remove the last position
+							if (gThis.g.en[i].p.length > gThis.g.en[i].l) //synchronize enemy length with array length
+								gThis.g.en[i].p.splice(gThis.g.en[i].p.length-(gThis.g.en[i].p.length-gThis.g.en[i].l), gThis.g.en[i].p.length-gThis.g.en[i].l);
 						}
 					}
 					var cl = gThis.g.en[i].c;
