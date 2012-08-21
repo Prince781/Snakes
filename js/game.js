@@ -1018,8 +1018,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.closePath();
 							cx.lineWidth = 1;
 							pkGradient();
-							var v = Math.sin((gThis.g.gt-gThis.g.pk[i].i/500)*3.14159); //variation
-							
+							var v = parseFloat(Math.sin((gThis.g.gt-gThis.g.pk[i].i/500)*Math.PI).toFixed(14)); //variation
+							for (var x=pk.x-8; x<=pk.x+8; x++)
+								
 							break;
 					}
 				}
