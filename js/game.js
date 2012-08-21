@@ -583,14 +583,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					ipt: gThis.g.gt, //initial poison time
 					lpt: gThis.g.gt, //last poison time
 					af: function(){ //affect
-						console.log("Next affecting time in "+(gThis.g.pl.pn.pt()/1000)+" seconds.");
 						if (!gThis.g.pl.pn.p||gThis.g.gt-gThis.g.pl.pn.lpt<gThis.g.pl.pn.pt()||gThis.g.pl.dy) return false;
 						gThis.g.pl.pn.lpt = gThis.g.gt;
-						console.log("Affecting! Current length is: "+gThis.g.pl.l);
 						gThis.g.pl.pn.lpt = gThis.g.gt;
 						gThis.g.pl.l--;
-						console.log("New length is: "+gThis.g.pl.l);
-						if (gThis.g.pl.l==0){ //kill player
+						if (gThis.g.pl.l<=1){ //kill player
 							gThis.g.pl.dy = true;
 							gThis.g.pl.dt = gThis.g.gt;
 						}
@@ -1042,33 +1039,34 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					
 				}
 				for (var i=0; i<gThis.g.en.length; i++){ //render all of the enemies
-					if ((gThis.g.gt-gThis.g.en[i].lu >= 50 || gThis.g.en[i].dy) && gThis.g.st != "paused"){ //don't perform if the enemy's position has been updated recently, or if it is dying
-						if ([1,1,1,1][(gThis.g.en[i].d)]){
-							gThis.g.en[i].lu = gThis.g.gt; //set the last update time
-							gThis.g.en[i].d = ai.nextDir(gThis.g.en[i]); //generate next direction, based on the AI
+					if (gThis.g.en[i].dy){
+						var delta = gThis.g.gt-gThis.g.en[i].dc;
+						gThis.g.en[i].c.a = 1-Math.pow(delta/1000,2);
+						if (delta >= 1000){
+							gThis.g.en.splice(i,1); //remove the enemy
+							i--;
+							continue;
 						}
-						if (gThis.g.en[i].pn.p&&gThis.g.gt-gThis.g.en[i].pn.lpt>gThis.g.en[i].pn.pt&&!gThis.g.en[i].dy){ //if the enemy is poisoned
+					} else if (gThis.g.gt-gThis.g.en[i].lu >= 50 && !gThis.g.en[i].dy && gThis.g.st != "paused"){ //update the enemy
+						if (gThis.g.en[i].pn.p&&gThis.g.gt-gThis.g.en[i].pn.lpt>gThis.g.en[i].pn.pt){ //if the enemy is poisoned
 							gThis.g.en[i].pn.lpt = gThis.g.gt;
 							gThis.g.en[i].l--;
-							if (gThis.g.en[i].l <= 0){
+							if (gThis.g.en[i].l <= 1){
 								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
-								gThis.g.en[i].dy = true;
+								gThis.g.en[i].dy = true; //set the dying attribute to be true
+								console.log("Killing enemy #"+i);
 							}								
 						} else if (gThis.g.gt-gThis.g.en[i].pn.ipt>5000) //if time is up
 							gThis.g.en[i].pn.p = false;
-						if (![1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if there are no more directions
-							if (!gThis.g.en[i].dy){
-								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
-								gThis.g.en[i].dy = true; //set the dying attribute to be true
-							}
-							var delta = gThis.g.gt-gThis.g.en[i].dc;
-							gThis.g.en[i].c.a = 1-Math.pow(delta/1000,2);
-							if (delta >= 1000){
-								gThis.g.en.splice(i,1); //remove the enemy
-								i--;
-								continue;
-							}
-						} else if (!gThis.g.en[i].dy){
+						if ([1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if a valid point is reached
+							gThis.g.en[i].lu = gThis.g.gt; //set the last update time
+							gThis.g.en[i].d = ai.nextDir(gThis.g.en[i]); //generate next direction, based on the AI
+						} else if (![1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if there are no more directions
+							gThis.g.en[i].dc = gThis.g.gt; //set the decay time
+							gThis.g.en[i].dy = true; //set the dying attribute to be true
+							console.log("Killing enemy #"+i);
+						}
+						if (!gThis.g.en[i].dy){
 							gThis.g.en[i].p.splice(0, 0, ai.nextPos(gThis.g.en[i])); //create a new position
 							if (gThis.g.en[i].p.length > gThis.g.en[i].l) //synchronize enemy length with array length
 								gThis.g.en[i].p.splice(gThis.g.en[i].p.length-(gThis.g.en[i].p.length-gThis.g.en[i].l), gThis.g.en[i].p.length-gThis.g.en[i].l);
