@@ -463,14 +463,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>95?1:0); //the type of pickup
+			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
 					r: Mathf.rand(25,230),
 					g: Mathf.rand(25,230),
 					b: Mathf.rand(25,230),
-					a: 0
+					a: 0,
+					oa: 0 //old opacity
 				},
 				i: gThis.g.gt, //the time of instantiation
 				f: false, //whether or not the item is fading
@@ -910,8 +911,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10))
 					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup
 				for (var i=0; i<gThis.g.pk.length; i++){ //render all of the pickups
-					if (gThis.g.gt-gThis.g.pk[i].i <= 500)
-						gThis.g.pk[i].c.a = Math.pow((gThis.g.gt-gThis.g.pk[i].i)/500,2);
+					if (gThis.g.gt-gThis.g.pk[i].i < 750)
+						gThis.g.pk[i].c.a = Math.pow((gThis.g.gt-gThis.g.pk[i].i)/750,3);
 					var eg = { g: false, e: 0 };
 					for (var j=0; j<gThis.g.en.length; j++){
 						if (gThis.g.pk[i].f) break;
@@ -934,6 +935,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
+						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
 						$get("mga3").currentTime = 0;
 						$get("mga3").play(); //play a sound
 					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
@@ -948,59 +950,77 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
-					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){
+						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
+					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){ //if existing time > 10 seconds
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
+						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
 					}
 					if (gThis.g.pk[i].f){
-						if (gThis.g.gt-gThis.g.pk[i].ft >= 500){
+						if (gThis.g.gt-gThis.g.pk[i].ft > 750){
 							gThis.g.pk.splice(i,1); //remove the item
 							i--;
 							continue;
-						} else gThis.g.pk[i].c.a = 1-Math.pow((gThis.g.gt-gThis.g.pk[i].ft)/500,2);
-					} else if (gThis.g.gt-gThis.g.pk[i].i > 1000 && gThis.g.st != "paused")//render the fading in and out of the pickup
-						gThis.g.pk[i].c.a = Math.abs(Math.sin((gThis.g.gt-gThis.g.pk[i].i/500)*3.141));
+						} else gThis.g.pk[i].c.a = gThis.g.pk[i].c.oa-Math.pow(gThis.g.pk[i].c.oa*(gThis.g.gt-gThis.g.pk[i].ft)/750,2);
+					} else if (gThis.g.gt-gThis.g.pk[i].i >= 750 && gThis.g.st != "paused")//render the fading in and out of the pickup
+						gThis.g.pk[i].c.a = Math.abs(parseFloat(Math.sin((gThis.g.gt-gThis.g.pk[i].i)/1500*Math.PI).toFixed(14)));
 					var cl = gThis.g.pk[i].c;
 					var pk = { x: bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, y: bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5 };
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
-					if (gThis.g.pk[i].t==0){ //normal
-						cx.strokeStyle = "rgba(0,0,0,0)";
-						//cx.fillRoundedRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x+1, bd.os().y1+bd.ps(gThis.g.pk[i].p).y+1, 8, 8, 5);
-						cx.beginPath();
-						cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
-						cx.fill();
-						cx.closePath();
+					function pkGradient(r1,r2){
 						var pkrg = cx.createRadialGradient(
 							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
 							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
-							2, 
+							(typeof r1=="undefined"?2:r1), 
 							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
 							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
-							16
+							(typeof r2=="undefined"?16:r2)
 						);
 						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")");
-						pkrg.addColorStop(0.2,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3)+")");
+						pkrg.addColorStop(0.3,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3)+")");
 						pkrg.addColorStop(1,"rgba("+cl.r+","+cl.g+","+cl.b+",0)");
 						cx.fillStyle=pkrg;
 						cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
-					} else if (gThis.g.pk[i].t==1){ //poison
-						cx.beginPath();
-						cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
-						cx.fill();
-						cx.closePath();
-						cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
-						cx.lineWidth = 1;
-						for (var r=8; r<=16; r+=4){
-							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16))+")";
+					}
+					switch (gThis.g.pk[i].t){
+						case 0: //normal
 							cx.beginPath();
-							cx.arc(pk.x, pk.y, r, 0.618*Math.PI, 1.382*Math.PI, false);
-							cx.stroke();
+							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
+							cx.fill();
 							cx.closePath();
+							cx.strokeStyle = "rgba(0,0,0,0)";
+							cx.lineWidth = 0;
+							pkGradient();
+							break;
+						case 1: //poison
 							cx.beginPath();
-							cx.arc(pk.x, pk.y, r, 0.382*Math.PI, 1.618*Math.PI, true);
-							cx.stroke();
+							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
+							cx.fill();
 							cx.closePath();
-						}
+							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
+							cx.lineWidth = 1;
+							for (var r=8; r<=16; r+=4){
+								cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16))+")";
+								cx.beginPath();
+								cx.arc(pk.x, pk.y, r, 0.618*Math.PI, 1.382*Math.PI, false);
+								cx.stroke();
+								cx.closePath();
+								cx.beginPath();
+								cx.arc(pk.x, pk.y, r, 0.382*Math.PI, 1.618*Math.PI, true);
+								cx.stroke();
+								cx.closePath();
+							}
+							break;
+						case 2: //life
+							cx.beginPath();
+							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
+							cx.fill();
+							cx.closePath();
+							cx.lineWidth = 1;
+							pkGradient();
+							var v = Math.sin((gThis.g.gt-gThis.g.pk[i].i/500)*3.14159); //variation
+							
+							break;
 					}
 				}
 				if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt()&&gThis.g.gt-gThis.g.pl.pn.ipt<5000)
@@ -1097,11 +1117,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				var lc = bd.os().x1+10; //left coord
 				if (gThis.g.bt[0].mt == 0)
 					gThis.g.bt[0].mt = gThis.g.gt;
-				else if (gThis.g.gt-gThis.g.bt[0].mt <= 700){
+				else if (gThis.g.gt-gThis.g.bt[0].mt < 700){
 					var dlt = (gThis.g.gt-gThis.g.bt[0].mt)/700;
 					dlt = Math.pow(dlt,1-dlt);
 					gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
-					gThis.g.bt[0].c.a = 0.7*Mathf.limit(1-Math.sin(dlt*3.141),0,1); //fade in and out the opacity
+					gThis.g.bt[0].c.a = 0.7*Mathf.limit(1-parseFloat(Math.sin(dlt*Math.PI).toFixed(14)),0,1); //fade in and out the opacity
 				} else {
 					gThis.g.bt[0].m = false;
 					gThis.g.bt[0].mt = 0;
