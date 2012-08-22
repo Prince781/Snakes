@@ -448,6 +448,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					t: ([1][t]?t:0), //type
 					cl: (typeof c!="object"?{r:0,g:0,b:0,a:1}:c)
 				});
+				console.log("Added animation.");
 			}
 		},
 		lv: 0, //the current game level
@@ -925,8 +926,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
 					switch(gThis.g.a.ls[i].t){
 						case 0: //sparkle animation
+							var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
 							if (gThis.g.a.ls[i].int==0){ //initialize
-								var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
 								gThis.g.a.ls[i].int=gThis.g.gt;
 								gThis.g.a.ls[i].pt=[]; //particles
 								gThis.g.a.ls[i].r=10; //radius
@@ -941,13 +942,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							} else if(gThis.g.gt-gThis.g.a.ls[i].int<=1700){
 								var dlt=(gThis.g.gt-gThis.g.a.ls[i].int)/1700;
 								gThis.g.a.ls[i].r=dlt*100;
-								gThis.g.a.ls[i].cl.a=dlt;
+								gThis.g.a.ls[i].cl.a=1-dlt;
 								var r=gThis.g.a.ls[i].r;
 								var r2=0.95*r;
 								for (var j=0;j<gThis.g.a.ls[i].pt.length;j++){
 									var px=pn.x+r2*(2*(j+1)/gThis.g.a.ls[i].pt.length-1);
 									gThis.g.a.ls[i].pt[j].x=px;
-									gThis.g.a.ls[i].pt[j].y=sqrt(pow(r,2)-pow(px,2))*((j+1)%2==0?-1:1);
+									with(Math)gThis.g.a.ls[i].pt[j].y=pn.y+sqrt(pow(r,2)-pow(pn.x-px,2))*((j+1)%2==0?-1:1);
 								}
 							} else if(gThis.g.gt-gThis.g.a.ls[i].int>1700){
 								gThis.g.a.ls.splice(i,1);
@@ -979,6 +980,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 						}
 					}
+					var cl = gThis.g.pk[i].c;
+					var pk = { x: bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, y: bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5 };
 					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused" && !gThis.g.pk[i].f){
 						switch (gThis.g.pk[i].t){
 							case 0: //pickup
@@ -996,7 +999,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
-						gThis.g.a.a(gThis.g.pk[i].x,gThis.g.pk[i].y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
+						gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 						$get("mga3").currentTime = 0;
 						$get("mga3").play(); //play a sound
 					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
@@ -1026,8 +1029,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						} else gThis.g.pk[i].c.a = gThis.g.pk[i].c.oa-Math.pow(gThis.g.pk[i].c.oa*(gThis.g.gt-gThis.g.pk[i].ft)/750,2);
 					} else if (gThis.g.gt-gThis.g.pk[i].i >= 750 && gThis.g.st != "paused")//render the fading in and out of the pickup
 						gThis.g.pk[i].c.a = Math.abs(parseFloat(Math.sin((gThis.g.gt-gThis.g.pk[i].i)/1500*Math.PI).toFixed(14)));
-					var cl = gThis.g.pk[i].c;
-					var pk = { x: bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, y: bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5 };
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
 					function pkGradient(r1,r2){
 						var pkrg = cx.createRadialGradient(
