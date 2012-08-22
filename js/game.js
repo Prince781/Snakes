@@ -437,7 +437,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		},
 		a: { //list of instanced animations
 			ls:[],
-			a: function(px,py,t){ //add
+			a: function(px,py,t,c){ //add
 				/*****
 				 * types:
 				 * 0 - sparkle effect
@@ -445,7 +445,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				gThis.g.a.ls.push({
 					int: 0, //initial time
 					p: {x:px,y:py}, //position
-					t: ([1][t]?t:0) //type
+					t: ([1][t]?t:0), //type
+					cl: (typeof c!="object"?{r:0,g:0,b:0,a:1}:c)
 				});
 			}
 		},
@@ -928,8 +929,38 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
 								gThis.g.a.ls[i].int=gThis.g.gt;
 								gThis.g.a.ls[i].pt=[]; //particles
-								for (var x=pn.x-30;x<=pn.x+30;x++)
-									gThis.g.a.ls[i].pt.push({x:x,pn.y-()});
+								gThis.g.a.ls[i].r=10; //radius
+								var r=gThis.g.a.ls[i].r;
+								var r2=0.95*r;
+								for (var x=pn.x-gThis.g.a.ls[i].r;x<pn.x+gThis.g.a.ls[i].r;x++){
+									with (Math){
+										gThis.g.a.ls[i].pt.push({x:x,y:pn.y-sqrt(pow(r,2)-pow(x,2))});
+										gThis.g.a.ls[i].pt.push({x:x,y:pn.y+sqrt(pow(r,2)-pow(x,2))});
+									}
+								}
+							} else if(gThis.g.gt-gThis.g.a.ls[i].int<=1700){
+								var dlt=(gThis.g.gt-gThis.g.a.ls[i].int)/1700;
+								gThis.g.a.ls[i].r=dlt*100;
+								gThis.g.a.ls[i].cl.a=dlt;
+								var r=gThis.g.a.ls[i].r;
+								var r2=0.95*r;
+								for (var j=0;j<gThis.g.a.ls[i].pt.length;j++){
+									var px=pn.x+r2*(2*(j+1)/gThis.g.a.ls[i].pt.length-1);
+									gThis.g.a.ls[i].pt[j].x=px;
+									gThis.g.a.ls[i].pt[j].y=sqrt(pow(r,2)-pow(px,2))*((j+1)%2==0?-1:1);
+								}
+							} else if(gThis.g.gt-gThis.g.a.ls[i].int>1700){
+								gThis.g.a.ls.splice(i,1);
+								i--;
+								continue;
+							}
+							var cl = gThis.g.a.ls[i].cl;
+							cx.fillStyle="rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
+							for (var j=0;j<gThis.g.a.ls[i].pt.length;j++){
+								cx.beginPath();
+								cx.arc(gThis.g.a.ls[i].pt[j].x,gThis.g.a.ls[i].pt[j].y,1,0,Math.PI*2,false);
+								cx.fill();
+								cx.closePath();
 							}
 							break;
 					}
@@ -965,6 +996,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
+						gThis.g.a.a(gThis.g.pk[i].x,gThis.g.pk[i].y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 						$get("mga3").currentTime = 0;
 						$get("mga3").play(); //play a sound
 					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
@@ -980,6 +1012,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
+						gThis.g.a.a(gThis.g.pk[i].x,gThis.g.pk[i].y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){ //if existing time > 10 seconds
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
