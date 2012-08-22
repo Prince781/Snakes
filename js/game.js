@@ -131,7 +131,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			var pkd = [];
 			//calculate the nearest distance of a pickup
 			for (var i=0; i<gThis.g.pk.length; i++)
-				if (gThis.g.pk[i].t!==1) //avoid poison
+				if ([1,0,0][(gThis.g.pk[i].t)]) //avoid poison and life
 					pkd.push({
 						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
 						p: {
@@ -463,7 +463,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
+			var pType = 2;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
@@ -932,6 +932,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								gThis.g.pl.pn.p = true; 
 								gThis.g.pl.pn.ipt = gThis.g.gt;
 								break;
+							case 2: //life
+								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
+								break;
 						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
@@ -982,6 +985,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillStyle=pkrg;
 						cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
 					}
+					function drawSquig(px,py,rd,fld,vr){
+						function squig(x,r,fl,v){with(Math)return sqrt(4*((4-v*4)+sin(fl*x))-pow(x,2));}
+						cx.lineJoin="round";
+						cx.beginPath();
+						for (var x=px-rd*2;x<=px+rd*2;x++)
+							cx.lineTo(x,py-squig((x-px)/(rd/4),rd,fld,vr)*(rd/4));
+						for (var x=px+rd*2;x>=px-rd*2;x--)
+							cx.lineTo(x,py+squig((x-px)/(rd/4),rd,fld,vr)*(rd/4));
+						for (var x=px-rd*2;x<=px+rd*2;x++)
+							cx.lineTo(x,py-squig((x-px)/(rd/4),rd,fld,vr)*(rd/4));
+						cx.stroke();
+						cx.closePath();
+					}
 					switch (gThis.g.pk[i].t){
 						case 0: //normal
 							cx.beginPath();
@@ -1018,6 +1034,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.closePath();
 							cx.lineWidth = 1;
 							pkGradient();
+							with(Math)
+								var delta=parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1300*PI).toFixed(14));
+							var vrt=delta*0.3;//radial variation (0-1)
+							var fldy=delta*1.2;//roughness
+							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
+							drawSquig(pk.x,pk.y,10,fldy,vrt);
 							break;
 					}
 				}
