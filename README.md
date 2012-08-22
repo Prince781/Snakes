@@ -7,7 +7,7 @@ Some history of the game can be found [here](http://en.wikipedia.org/wiki/Snake_
 
 A list of features to implement:
 * Infinite levels (**todo**)
-* Various pickups and other items (**mostly**)
+* Various pickups and other items (**almost done**)
 * Player lives (**done**)
 * Fully challenging, aggressive and defensive enemy AI (**done**)
 * Introductive tutorial (**todo**)

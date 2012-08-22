@@ -435,6 +435,20 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				gThis.g.tb.at = (new Date()).getTime();
 			}
 		},
+		a: { //list of instanced animations
+			ls:[],
+			a: function(px,py,t){ //add
+				/*****
+				 * types:
+				 * 0 - sparkle effect
+				******/
+				gThis.g.a.ls.push({
+					int: 0, //initial time
+					p: {x:px,y:py}, //position
+					t: ([1][t]?t:0) //type
+				});
+			}
+		},
 		lv: 0, //the current game level
 		pl: {}, //the player (defined during initialization)
 		en: [], //the array of enemies
@@ -904,9 +918,21 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 				gThis.g.pl.lu = gThis.g.gt;
 			} else if (gThis.g.pl.hm){ //otherwise, we're in the middle of the game, at an unknown level yet
-				if (gThis.g.en.length==0){ //if there are no current enemies
+				if (gThis.g.en.length==0) //if there are no current enemies
 					for (var i=0; i<Math.ceil(Math.pow(gThis.g.lv,2)/10); i++) //equals ~(c^2)/10
 						gThis.g.en.push(ai.createEnem());
+				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
+					switch(gThis.g.a.ls[i].t){
+						case 0: //sparkle animation
+							if (gThis.g.a.ls[i].int==0){ //initialize
+								var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
+								gThis.g.a.ls[i].int=gThis.g.gt;
+								gThis.g.a.ls[i].pt=[]; //particles
+								for (var x=pn.x-30;x<=pn.x+30;x++)
+									gThis.g.a.ls[i].pt.push({x:x,pn.y-()});
+							}
+							break;
+					}
 				}
 				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10))
 					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup
