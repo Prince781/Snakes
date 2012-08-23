@@ -131,7 +131,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			var pkd = [];
 			//calculate the nearest distance of a pickup
 			for (var i=0; i<gThis.g.pk.length; i++)
-				if ([1,0,0][(gThis.g.pk[i].t)]) //avoid poison and life
+				if (gThis.g.pk[i].t!=1) //avoid poison
 					pkd.push({
 						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
 						p: {
@@ -448,7 +448,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					t: ([1][t]?t:0), //type
 					cl: (typeof c!="object"?{r:0,g:0,b:0,a:1}:c)
 				});
-				console.log("Added animation.");
 			}
 		},
 		lv: 0, //the current game level
@@ -479,7 +478,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = 2;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
+			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
@@ -927,29 +926,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					switch(gThis.g.a.ls[i].t){
 						case 0: //sparkle animation
 							var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
+							var pnts=[]; //particles
 							if (gThis.g.a.ls[i].int==0){ //initialize
 								gThis.g.a.ls[i].int=gThis.g.gt;
-								gThis.g.a.ls[i].pt=[]; //particles
 								gThis.g.a.ls[i].r=10; //radius
-								var r=gThis.g.a.ls[i].r;
-								var r2=0.95*r;
-								for (var x=pn.x-gThis.g.a.ls[i].r;x<pn.x+gThis.g.a.ls[i].r;x++){
-									with (Math){
-										gThis.g.a.ls[i].pt.push({x:x,y:pn.y-sqrt(pow(r,2)-pow(x,2))});
-										gThis.g.a.ls[i].pt.push({x:x,y:pn.y+sqrt(pow(r,2)-pow(x,2))});
-									}
-								}
-							} else if(gThis.g.gt-gThis.g.a.ls[i].int<=1700){
+							}
+							if (gThis.g.gt-gThis.g.a.ls[i].int<=1700){
 								var dlt=(gThis.g.gt-gThis.g.a.ls[i].int)/1700;
-								gThis.g.a.ls[i].r=dlt*100;
+								var mr=100; //md=maximum diameter
+								gThis.g.a.ls[i].r=dlt*mr;
 								gThis.g.a.ls[i].cl.a=1-dlt;
-								var r=gThis.g.a.ls[i].r;
-								var r2=0.95*r;
-								for (var j=0;j<gThis.g.a.ls[i].pt.length;j++){
-									var px=pn.x+r2*(2*(j+1)/gThis.g.a.ls[i].pt.length-1);
-									gThis.g.a.ls[i].pt[j].x=px;
-									with(Math)gThis.g.a.ls[i].pt[j].y=pn.y+sqrt(pow(r,2)-pow(pn.x-px,2))*((j+1)%2==0?-1:1);
-								}
+								function g(x,y,d,r){with(Math)return{x:x+r*parseFloat(cos(PI*d/180).toFixed(14)),y:y+r*parseFloat(sin(PI*d/180).toFixed(14))};}
+								for (var deg=0;deg<360;deg+=360/30)
+									pnts.push(g(pn.x,pn.y,deg,gThis.g.a.ls[i].r));
 							} else if(gThis.g.gt-gThis.g.a.ls[i].int>1700){
 								gThis.g.a.ls.splice(i,1);
 								i--;
@@ -957,9 +946,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							}
 							var cl = gThis.g.a.ls[i].cl;
 							cx.fillStyle="rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
-							for (var j=0;j<gThis.g.a.ls[i].pt.length;j++){
+							for (var j=0;j<pnts.length;j++){
 								cx.beginPath();
-								cx.arc(gThis.g.a.ls[i].pt[j].x,gThis.g.a.ls[i].pt[j].y,1,0,Math.PI*2,false);
+								cx.arc(pnts[j].x,pnts[j].y,1,0,Math.PI*2,false);
 								cx.fill();
 								cx.closePath();
 							}
@@ -994,12 +983,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								break;
 							case 2: //life
 								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
+								gThis.g.pl.l+=5;
+								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 								break;
 						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
-						gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 						$get("mga3").currentTime = 0;
 						$get("mga3").play(); //play a sound
 					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
@@ -1011,11 +1001,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								gThis.g.en[eg.e].pn.p = true;
 								gThis.g.en[eg.e].pn.ipt = gThis.g.gt;
 								break;
+							case 2: //life
+								gThis.g.en[eg.e].l+=20;
+								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
+								break;
 						}
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
 						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
-						gThis.g.a.a(gThis.g.pk[i].x,gThis.g.pk[i].y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){ //if existing time > 10 seconds
 						gThis.g.pk[i].f = true; //set the item to fade away
 						gThis.g.pk[i].ft = gThis.g.gt;
