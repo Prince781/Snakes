@@ -214,6 +214,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					break;
 				case 1: //aggressive
 					var xd=c.p[0].x-fp.x, yd=c.p[0].y-fp.y;
+					/*
 					var ang = (xd==0||yd==0)?0:Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
 					ang = (xd>=0?(yd>=0?269+ang:179+ang):(yd>=0?(ang==0?0:ang):89+ang));
 					var nwDir = Math.round(ang/90);
@@ -238,6 +239,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
 					}
+					*/
+					with(Math)var ang=(xd<0?180:(yd<0?360:0))+atan(yd/xd)*180/PI;
+					nDir=[1,0,3,2,1][(Math.round(ang/90))];
+					console.log("Current angle: "+ang);//["up","right","down","left"][nDir]);
 					break;
 				case 2: //economical
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
@@ -478,7 +483,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = 1;//Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
+			var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
 				c: { //add a new color
@@ -732,10 +737,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		$_("#mg_mms").click(gThis.s.show); //start the settings div's appearance, and pause everything else
 		$_("#mg_sd_cb").click(gThis.s.hide); //close the settings div, and revert back to previous game state
 		if (Storage){
-			if (localStorage.SGsnda) gThis.g.sn.a = parseInt(localStorage.SGsnda);
-			if (localStorage.SGsnde) gThis.g.sn.e = parseInt(localStorage.SGsnde);
+			if (localStorage.SGsnda) gThis.g.sn.a = parseFloat(localStorage.SGsnda);
+			if (localStorage.SGsnde) gThis.g.sn.e = parseFloat(localStorage.SGsnde);
 			if (localStorage.SGpn) gThis.g.pl.n = localStorage.SGpn;
-			if (localStorage.SGkt) gThis.g.kt = parseInt(localStorage.SGkt);
+			if (localStorage.SGkt) gThis.g.kt = parseFloat(localStorage.SGkt);
 		}
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
@@ -920,7 +925,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				gThis.g.pl.lu = gThis.g.gt;
 			} else if (gThis.g.pl.hm){ //otherwise, we're in the middle of the game, at an unknown level yet
 				if (gThis.g.en.length==0) //if there are no current enemies
-					for (var i=0; i<Math.ceil(Math.pow(gThis.g.lv,2)/10); i++) //equals ~(c^2)/10
+					//for (var i=0; i<Math.ceil(Math.pow(gThis.g.lv,2)/10); i++) //equals ~(c^2)/10
 						gThis.g.en.push(ai.createEnem());
 				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
 					switch(gThis.g.a.ls[i].t){
@@ -984,6 +989,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							case 2: //life
 								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
 								gThis.g.pl.l+=5;
+								gThis.g.pl.s+=60;
 								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 								break;
 						}
@@ -1021,15 +1027,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							continue;
 						} else gThis.g.pk[i].c.a = gThis.g.pk[i].c.oa-Math.pow(gThis.g.pk[i].c.oa*(gThis.g.gt-gThis.g.pk[i].ft)/750,2);
 					} else if (gThis.g.gt-gThis.g.pk[i].i >= 750 && gThis.g.st != "paused")//render the fading in and out of the pickup
-						gThis.g.pk[i].c.a = Math.abs(parseFloat(Math.sin((gThis.g.gt-gThis.g.pk[i].i)/1500*Math.PI).toFixed(14)));
+						with(Math)gThis.g.pk[i].c.a = abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1500*PI).toFixed(14)));
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
 					function pkGradient(r1,r2){
 						var pkrg = cx.createRadialGradient(
-							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
-							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
-							(typeof r1=="undefined"?2:r1), 
-							bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, 
-							bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5, 
+							pk.x, 
+							pk.y, 
+							(typeof r1=="undefined"?1:r1), 
+							pk.x, 
+							pk.y, 
 							(typeof r2=="undefined"?16:r2)
 						);
 						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")");
@@ -1088,7 +1094,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.lineWidth = 1;
 							pkGradient();
 							with(Math)
-								var delta=parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1300*PI).toFixed(14));
+								var delta=abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1300*PI).toFixed(14)));
 							var vrt=delta*0.3;//radial variation (0-1)
 							var fldy=delta*1.2;//roughness
 							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
@@ -1125,11 +1131,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				for (var i=0; i<gThis.g.pl.p.length; i++){ //render the player
 					var p = gThis.g.pl.p[i];
 					cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+pcl.a+")";
-					cx.strokeStyle = "rgba(0,0,0,0)";
+					cx.strokeStyle = "none";
+					if (gThis.g.pl.pn.p){ //poison rendering
+						with(Math)
+							cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((gThis.g.gt-gThis.g.pl.pn.ipt)/1000*PI).toFixed(14))))+")";
+						cx.shadowBlur = 20;
+						cx.shadowOffsetX = 0;
+						cx.shadowoffSetY = 0;
+					}
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
-				}
-				if (gThis.g.pl.pn.p){ //poison rendering
-					
+					cx.shadowBlur = 0;
+					cx.shadowColor = "none";
 				}
 				for (var i=0; i<gThis.g.en.length; i++){ //render all of the enemies
 					if (gThis.g.en[i].dy){
@@ -1147,7 +1159,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							if (gThis.g.en[i].l <= 1){
 								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
 								gThis.g.en[i].dy = true; //set the dying attribute to be true
-								console.log("Killing enemy #"+i);
 							}								
 						} else if (gThis.g.gt-gThis.g.en[i].pn.ipt>5000) //if time is up
 							gThis.g.en[i].pn.p = false;
@@ -1157,7 +1168,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						} else if (![1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if there are no more directions
 							gThis.g.en[i].dc = gThis.g.gt; //set the decay time
 							gThis.g.en[i].dy = true; //set the dying attribute to be true
-							console.log("Killing enemy #"+i);
 						}
 						if (!gThis.g.en[i].dy){
 							gThis.g.en[i].p.splice(0, 0, ai.nextPos(gThis.g.en[i])); //create a new position
@@ -1169,8 +1179,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					for (var j=0; j<gThis.g.en[i].p.length; j++){
 						var p = gThis.g.en[i].p[j];
 						cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
-						cx.strokeStyle = "rgba(0,0,0,0)";
+						cx.strokeStyle = "none";
+						if (gThis.g.en[i].pn.p){ //poison rendering
+							with(Math)
+								cx.shadowColor = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*abs(parseFloat(sin((gThis.g.gt-gThis.g.en[i].pn.ipt)/1000*PI).toFixed(14))))+")";
+							cx.shadowBlur = 20;
+							cx.shadowOffsetX = 0;
+							cx.shadowoffSetY = 0;
+						}
 						cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
+						cx.shadowBlur = 0;
+						cx.shadowColor = "none";
 					}
 				}
 			}
@@ -1194,7 +1213,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					var dlt = (gThis.g.gt-gThis.g.bt[0].mt)/700;
 					dlt = Math.pow(dlt,1-dlt);
 					gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
-					gThis.g.bt[0].c.a = 0.7*Mathf.limit(1-parseFloat(Math.sin(dlt*Math.PI).toFixed(14)),0,1); //fade in and out the opacity
+					with(Math)gThis.g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
 				} else {
 					gThis.g.bt[0].m = false;
 					gThis.g.bt[0].mt = 0;
