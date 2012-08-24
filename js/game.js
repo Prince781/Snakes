@@ -14,14 +14,26 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	var gThis = this;
 	var intervs = []; //the intervals, used for looping all functions. Specifically a private variable for ease
 	var cx = {}; //additional ScriJe "2d+" context for canvas
+	function Hue(hue){ //hue=0->1
+		//generates a hsv color, with saturation and value at 1
+		var h=hue*360;
+		with(Math)
+			return {
+				r: (h<=60||h>=300?255:(h>=120&&h<=240?0:(h>240?255*(h-240)/60:255*(1-(h-60)/60)))),
+				g: (h>=60&&h<=180?255:(h>=240?0:(h<60?255*h/60:255*(1-(h-180)/60)))),
+				b: (h>=180&&h<=300?255:(h<=120?0:(h>300?255*(1-(h-300)/60):255*(h-120)/60))),
+				a: 1
+			};
+	}
 	var bd = { //various functions pertaining to the geometry of the canvas
 		os: function(){ //the offsets, in x and y, of the coordinates of the board within the canvas
-			return {
-				x1: Math.floor((gThis.cnv.width % 10)/2),
-				x2: Math.ceil((gThis.cnv.width % 10)/2),
-				y1: Math.floor((gThis.cnv.height % 10)/2),
-				y2: Math.ceil((gThis.cnv.height % 10)/2)
-			};
+			with(Math)
+				return {
+					x1: floor((gThis.cnv.width % 10)/2),
+					x2: ceil((gThis.cnv.width % 10)/2),
+					y1: floor((gThis.cnv.height % 10)/2),
+					y2: ceil((gThis.cnv.height % 10)/2)
+				};
 		},
 		cv: function(){ //the dimensions of the board within the canvas
 			return {
@@ -250,7 +262,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
 					}
-					/*
+					/*//buggy code below...
 					var xd=npkd.p.x-c.p[0].x, yd=(c.p[0].y-npkd.p.y)*(-1);
 					var dL={h:(xd==0?-1:(xd<0?3:1)),v:(yd==0?-1:(yd<0?0:2))};
 					if (dL.h==-1&&dL.v==-1)nDir=c.d;
@@ -575,12 +587,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					y: frst.y+([i,0,-i,0][dir])  //as point 0 shall be the starting point of the enemy
 				});								 //hence, the -, instead of a +
 			}
+			var rC=Hue(1/6+Math.random()*5/6);
 			return {
 				p: pnts, //the list of points (x, y)
 				c: { //the color data (r, g, b, a). Is randomized on initialization
-					r: Mathf.rand(25,255),
-					g: Mathf.rand(25,255),
-					b: Mathf.rand(25,255),
+					r: Math.round(rC.r),
+					g: Math.round(rC.g),
+					b: Math.round(rC.b),
 					a: 1
 				},
 				d: dir, //the direction of the player, at move time
@@ -650,10 +663,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 					}
 					for (var d=0; d<=3; d++) room(d);
-					
-					//console.log($_.assort(dList,false,"d")[0].t);
 					gThis.g.pl.d = $_.assort(dList,false,"d")[0].t;
-					//console.log("Heading in "+["up","right","down","left"][gThis.g.pl.d]+" direction, which has "+$_.assort(dList,false,"d")[0].t+" distance.");
 				},
 				hm: false, //whether or not the player has decided to move
 				mv: function(d){ //function to move the player according to direction
@@ -1134,7 +1144,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 					cx.shadowBlur = 0;
-					cx.shadowColor = "none";
+					cx.shadowColor = "rgba(0,0,0,0)";
 				}
 				for (var i=0; i<gThis.g.en.length; i++){ //render all of the enemies
 					if (gThis.g.en[i].dy){
@@ -1182,7 +1192,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						}
 						cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 						cx.shadowBlur = 0;
-						cx.shadowColor = "none";
+						cx.shadowColor = "rgba(0,0,0,0)";
 					}
 				}
 			}
