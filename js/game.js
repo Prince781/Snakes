@@ -213,36 +213,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					else if (dList.length>0) nDir = !inval(c.d)?(Mathf.rand(0,100)>90?Mathf.randVal(dList).d:c.d):Mathf.randVal(dList).d;
 					break;
 				case 1: //aggressive
-					var xd=c.p[0].x-fp.x, yd=c.p[0].y-fp.y;
-					/*
-					var ang = (xd==0||yd==0)?0:Math.atan(Math.abs(xd)/Math.abs(yd))*180/Math.PI;
-					ang = (xd>=0?(yd>=0?269+ang:179+ang):(yd>=0?(ang==0?0:ang):89+ang));
-					var nwDir = Math.round(ang/90);
-					nwDir = nwDir==4?0:nwDir;
-					var clDir = Math.floor(ang/90)==nwDir?Math.ceil(ang/90):Math.floor(ang/90);
-					clDir = clDir==4?0:clDir;
-					if (!inval(nwDir))
-						nDir = nwDir;
-					else if (!inval(clDir))
-						nDir = clDir;
-					else {
-						var cDir = [];
-						if (nDir!==-1){
-							cDir.push(nDir-1==-1?3:nDir-1);
-							cDir.push(nDir+1==4?0:nDir+1);
-						}
-						var dList = [];
-						for (var d1=0; d1<4; d1++)
-							if (!inval(d1)&&d1!==cDir[0]&&d1!==cDir[1]) dList.push({d:d1,c:ppD(d1)});
-						for (var i=0; i<cDir.length; i++)
-							if (!inval(cDir[i])) dList.push({d:cDir[i],c:ppD(cDir[i])});
-						if (dList.length>0)
-							nDir = $_.assort(dList,true,"c")[0].d;
-					}
-					*/
+					var xd=fp.x-c.p[0].x, yd=c.p[0].y-fp.y;
 					with(Math)var ang=(xd<0?180:(yd<0?360:0))+atan(yd/xd)*180/PI;
-					nDir=[1,0,3,2,1][(Math.round(ang/90))];
-					console.log("Current angle: "+ang);//["up","right","down","left"][nDir]);
+					var nwDir=[1,0,3,2,1][(Math.round(ang/90))];
+					if (!inval(nwDir))
+						nDir=nwDir;
+					else{
+						var cDirs=[];
+						cDirs.push({d:(nwDir-1==-1?3:nwDir-1),c:ppD(nwDir-1==-1?3:nwDir-1)});
+						cDirs.push({d:(nwDir+1==4?0:nwDir+1),c:ppD(nwDir+1==4?0:nwDir+1)});
+						var rd={d:-1,c:0};
+						for (var d1=0;d1<4;d1++)
+							if (!inval(d1)&&d1!==cDirs[0].d&&d1!==cDirs[1].d) rd={d:d1,c:ppD(d1)};
+						for (var i=0;i<cDirs.length;i++)
+							if (inval(cDirs[i].d)||(cDirs[i].c>10&&rd.c<cDirs[i].c)){ cDirs.splice(i,1); i--; }
+						if (cDirs.length>0) nDir=$_.assort(cDirs,true,"c")[0].d;
+						else nDir=rd.d;
+					}
 					break;
 				case 2: //economical
 					var dL = {v:c.p[0].y!==npkd.p.y?(c.p[0].y>npkd.p.y?0:2):-1,h:c.p[0].x!==npkd.p.x?(c.p[0].x>npkd.p.x?3:1):-1};
@@ -263,6 +250,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						if (dList.length>0)
 							nDir = $_.assort(dList,true,"c")[0].d;
 					}
+					/*
+					var xd=npkd.p.x-c.p[0].x, yd=(c.p[0].y-npkd.p.y)*(-1);
+					var dL={h:(xd==0?-1:(xd<0?3:1)),v:(yd==0?-1:(yd<0?0:2))};
+					if (dL.h==-1&&dL.v==-1)nDir=c.d;
+					else nDir=(dL.h==-1?(inval(dL.v)?(inval(3)?1:3):dL.v):(dL.v==-1?(inval(dL.h)?(inval(0)?2:0):dL.h):(c.d==dL.h?(inval(dL.v)?dL.h:dL.v):(inval(dL.h)?dL.v:dL.h))));
+					*/
 					break;
 			}
 			return nDir;

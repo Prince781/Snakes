@@ -9,11 +9,11 @@ A list of features to implement:
 * Infinite levels (**todo**)
 * Various pickups and other items (**done**)
 * Player lives (**done**)
-* Fully challenging, aggressive and defensive enemy AI (**done - needs rework**)
+* Fully challenging, aggressive and defensive enemy AI (**done**)
 * Introductive tutorial (**todo**)
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
-* Game state management (between pausing, playing, etc...) (**almost**)
+* Game state management (between pausing, playing, etc...) (**W.I.P.**)
 * More fluid/aesthetic Pause Menu UI (**done**)
 * Music?
 * More sound effects?
