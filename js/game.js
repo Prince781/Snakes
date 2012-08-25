@@ -92,11 +92,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				3 -- left
 			******/
 			var len = 10;
+			var rC=Hue(1/6+Math.random()*5/6);
 			return { //return a new object, as a game enemy
 				c: { //the array of colors (r, g, b, a)
-					r: (gThis.g.st=="init"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.r : Mathf.rand(30,240),
-					g: (gThis.g.st=="init"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.g : Mathf.rand(30,240),
-					b: (gThis.g.st=="init"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.b : Mathf.rand(30,240),
+					r: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.r : Mathf.rand(30,240),
+					g: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.g : Mathf.rand(30,240),
+					b: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.b : Mathf.rand(30,240),
 					a: 1
 				},
 				d: rDir,
@@ -119,7 +120,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					*/
 					return pnts;
 				})(),
-				lu: 0,//(gThis.g.st == "init" ? gThis.g.gt : (new Date()).getTime()),
+				lu: 0,//(gThis.g.st == "game" ? gThis.g.gt : (new Date()).getTime()),
 				dy: false, //whether or not the enemy is dying
 				dc: 0,
 				l: len, //the length of the enemy
@@ -143,7 +144,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			var pkd = [];
 			//calculate the nearest distance of a pickup
 			for (var i=0; i<gThis.g.pk.length; i++)
-				if (gThis.g.pk[i].t!=1) //avoid poison
+				if (gThis.g.pk[i].t!=1&&!gThis.g.pk[i].f) //avoid poison
 					pkd.push({
 						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
 						p: {
@@ -201,7 +202,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			*************/
 			var fp = typeof gThis.g.pl.p[0] == "undefined" ? false : gThis.g.pl.p[0];
 			var dir = gThis.g.pl.d;
-			mode=gThis.g.st=="init"?(npkd?2:((gThis.g.pl.dy||!fp)?0:1)):0;
+			mode=gThis.g.st=="game"?(npkd?2:((gThis.g.pl.irs||gThis.g.pl.dy||!fp)?0:1)):0;
 			c.m = mode;
 			//console.log("Current mode: "+["default","aggressive","economical"][c.m]);
 			var nDir = -1;
@@ -291,11 +292,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				aud.play();
 				aud.addEventListener("ended", function(){
 					aud.currentTime = 0;
-					if (gThis.g.st=="uninit")aud2.play();
+					if (gThis.g.st=="menu")aud2.play();
 				}, false);
 				aud2.addEventListener("ended", function(){
 					aud2.currentTime = 0;
-					if (gThis.g.st=="uninit")aud.play();
+					if (gThis.g.st=="menu")aud.play();
 				}, false);
 			}
 		}
@@ -357,23 +358,25 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		}
 	};
 	this.g = { //the main components of the game, when started
-		st: "uninit",
+		st: "menu",
 		/*******************************************************************
 		* The current state of the game. Can be one of the following:
-		* settings --> The settings div is visible.
-		* help --> The "help" visualization has appeared.
-		* uninit --> The game is in a "zero" state, and hasn't been
-		*			 initialized yet.
-		* init --> The game has been started, and is currently running.
-		* paused --> The game has been started, but is currently paused.
-		* over --> The game has ended, but has already been initialized.
+		* menu --> The main menu is visible.
+		* game --> The game is playing, and current visible.
+		* paused --> The game is paused, and currently visible.
+		* interim --> A new level has loaded, but the player has not given
+		* 			  input yet.
+		* over --> The game has finished and is currently visible, as well
+		* 		   as the score upload prompt.
+		* help --> The help menu is visible.
+		* lboards --> The leaderboards are currently visible.
 		********************************************************************/
-		sst: "uninit", //the saved state of the previous game state
+		sst: "menu", //the saved state of the previous game state
 		cSt: function(s){ //function to change the current game state
 			if (s=="paused"){
 				gThis.g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (s=="init"&&gThis.g.st=="paused"){
+			} else if (s=="game"&&gThis.g.st=="paused"){
 				gThis.g.rt=(new Date()).getTime();
 				gThis.g.to += gThis.g.rt-gThis.g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
@@ -386,7 +389,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (rv=="paused"){
 				gThis.g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (rv=="init"&&gThis.g.st=="paused"){
+			} else if (rv=="game"&&gThis.g.st=="paused"){
 				gThis.g.rt=(new Date()).getTime();
 				gThis.g.to += gThis.g.rt-gThis.g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
@@ -445,6 +448,25 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				gThis.g.tb.at = (new Date()).getTime();
 			}
 		},
+		pg: { //info for the progress bar
+			d: { //dimensions
+				w: 140,
+				h: 14
+			},
+			p: { //position
+				x: 0, //defined at init
+				y: 0  //defined at init
+			},
+			c: $_.newColor(84,114,124,0.6),
+			ib: { //inside bar
+				d: {w:0}, //width set at init
+				nd: {w:0} //set at init
+			},
+			an: { //animation values
+				iat: false,
+				iit: false
+			}
+		},
 		a: { //list of instanced animations
 			ls:[],
 			a: function(px,py,t,c){ //add
@@ -461,6 +483,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		},
 		lv: 0, //the current game level
+		gl: 0, //goal for the current level
 		pl: {}, //the player (defined during initialization)
 		en: [], //the array of enemies
 		kt: 0, //the type of key input used. 0 for WASD, and 1 for arrow keys
@@ -558,7 +581,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						gThis.g.bt[0].e.ismouseover = false;
 					},
 					click: function(){
-						if ((gThis.g.st == "init" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="init" ? "paused" : "init");
+						if ((gThis.g.st == "game" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="game" ? "paused" : "game");
 					}
 				}
 			}
@@ -631,13 +654,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					gThis.g.pl.p.splice(0,gThis.g.pl.p.length); //remove every point
 					gThis.g.pl.lv--;
 					if (gThis.g.pl.lv==0) return false;
+					/*
 					var safeCoords = [];
-					for (var x=1; x<=bd.gd().x-1; x++){
-						for (var y=1; y<=bd.gd().y-1; y++){
+					for (var x=10; x<=bd.gd().x-10; x++){
+						for (var y=10; y<=bd.gd().y-10; y++){
 							if (!bd.invalid(x,y)) safeCoords.push({x:x,y:y});
 						}
 					}
 					gThis.g.pl.p.push(Mathf.randVal(safeCoords));
+					*/
+					gThis.g.pl.p.push({x:Mathf.rand(10,bd.gd().x-10),y:Mathf.rand(10,bd.gd().y-10)});
 					gThis.g.pl.l = 10;
 					gThis.g.pl.rt = gThis.g.gt;
 					var dList = [];
@@ -662,8 +688,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								break;
 						}
 					}
-					for (var d=0; d<=3; d++) room(d);
-					gThis.g.pl.d = $_.assort(dList,false,"d")[0].t;
+					//for (var d=0; d<=3; d++) room(d);
+					gThis.g.pl.d = Mathf.rand(0,3);//$_.assort(dList,false,"d")[0].t;
 				},
 				hm: false, //whether or not the player has decided to move
 				mv: function(d){ //function to move the player according to direction
@@ -706,13 +732,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				lv: 3 //the amount of lives left in the player
 			};
 		})();
-		gThis.g.bt[0].p = (function(){
-			return { //the position of the pause button
-				x: bd.os().x1+10,
-				y: bd.os().y1+bd.cv().y-gThis.g.bt[0].h-10
-			};
-		})();
+		gThis.g.bt[0].p = { //the position of the pause button
+			x: bd.os().x1+10,
+			y: bd.os().y1+bd.cv().y-gThis.g.bt[0].h-10
+		};
 		gThis.g.tb.d.w = gThis.cnv.width;
+		gThis.g.pg.p = {
+			x: gThis.cnv.width-10-gThis.g.pg.d.w, //position of progress bar
+			y: gThis.g.tb.p.y+gThis.g.tb.d.h+10
+		};
 		gThis.is.a("img/heart.png");
 		gThis.is.a("img/heart_gs.png");
 		$_("#mg_mmi").effects.fadeTo(100,200, function(){
@@ -724,7 +752,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (gThis.g.pl.n == ""){
 				$_("#mg_np").effects.fadeTo(100,500);
 				$_("#mg_np_dun").value(gThis.g.pl.n);
-			} else gThis.g.cSt("init");
+			} else gThis.g.cSt("game");
 		});
 		$_("#mg_np_dc").click(function(){ //start the game, if there is a valid username
 			var rs = gThis.un.chk($_("#mg_np_dun").value());
@@ -735,7 +763,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 			$_("#mg_np").effects.fadeTo(0,500);
 			gThis.g.pl.n = $_("#mg_np_dun").value();
-			gThis.g.cSt("init");
+			gThis.g.cSt("game");
 		});
 		$_("#mg_mms").click(gThis.s.show); //start the settings div's appearance, and pause everything else
 		$_("#mg_sd_cb").click(gThis.s.hide); //close the settings div, and revert back to previous game state
@@ -808,23 +836,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		$_("#mgpdbt_st").click(gThis.s.show);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gThis.g.st){
-				case "init":
+				case "game":
 				case "paused":
 					switch(k){
 						case (gThis.g.kt ? "up" : "w"):
-							if (gThis.g.st == "init") gThis.g.pl.mv(0);
+							if (gThis.g.st == "game") gThis.g.pl.mv(0);
 							break;
 						case (gThis.g.kt ? "right" : "d"):
-							if (gThis.g.st == "init") gThis.g.pl.mv(1);
+							if (gThis.g.st == "game") gThis.g.pl.mv(1);
 							break;
 						case (gThis.g.kt ? "down" : "s"):
-							if (gThis.g.st == "init") gThis.g.pl.mv(2);
+							if (gThis.g.st == "game") gThis.g.pl.mv(2);
 							break;
 						case (gThis.g.kt ? "left" : "a"):
-							if (gThis.g.st == "init") gThis.g.pl.mv(3);
+							if (gThis.g.st == "game") gThis.g.pl.mv(3);
 							break;
 						case "p":
-							if ((gThis.g.st == "init" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="init" ? "paused" : "init");
+							if ((gThis.g.st == "game" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="game" ? "paused" : "game");
 							break;
 					}
 				break;
@@ -864,10 +892,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	this.draw = function(){ //the main drawing function of the game, which renders everything on the canvas
 		cx = $_(gThis.cnv).ctx("2d+"); //additional ScriJe "2d+" context for canvas
 		cx.clearRect(0, 0, gThis.cnv.width, gThis.cnv.height);
+		with(cx){ //resetting values...
+			strokeStyle="rgba(0,0,0,0)";
+			fillStyle="rgba(0,0,0,0)";
+			shadowColor="rgba(0,0,0,0)";
+			shadowOffsetX=0;
+			shadowOffsetY=0;
+			lineWidth=0;
+			lineJoin="miter";
+		}
 		if (gThis.g.bg.v){
 			if ((new Date()).getTime()-gThis.mm.str < 1000 && gThis.g.bg.dt==0)
 				gThis.g.bg.o = Math.pow(((new Date()).getTime()-gThis.mm.str)/1000,2);
-			if (gThis.g.st == "init" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
+			if (gThis.g.st == "game" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
 			if (gThis.g.bg.dt >= 0 && (new Date()).getTime()-gThis.g.bg.dt < 1000)
 				gThis.g.bg.o = 1-Math.pow(((new Date()).getTime()-gThis.g.bg.dt)/1000,2);
 			else if ((new Date()).getTime()-gThis.g.bg.dt >= 1000 && gThis.g.bg.dt != 0)
@@ -880,7 +917,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			cx.fillStyle=rg;
 			cx.fillRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		}
-		if (gThis.g.st == "uninit"){ //render the main menu
+		if (gThis.g.st == "menu"){ //render the main menu
 			if ($_(gThis.mmdiv).css("display") != "block")
 				$_(gThis.mmdiv).effects.fadeTo(100,700);
 			gThis.mm.am.pl(); //play the ambient music
@@ -915,21 +952,22 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 				}
 			}
-		} else if (gThis.g.st == "init" || gThis.g.st == "paused" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
-			if (gThis.g.st != "paused" && gThis.g.pl.hm) gThis.g.gt = (new Date()).getTime()-gThis.g.to;
-			$get("mga").pause();
-			$get("mga2").pause();
-			if (!gThis.g.tb.v) gThis.g.tb.s(); //show the top bar
-			if (gThis.g.lv == 0 && gThis.g.pl.hm){ //if we're at the very start of the game
+		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
+			if (gThis.g.st !== "interim") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
+			if (gThis.g.st=="interim"){ //if we're at the very start of the game's level
 				if (gThis.g.pl.n != ""){
 					gThis.g.en.push(ai.createEnem()); //create a new enemy
 					gThis.g.lv++;
 				}
 				gThis.g.pl.lu = gThis.g.gt;
-			} else if (gThis.g.pl.hm){ //otherwise, we're in the middle of the game, at an unknown level yet
+				with(Math)gThis.g.gl = floor(5*(log(pow(gThis.g.lv,0.6))+1)); //set the goal for the current level
+				gThis.g.lpa = gThis.g.gt;
+				if (!gThis.g.tb.v) gThis.g.tb.s(); //show the top bar
+				$get("mga").pause();
+				$get("mga2").pause();
+			} else if (gThis.g.st=="game"||gThis.g.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
 				if (gThis.g.en.length==0) //if there are no current enemies
-					//for (var i=0; i<Math.ceil(Math.pow(gThis.g.lv,2)/10); i++) //equals ~(c^2)/10
-						gThis.g.en.push(ai.createEnem());
+					gThis.g.en.push(ai.createEnem());
 				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
 					switch(gThis.g.a.ls[i].t){
 						case 0: //sparkle animation
@@ -988,6 +1026,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							case 1: //poison
 								gThis.g.pl.pn.p = true; 
 								gThis.g.pl.pn.ipt = gThis.g.gt;
+								if(gThis.g.pl.s-20>=0)gThis.g.pl.s-=20;
 								break;
 							case 2: //life
 								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
@@ -1097,7 +1136,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.lineWidth = 1;
 							pkGradient();
 							with(Math)
-								var delta=abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1300*PI).toFixed(14)));
+								var delta=abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1700*PI).toFixed(14)));
 							var vrt=delta*0.3;//radial variation (0-1)
 							var fldy=delta*1.2;//roughness
 							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5)+")";
@@ -1188,13 +1227,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 								cx.shadowColor = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*abs(parseFloat(sin((gThis.g.gt-gThis.g.en[i].pn.ipt)/1000*PI).toFixed(14))))+")";
 							cx.shadowBlur = 20;
 							cx.shadowOffsetX = 0;
-							cx.shadowoffSetY = 0;
+							cx.shadowOffsetY = 0;
 						}
 						cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 						cx.shadowBlur = 0;
 						cx.shadowColor = "rgba(0,0,0,0)";
 					}
 				}
+			} else if (gThis.g.st == "over"){ //if the game is over
+				
 			}
 			//update the position of the pause button
 			var pbcflct = false;
@@ -1262,88 +1303,125 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.lineTo(crds[i].x,crds[i].y);
 				cx.lineTo(crds[(crds.length-1)].x,crds[(crds.length-1)].y);
 				cx.closePath();
-				cx.fill();
-					
+				cx.fill();	
 			} else {
 				cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2), gThis.g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
 				cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+12, gThis.g.bt[0].p.y+10, 6, 20);
 			}
 			cx.shadowBlur = 0;
 			cx.shadowColor = null;
+			if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at >= 700){//update the top bar
+				gThis.g.tb.p = {
+					x: gThis.g.tb.np.x,
+					y: gThis.g.tb.np.y
+				};
+				gThis.g.tb.c.bg = { 
+					r: gThis.g.tb.nc.bg.r,
+					g: gThis.g.tb.nc.bg.g,
+					b: gThis.g.tb.nc.bg.b,
+					a: gThis.g.tb.nc.bg.a 
+				};
+				if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-800||gThis.g.tb.p.y<=-24) gThis.g.tb.v = false;
+				else gThis.g.tb.v = true;
+				gThis.g.tb.an = "";
+			} else if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at < 700){
+				var dlta = ((new Date()).getTime()-gThis.g.tb.at)/700;
+				var dc = {
+					r: gThis.g.tb.c.bg.r+Math.round(dlta*(gThis.g.tb.nc.bg.r-gThis.g.tb.c.bg.r)),
+					g: gThis.g.tb.c.bg.g+Math.round(dlta*(gThis.g.tb.nc.bg.g-gThis.g.tb.c.bg.g)),
+					b: gThis.g.tb.c.bg.b+Math.round(dlta*(gThis.g.tb.nc.bg.b-gThis.g.tb.c.bg.b)),
+					a: gThis.g.tb.c.bg.a+(dlta*(gThis.g.tb.nc.bg.a-gThis.g.tb.c.bg.a))
+				};
+				var dp = {
+					x: gThis.g.tb.p.x+Math.round(dlta*(gThis.g.tb.np.x-gThis.g.tb.p.x)),
+					y: gThis.g.tb.p.y+Math.round(dlta*(gThis.g.tb.np.y-gThis.g.tb.p.y))
+				};
+				if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
+				else gThis.g.tb.v = true;
+				cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+dc.a+")";
+				cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
+				cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
+				cx.textAlign = "left";
+				cx.font = "14px Arial";
+				cx.textBaseline = "top";
+				cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
+				cx.fillStyle = "rgba(186,244,255,"+(dc.a+0.3)+")";
+				cx.fillText(gThis.g.pl.s, dp.x+54, dp.y+gThis.g.tb.to.y);
+				cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
+				cx.textAlign = "center";
+				cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
+				cx.textAlign = "right";
+				cx.fillText(gThis.g.pl.n, dp.x+gThis.g.tb.d.w-80, dp.y+gThis.g.tb.to.y);
+				if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
+					for (var i=0; i<3; i++)
+						cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
+			}
+			if (gThis.g.tb.an==""){
+				cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+gThis.g.tb.c.bg.a+")";
+				cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
+				cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+				cx.textAlign = "left";
+				cx.font = "14px Arial";
+				cx.textBaseline = "top";
+				cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
+				cx.fillStyle = "rgba(186,244,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+				cx.fillText(gThis.g.pl.s, gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
+				cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+				cx.textAlign = "center";
+				cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
+				cx.textAlign = "right";
+				cx.fillText(gThis.g.pl.n, gThis.g.tb.p.x+gThis.g.tb.d.w-80, gThis.g.tb.p.y+gThis.g.tb.to.y);
+				if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
+					for (var i=0; i<3; i++)
+						cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], gThis.g.tb.p.x+gThis.g.tb.d.w-30-(20*i), gThis.g.tb.p.y+2, 20, 20);
+			}
+			gThis.g.pg.p.y=(gThis.g.tb.an!=""?dp.y+gThis.g.tb.d.h+10:gThis.g.tb.p.y+gThis.g.tb.d.h+10); //drawing progress bar
+			if(!gThis.g.pg.an.iit)gThis.g.pg.an.iit=gThis.g.gt;
+			with(Math)var shdwA=abs(parseFloat(sin((gThis.g.gt-gThis.g.pg.an.iit)/1200*PI/2).toFixed(14)));
+			var pgcl=gThis.g.pg.c;
+			cx.strokeStyle="rgba("+pgcl.r+","+pgcl.g+","+pgcl.b+","+pgcl.a+")";
+			cx.fillStyle="rgba("+(pgcl.r+35)+","+(pgcl.g+35)+","+(pgcl.b+35)+","+(pgcl.a*0.7)+")";
+			cx.lineWidth=1;
+			cx.lineJoin="round";
+			gThis.g.pg.ib.nd.w = (gThis.g.pg.d.w-2)*gThis.g.pl.s/20/gThis.g.gl;
+			if (gThis.g.pg.ib.nd.w!==gThis.g.pg.ib.d.w){
+				if (!gThis.g.pg.an.iat) gThis.g.pg.an.iat=gThis.g.gt;
+				if (gThis.g.gt-gThis.g.pg.an.iat<700){
+					with(Math)var delta = pow((gThis.g.gt-gThis.g.pg.an.iat)/700,2);
+					var nw = gThis.g.pg.ib.d.w+delta*(gThis.g.pg.ib.nd.w-gThis.g.pg.ib.d.w);
+					cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
+					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
+					cx.shadowBlur=7;
+					cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,nw,gThis.g.pg.d.h-2);
+					cx.shadowColor="rgba(0,0,0,0)";
+					cx.shadowBlur=0;
+				} else if (gThis.g.gt-gThis.g.pg.an.iat>=700){
+					gThis.g.pg.ib.d.w = gThis.g.pg.ib.nd.w;
+					gThis.g.pg.an.iat = false;
+					cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
+					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
+					cx.shadowBlur=7;
+					cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
+					cx.shadowColor="rgba(0,0,0,0)";
+					cx.shadowBlur=0;
+				}
+			} else {
+				cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
+				cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
+				cx.shadowBlur=7;
+				cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
+				cx.shadowColor="rgba(0,0,0,0)";
+				cx.shadowBlur=0;
+			}
 		} else if (gThis.g.st == "help"){
 			
+		} else if (gThis.g.st == "lboards"){
+			
 		} //otherwise, there's nothing to do
-		//update the top bar
-		if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at >= 700){
-			gThis.g.tb.p = {
-				x: gThis.g.tb.np.x,
-				y: gThis.g.tb.np.y
-			};
-			gThis.g.tb.c.bg = { 
-				r: gThis.g.tb.nc.bg.r,
-				g: gThis.g.tb.nc.bg.g,
-				b: gThis.g.tb.nc.bg.b,
-				a: gThis.g.tb.nc.bg.a 
-			};
-			if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-800||gThis.g.tb.p.y<=-24) gThis.g.tb.v = false;
-			else gThis.g.tb.v = true;
-			gThis.g.tb.an = "";
-		} else if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at < 700){
-			var dlta = ((new Date()).getTime()-gThis.g.tb.at)/700;
-			var dc = {
-				r: gThis.g.tb.c.bg.r+Math.round(dlta*(gThis.g.tb.nc.bg.r-gThis.g.tb.c.bg.r)),
-				g: gThis.g.tb.c.bg.g+Math.round(dlta*(gThis.g.tb.nc.bg.g-gThis.g.tb.c.bg.g)),
-				b: gThis.g.tb.c.bg.b+Math.round(dlta*(gThis.g.tb.nc.bg.b-gThis.g.tb.c.bg.b)),
-				a: gThis.g.tb.c.bg.a+(dlta*(gThis.g.tb.nc.bg.a-gThis.g.tb.c.bg.a))
-			};
-			var dp = {
-				x: gThis.g.tb.p.x+Math.round(dlta*(gThis.g.tb.np.x-gThis.g.tb.p.x)),
-				y: gThis.g.tb.p.y+Math.round(dlta*(gThis.g.tb.np.y-gThis.g.tb.p.y))
-			};
-			if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
-			else gThis.g.tb.v = true;
-			cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+dc.a+")";
-			cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-			cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
-			cx.textAlign = "left";
-			cx.font = "14px Arial";
-			cx.textBaseline = "top";
-			cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
-			cx.fillStyle = "rgba(186,244,255,"+(dc.a+0.3)+")";
-			cx.fillText(gThis.g.pl.s, dp.x+54, dp.y+gThis.g.tb.to.y);
-			cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
-			cx.textAlign = "center";
-			cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
-			cx.textAlign = "right";
-			cx.fillText(gThis.g.pl.n, dp.x+gThis.g.tb.d.w-80, dp.y+gThis.g.tb.to.y);
-			if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
-				for (var i=0; i<3; i++)
-					cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
-		}
-		if (gThis.g.tb.an==""){
-			cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+gThis.g.tb.c.bg.a+")";
-			cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-			cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-			cx.textAlign = "left";
-			cx.font = "14px Arial";
-			cx.textBaseline = "top";
-			cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
-			cx.fillStyle = "rgba(186,244,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-			cx.fillText(gThis.g.pl.s, gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
-			cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-			cx.textAlign = "center";
-			cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
-			cx.textAlign = "right";
-			cx.fillText(gThis.g.pl.n, gThis.g.tb.p.x+gThis.g.tb.d.w-80, gThis.g.tb.p.y+gThis.g.tb.to.y);
-			if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
-				for (var i=0; i<3; i++)
-					cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], gThis.g.tb.p.x+gThis.g.tb.d.w-30-(20*i), gThis.g.tb.p.y+2, 20, 20);
-		}
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
 		$get("mga3").volume = gThis.g.sn.e;
-		//save data
-		if (Storage){
+		if (Storage){ //save data
 			localStorage.SGsnda = gThis.g.sn.a;
 			localStorage.SGsnde = gThis.g.sn.e;
 			localStorage.SGpn = gThis.g.pl.n;
