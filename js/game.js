@@ -92,12 +92,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				3 -- left
 			******/
 			var len = 10;
-			var rC=Hue(1/6+Math.random()*5/6);
+			var rClr=Hue(gThis.g.st=="interim"||gThis.g.st=="game"?Mathf.randVal([Math.random()*(gThis.g.pl.c.h*0.99),gThis.g.pl.c.h*1.01+Math.random()*(1-gThis.g.pl.c.h)]):Math.random());
 			return { //return a new object, as a game enemy
 				c: { //the array of colors (r, g, b, a)
-					r: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.r : Mathf.rand(30,240),
-					g: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.g : Mathf.rand(30,240),
-					b: (gThis.g.st=="game"&&typeof gThis.g.pl.c!="undefined") ? 255-gThis.g.pl.c.b : Mathf.rand(30,240),
+					r: Math.round(rClr.r),
+					g: Math.round(rClr.g),
+					b: Math.round(rClr.b),
 					a: 1
 				},
 				d: rDir,
@@ -366,6 +366,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		* paused --> The game is paused, and currently visible.
 		* interim --> A new level has loaded, but the player has not given
 		* 			  input yet.
+		* complete --> The level has ended, and there is a prompt for the 
+		* 			   user to continue.
 		* over --> The game has finished and is currently visible, as well
 		* 		   as the score upload prompt.
 		* help --> The help menu is visible.
@@ -485,6 +487,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		lv: 0, //the current game level
 		olv: 0, //the original game level, prior to initialization
 		gl: 0, //goal for the current level
+		glc: false, //whether or not the goal has been completed
+		glct: 0, //the time of goal completion
 		pl: {}, //the player (defined during initialization)
 		en: [], //the array of enemies
 		kt: 0, //the type of key input used. 0 for WASD, and 1 for arrow keys
@@ -611,14 +615,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					y: frst.y+([i,0,-i,0][dir])  //as point 0 shall be the starting point of the enemy
 				});								 //hence, the -, instead of a +
 			}
-			var rC=Hue(1/6+Math.random()*5/6);
+			var hueColor = Math.random();
+			var rC=Hue(hueColor);
 			return {
 				p: pnts, //the list of points (x, y)
 				c: { //the color data (r, g, b, a). Is randomized on initialization
 					r: Math.round(rC.r),
 					g: Math.round(rC.g),
 					b: Math.round(rC.b),
-					a: 1
+					a: 1,
+					h: hueColor
 				},
 				d: dir, //the direction of the player, at move time
 				qd: dir, //the queued direction of the player, prior to move time
@@ -956,8 +962,25 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 				}
 			}
-		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
-			if (gThis.g.st !== "interim") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
+		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "complete" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
+			if (gThis.g.st == "game") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
+			if (gThis.g.pl.s/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0){ //level has been completed
+				gThis.g.glc=true;
+				gThis.g.glct=(new Date()).getTime(); //set time for goal completion
+			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000){
+				var glA = 1-Math.pow(((new Date()).getTime()-gThis.g.glct)/1000,2);
+				gThis.g.pl.c.a = glA;
+				for (var i=0;i<gThis.g.en.length;i++)
+					gThis.g.en[i].c.a = glA;
+			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct>=1000){
+				gThis.g.pl.c.a = 0;
+				for (var i=0;i<gThis.g.en.length;i++){
+					gThis.g.en[i].c.a = 0;
+					gThis.g.en.splice(i,1);
+					i--;
+				}
+				gThis.g.st = "complete";
+			}
 			if (gThis.g.st=="interim"){ //if we're at the very start of the game's level
 				gThis.g.olv=gThis.g.lv;
 				if ((gThis.g.lv==0||gThis.g.lv!==gThis.g.olv)&&gThis.g.pl.n!==""){
@@ -976,9 +999,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					gThis.g.pl.hm=false;
 				}
 			} else if (gThis.g.st=="game"||gThis.g.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
-				if (gThis.g.en.length==0) //if there are no current enemies
+				if (gThis.g.en.length==0 && !gThis.g.glc) //if there are no current enemies
 					gThis.g.en.push(ai.createEnem());
-				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10))
+				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10) && !gThis.g.glc)
 					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup, and set the last pickup addition time
 				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
 					switch(gThis.g.a.ls[i].t){
@@ -1157,19 +1180,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt()&&gThis.g.gt-gThis.g.pl.pn.ipt<5000)
 					gThis.g.pl.pn.af(); //affect the player, if poisoned
 				else if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.ipt>=5000) gThis.g.pl.pn.p = false;
-				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused"){ //update the player
+				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused" && !gThis.g.glc){ //update the player
 					gThis.g.pl.lu = gThis.g.gt;
 					gThis.g.pl.pf(); //update the player's coordinates
 					gThis.g.pl.d = gThis.g.pl.qd;
 					if (gThis.g.pl.p.length > gThis.g.pl.l) //sychronize player length with array length
 						gThis.g.pl.p.splice(gThis.g.pl.p.length-(gThis.g.pl.p.length-gThis.g.pl.l), gThis.g.pl.p.length-gThis.g.pl.l);
-				} else if (gThis.g.pl.dy && !gThis.g.pl.irs){ //if the player is dying
+				} else if (gThis.g.pl.dy && !gThis.g.pl.irs && !gThis.g.glc){ //if the player is dying
 					if (gThis.g.gt-gThis.g.pl.dt <= 500) gThis.g.pl.c.a = 1-Math.pow((gThis.g.gt-gThis.g.pl.dt)/500,2);
 					else {
 						gThis.g.pl.c.a = 0;
 						gThis.g.pl.rs(); //resurrect the player
 					}
-				} else if (gThis.g.pl.irs && !gThis.g.pl.dy){ //if the player is resurrecting
+				} else if (gThis.g.pl.irs && !gThis.g.pl.dy && !gThis.g.glc){ //if the player is resurrecting
 					if (gThis.g.gt-gThis.g.pl.rt <= 500) gThis.g.pl.c.a = Math.pow((gThis.g.gt-gThis.g.pl.rt)/500,2);
 					else {
 						if (gThis.g.pl.lv == 0){ //if we're out of lives, too, end the game
@@ -1244,170 +1267,182 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.shadowColor = "rgba(0,0,0,0)";
 					}
 				}
+			} else if (gThis.g.st == "complete"){ //if the level is complete
+				//console.log("Game state is rendering in \"complete\".");
+				
 			} else if (gThis.g.st == "over"){ //if the game is over
 				
 			}
-			//update the position of the pause button
-			var pbcflct = false;
-			if (!gThis.g.pl.irs && !gThis.g.pl.dy && bd.ps(gThis.g.pl.p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.pl.p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.pl.p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.pl.p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
-			/* -- use the following below only for enemies -- *
-			for (var i=0; i<gThis.g.en.length; i++)
-				if (bd.ps(gThis.g.en[i].p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.en[i].p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.en[i].p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.en[i].p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
-			*/
-			if (pbcflct && !gThis.g.bt[0].m){
-				gThis.g.bt[0].m = true;
-				gThis.g.bt[0].r = !gThis.g.bt[0].r; //switch orientations 
-			}
-			if (gThis.g.bt[0].m){ //if the pause button is moving
-				var rc = bd.os().x1+bd.cv().x-gThis.g.bt[0].w-10; //right coord
-				var lc = bd.os().x1+10; //left coord
-				if (gThis.g.bt[0].mt == 0)
-					gThis.g.bt[0].mt = gThis.g.gt;
-				else if (gThis.g.gt-gThis.g.bt[0].mt < 700){
-					var dlt = (gThis.g.gt-gThis.g.bt[0].mt)/700;
-					dlt = Math.pow(dlt,1-dlt);
-					gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
-					with(Math)gThis.g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
-				} else {
-					gThis.g.bt[0].m = false;
-					gThis.g.bt[0].mt = 0;
-					gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? rc : lc);
+			if (gThis.g.st == "interim" || gThis.g.st == "game" || gThis.g.st == "paused"){ //some additional last-millisecond rendering
+				//update the position of the pause button
+				var pbcflct = false;
+				if (!gThis.g.pl.irs && !gThis.g.pl.dy && bd.ps(gThis.g.pl.p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.pl.p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.pl.p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.pl.p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
+				/* -- use the following below only for enemies -- *
+				for (var i=0; i<gThis.g.en.length; i++)
+					if (bd.ps(gThis.g.en[i].p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.en[i].p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.en[i].p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.en[i].p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
+				*/
+				if (pbcflct && !gThis.g.bt[0].m){
+					gThis.g.bt[0].m = true;
+					gThis.g.bt[0].r = !gThis.g.bt[0].r; //switch orientations 
 				}
-			}
-			if (gThis.g.bt[0].nsr != gThis.g.bt[0].sr && (new Date()).getTime()-gThis.g.bt[0].srt <= 700) //animate the shadow radius
-				gThis.g.bt[0].sr = gThis.g.bt[0].osr+Math.round((((new Date()).getTime()-gThis.g.bt[0].srt)/700)*(gThis.g.bt[0].nsr-gThis.g.bt[0].osr));
-			var pbcl = gThis.g.bt[0].c;
-			cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+pbcl.a+")";
-			cx.strokeStyle = "rgba(0,0,0,0)";
-			cx.fillRoundedRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h, 10);
-			var r = {x:gThis.g.bt[0].p.x+gThis.g.bt[0].w/2,y:gThis.g.bt[0].p.y+gThis.g.bt[0].h/2};
-			var shdw = cx.createRadialGradient(r.x, r.y, 0, r.x, r.y, gThis.g.bt[0].sr);
-			shdw.addColorStop(0, "rgba("+pbcl.r+80+","+pbcl.g+80+","+pbcl.b+80+","+pbcl.a+")");
-			shdw.addColorStop(0.82, "rgba(0,0,0,0)");
-			cx.fillStyle = shdw;
-			cx.fillRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h);
-			cx.fillStyle = "rgba("+pbcl.r+100+","+pbcl.g+100+","+pbcl.b+100+","+pbcl.a+")";
-			//pause rectangles
-			cx.shadowOffsetX = 0;
-			cx.shadowOffsetY = 0;
-			cx.shadowBlur = 5;
-			cx.shadowColor = "rgba(20,20,20,"+pbcl.a+")";
-			if (gThis.g.st == "paused"){
-				var crds = [
-					{
-						x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
-						y: gThis.g.bt[0].p.y+10
-					},
-					{
-						x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
-						y: gThis.g.bt[0].p.y+30
-					},
-					{
-						x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+18,
-						y: gThis.g.bt[0].p.y+20
+				if (gThis.g.bt[0].m){ //if the pause button is moving
+					var rc = bd.os().x1+bd.cv().x-gThis.g.bt[0].w-10; //right coord
+					var lc = bd.os().x1+10; //left coord
+					if (gThis.g.bt[0].mt == 0)
+						gThis.g.bt[0].mt = gThis.g.gt;
+					else if (gThis.g.gt-gThis.g.bt[0].mt < 700){
+						var dlt = (gThis.g.gt-gThis.g.bt[0].mt)/700;
+						dlt = Math.pow(dlt,1-dlt);
+						gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
+						with(Math)gThis.g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
+					} else {
+						gThis.g.bt[0].m = false;
+						gThis.g.bt[0].mt = 0;
+						gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? rc : lc);
 					}
-				];
-				cx.beginPath();
-				cx.moveTo(crds[0].x,crds[0].y);
-				for (var i=1; i<crds.length; i++)
-					cx.lineTo(crds[i].x,crds[i].y);
-				cx.lineTo(crds[(crds.length-1)].x,crds[(crds.length-1)].y);
-				cx.closePath();
-				cx.fill();	
-			} else {
-				cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2), gThis.g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
-				cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+12, gThis.g.bt[0].p.y+10, 6, 20);
-			}
-			cx.shadowBlur = 0;
-			cx.shadowColor = null;
-			if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at >= 700){//update the top bar
-				gThis.g.tb.p = {
-					x: gThis.g.tb.np.x,
-					y: gThis.g.tb.np.y
-				};
-				gThis.g.tb.c.bg = { 
-					r: gThis.g.tb.nc.bg.r,
-					g: gThis.g.tb.nc.bg.g,
-					b: gThis.g.tb.nc.bg.b,
-					a: gThis.g.tb.nc.bg.a 
-				};
-				if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-800||gThis.g.tb.p.y<=-24) gThis.g.tb.v = false;
-				else gThis.g.tb.v = true;
-				gThis.g.tb.an = "";
-			} else if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at < 700){
-				var dlta = ((new Date()).getTime()-gThis.g.tb.at)/700;
-				var dc = {
-					r: gThis.g.tb.c.bg.r+Math.round(dlta*(gThis.g.tb.nc.bg.r-gThis.g.tb.c.bg.r)),
-					g: gThis.g.tb.c.bg.g+Math.round(dlta*(gThis.g.tb.nc.bg.g-gThis.g.tb.c.bg.g)),
-					b: gThis.g.tb.c.bg.b+Math.round(dlta*(gThis.g.tb.nc.bg.b-gThis.g.tb.c.bg.b)),
-					a: gThis.g.tb.c.bg.a+(dlta*(gThis.g.tb.nc.bg.a-gThis.g.tb.c.bg.a))
-				};
-				var dp = {
-					x: gThis.g.tb.p.x+Math.round(dlta*(gThis.g.tb.np.x-gThis.g.tb.p.x)),
-					y: gThis.g.tb.p.y+Math.round(dlta*(gThis.g.tb.np.y-gThis.g.tb.p.y))
-				};
-				if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
-				else gThis.g.tb.v = true;
-				cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+dc.a+")";
-				cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-				cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
-				cx.textAlign = "left";
-				cx.font = "14px Arial";
-				cx.textBaseline = "top";
-				cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
-				cx.fillStyle = "rgba(186,244,255,"+(dc.a+0.3)+")";
-				cx.fillText(gThis.g.pl.s, dp.x+54, dp.y+gThis.g.tb.to.y);
-				cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
-				cx.textAlign = "center";
-				cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
-				cx.textAlign = "right";
-				cx.fillText(gThis.g.pl.n, dp.x+gThis.g.tb.d.w-80, dp.y+gThis.g.tb.to.y);
-				if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
-					for (var i=0; i<3; i++)
-						cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
-			}
-			if (gThis.g.tb.an==""){
-				cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+gThis.g.tb.c.bg.a+")";
-				cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-				cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-				cx.textAlign = "left";
-				cx.font = "14px Arial";
-				cx.textBaseline = "top";
-				cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
-				cx.fillStyle = "rgba(186,244,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-				cx.fillText(gThis.g.pl.s, gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
-				cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
-				cx.textAlign = "center";
-				cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
-				cx.textAlign = "right";
-				cx.fillText(gThis.g.pl.n, gThis.g.tb.p.x+gThis.g.tb.d.w-80, gThis.g.tb.p.y+gThis.g.tb.to.y);
-				if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
-					for (var i=0; i<3; i++)
-						cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], gThis.g.tb.p.x+gThis.g.tb.d.w-30-(20*i), gThis.g.tb.p.y+2, 20, 20);
-			}
-			gThis.g.pg.p.y=(gThis.g.tb.an!=""?dp.y+gThis.g.tb.d.h+10:gThis.g.tb.p.y+gThis.g.tb.d.h+10); //drawing progress bar
-			if(!gThis.g.pg.an.iit)gThis.g.pg.an.iit=gThis.g.gt;
-			with(Math)var shdwA=abs(parseFloat(sin((gThis.g.gt-gThis.g.pg.an.iit)/1200*PI/2).toFixed(14)));
-			var pgcl=gThis.g.pg.c;
-			cx.strokeStyle="rgba("+pgcl.r+","+pgcl.g+","+pgcl.b+","+pgcl.a+")";
-			cx.fillStyle="rgba("+(pgcl.r+35)+","+(pgcl.g+35)+","+(pgcl.b+35)+","+(pgcl.a*0.7)+")";
-			cx.lineWidth=1;
-			cx.lineJoin="round";
-			gThis.g.pg.ib.nd.w = (gThis.g.pg.d.w-2)*gThis.g.pl.s/20/gThis.g.gl;
-			if (gThis.g.pg.ib.nd.w!==gThis.g.pg.ib.d.w){
-				if (!gThis.g.pg.an.iat) gThis.g.pg.an.iat=gThis.g.gt;
-				if (gThis.g.gt-gThis.g.pg.an.iat<700){
-					with(Math)var delta = pow((gThis.g.gt-gThis.g.pg.an.iat)/700,2);
-					var nw = gThis.g.pg.ib.d.w+delta*(gThis.g.pg.ib.nd.w-gThis.g.pg.ib.d.w);
-					cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
-					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
-					cx.shadowBlur=7;
-					cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,nw,gThis.g.pg.d.h-2);
-					cx.shadowColor="rgba(0,0,0,0)";
-					cx.shadowBlur=0;
-				} else if (gThis.g.gt-gThis.g.pg.an.iat>=700){
-					gThis.g.pg.ib.d.w = gThis.g.pg.ib.nd.w;
-					gThis.g.pg.an.iat = false;
+				}
+				if (gThis.g.bt[0].nsr != gThis.g.bt[0].sr && (new Date()).getTime()-gThis.g.bt[0].srt <= 700) //animate the shadow radius
+					gThis.g.bt[0].sr = gThis.g.bt[0].osr+Math.round((((new Date()).getTime()-gThis.g.bt[0].srt)/700)*(gThis.g.bt[0].nsr-gThis.g.bt[0].osr));
+				var pbcl = gThis.g.bt[0].c;
+				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+pbcl.a+")";
+				cx.strokeStyle = "rgba(0,0,0,0)";
+				cx.fillRoundedRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h, 10);
+				var r = {x:gThis.g.bt[0].p.x+gThis.g.bt[0].w/2,y:gThis.g.bt[0].p.y+gThis.g.bt[0].h/2};
+				var shdw = cx.createRadialGradient(r.x, r.y, 0, r.x, r.y, gThis.g.bt[0].sr);
+				shdw.addColorStop(0, "rgba("+pbcl.r+80+","+pbcl.g+80+","+pbcl.b+80+","+pbcl.a+")");
+				shdw.addColorStop(0.82, "rgba(0,0,0,0)");
+				cx.fillStyle = shdw;
+				cx.fillRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h);
+				cx.fillStyle = "rgba("+pbcl.r+100+","+pbcl.g+100+","+pbcl.b+100+","+pbcl.a+")";
+				//pause rectangles
+				cx.shadowOffsetX = 0;
+				cx.shadowOffsetY = 0;
+				cx.shadowBlur = 5;
+				cx.shadowColor = "rgba(20,20,20,"+pbcl.a+")";
+				if (gThis.g.st == "paused"){
+					var crds = [
+						{
+							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
+							y: gThis.g.bt[0].p.y+10
+						},
+						{
+							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
+							y: gThis.g.bt[0].p.y+30
+						},
+						{
+							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+18,
+							y: gThis.g.bt[0].p.y+20
+						}
+					];
+					cx.beginPath();
+					cx.moveTo(crds[0].x,crds[0].y);
+					for (var i=1; i<crds.length; i++)
+						cx.lineTo(crds[i].x,crds[i].y);
+					cx.lineTo(crds[(crds.length-1)].x,crds[(crds.length-1)].y);
+					cx.closePath();
+					cx.fill();	
+				} else {
+					cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2), gThis.g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
+					cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+12, gThis.g.bt[0].p.y+10, 6, 20);
+				}
+				cx.shadowBlur = 0;
+				cx.shadowColor = null;
+				if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at >= 700){//update the top bar
+					gThis.g.tb.p = {
+						x: gThis.g.tb.np.x,
+						y: gThis.g.tb.np.y
+					};
+					gThis.g.tb.c.bg = { 
+						r: gThis.g.tb.nc.bg.r,
+						g: gThis.g.tb.nc.bg.g,
+						b: gThis.g.tb.nc.bg.b,
+						a: gThis.g.tb.nc.bg.a 
+					};
+					if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-800||gThis.g.tb.p.y<=-24) gThis.g.tb.v = false;
+					else gThis.g.tb.v = true;
+					gThis.g.tb.an = "";
+				} else if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at < 700){
+					var dlta = ((new Date()).getTime()-gThis.g.tb.at)/700;
+					var dc = {
+						r: gThis.g.tb.c.bg.r+Math.round(dlta*(gThis.g.tb.nc.bg.r-gThis.g.tb.c.bg.r)),
+						g: gThis.g.tb.c.bg.g+Math.round(dlta*(gThis.g.tb.nc.bg.g-gThis.g.tb.c.bg.g)),
+						b: gThis.g.tb.c.bg.b+Math.round(dlta*(gThis.g.tb.nc.bg.b-gThis.g.tb.c.bg.b)),
+						a: gThis.g.tb.c.bg.a+(dlta*(gThis.g.tb.nc.bg.a-gThis.g.tb.c.bg.a))
+					};
+					var dp = {
+						x: gThis.g.tb.p.x+Math.round(dlta*(gThis.g.tb.np.x-gThis.g.tb.p.x)),
+						y: gThis.g.tb.p.y+Math.round(dlta*(gThis.g.tb.np.y-gThis.g.tb.p.y))
+					};
+					if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
+					else gThis.g.tb.v = true;
+					cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+dc.a+")";
+					cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
+					cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
+					cx.textAlign = "left";
+					cx.font = "14px Arial";
+					cx.textBaseline = "top";
+					cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
+					cx.fillStyle = "rgba(186,244,255,"+(dc.a+0.3)+")";
+					cx.fillText(gThis.g.pl.s, dp.x+54, dp.y+gThis.g.tb.to.y);
+					cx.fillStyle = "rgba(240,255,255,"+(dc.a+0.3)+")";
+					cx.textAlign = "center";
+					cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
+					cx.textAlign = "right";
+					cx.fillText(gThis.g.pl.n, dp.x+gThis.g.tb.d.w-80, dp.y+gThis.g.tb.to.y);
+					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
+						for (var i=0; i<3; i++)
+							cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
+				}
+				if (gThis.g.tb.an==""){
+					cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+gThis.g.tb.c.bg.a+")";
+					cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
+					cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+					cx.textAlign = "left";
+					cx.font = "14px Arial";
+					cx.textBaseline = "top";
+					cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.fillStyle = "rgba(186,244,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+					cx.fillText(gThis.g.pl.s, gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.fillStyle = "rgba(240,255,255,"+(gThis.g.tb.c.bg.a+0.3)+")";
+					cx.textAlign = "center";
+					cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.textAlign = "right";
+					cx.fillText(gThis.g.pl.n, gThis.g.tb.p.x+gThis.g.tb.d.w-80, gThis.g.tb.p.y+gThis.g.tb.to.y);
+					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
+						for (var i=0; i<3; i++)
+							cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], gThis.g.tb.p.x+gThis.g.tb.d.w-30-(20*i), gThis.g.tb.p.y+2, 20, 20);
+				}
+				gThis.g.pg.p.y=(gThis.g.tb.an!=""?dp.y+gThis.g.tb.d.h+10:gThis.g.tb.p.y+gThis.g.tb.d.h+10); //drawing progress bar
+				if(!gThis.g.pg.an.iit)gThis.g.pg.an.iit=gThis.g.gt;
+				with(Math)var shdwA=abs(parseFloat(sin((gThis.g.gt-gThis.g.pg.an.iit)/1200*PI/2).toFixed(14)));
+				var pgcl=gThis.g.pg.c;
+				cx.strokeStyle="rgba("+pgcl.r+","+pgcl.g+","+pgcl.b+","+pgcl.a+")";
+				cx.fillStyle="rgba("+(pgcl.r+35)+","+(pgcl.g+35)+","+(pgcl.b+35)+","+(pgcl.a*0.7)+")";
+				cx.lineWidth=1;
+				cx.lineJoin="round";
+				gThis.g.pg.ib.nd.w = Mathf.limit((gThis.g.pg.d.w-2)*gThis.g.pl.s/20/gThis.g.gl,0,gThis.g.pg.d.w-2);
+				if (gThis.g.pg.ib.nd.w!==gThis.g.pg.ib.d.w){
+					if (!gThis.g.pg.an.iat) gThis.g.pg.an.iat=gThis.g.gt;
+					if (gThis.g.gt-gThis.g.pg.an.iat<700){
+						with(Math)var delta = pow((gThis.g.gt-gThis.g.pg.an.iat)/700,2);
+						var nw = gThis.g.pg.ib.d.w+delta*(gThis.g.pg.ib.nd.w-gThis.g.pg.ib.d.w);
+						cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
+						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
+						cx.shadowBlur=7;
+						cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,nw,gThis.g.pg.d.h-2);
+						cx.shadowColor="rgba(0,0,0,0)";
+						cx.shadowBlur=0;
+					} else if (gThis.g.gt-gThis.g.pg.an.iat>=700){
+						gThis.g.pg.ib.d.w = gThis.g.pg.ib.nd.w;
+						gThis.g.pg.an.iat = false;
+						cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
+						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
+						cx.shadowBlur=7;
+						cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
+						cx.shadowColor="rgba(0,0,0,0)";
+						cx.shadowBlur=0;
+					}
+				} else {
 					cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
 					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
 					cx.shadowBlur=7;
@@ -1415,13 +1450,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.shadowColor="rgba(0,0,0,0)";
 					cx.shadowBlur=0;
 				}
-			} else {
-				cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
-				cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+shdwA+")";
-				cx.shadowBlur=7;
-				cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
-				cx.shadowColor="rgba(0,0,0,0)";
-				cx.shadowBlur=0;
 			}
 		} else if (gThis.g.st == "help"){
 			
