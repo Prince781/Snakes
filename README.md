@@ -15,6 +15,7 @@ A list of features to implement:
 * Leaderboards (**todo**)
 * Game state management (between pausing, playing, etc...) (**done**)
 * More fluid/aesthetic Pause Menu UI (**done**)
+* More fluid/aesthetic level transition menu (**done**)
 * Music?
 * More sound effects?
 * Level barriers/walls?
