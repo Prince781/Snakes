@@ -483,6 +483,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		},
 		lv: 0, //the current game level
+		olv: 0, //the original game level, prior to initialization
 		gl: 0, //goal for the current level
 		pl: {}, //the player (defined during initialization)
 		en: [], //the array of enemies
@@ -695,10 +696,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				mv: function(d){ //function to move the player according to direction
 					if (gThis.g.pl.dy || gThis.g.pl.irs) return false;
 					else if ([2,3,0,1][d]==gThis.g.pl.d){
-						gThis.g.pl.hm = true;
+						if (gThis.g.st=="interim")gThis.g.pl.hm = true;
 						return false;
 					}
-					gThis.g.pl.hm = true;
+					if (gThis.g.st=="interim")gThis.g.pl.hm = true;
 					gThis.g.pl.qd = d;
 				},
 				pf: function(){
@@ -752,7 +753,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (gThis.g.pl.n == ""){
 				$_("#mg_np").effects.fadeTo(100,500);
 				$_("#mg_np_dun").value(gThis.g.pl.n);
-			} else gThis.g.cSt("game");
+			} else gThis.g.cSt("interim"); //start at new level
 		});
 		$_("#mg_np_dc").click(function(){ //start the game, if there is a valid username
 			var rs = gThis.un.chk($_("#mg_np_dun").value());
@@ -763,7 +764,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 			$_("#mg_np").effects.fadeTo(0,500);
 			gThis.g.pl.n = $_("#mg_np_dun").value();
-			gThis.g.cSt("game");
+			gThis.g.cSt("interim"); //start at new level
 		});
 		$_("#mg_mms").click(gThis.s.show); //start the settings div's appearance, and pause everything else
 		$_("#mg_sd_cb").click(gThis.s.hide); //close the settings div, and revert back to previous game state
@@ -836,25 +837,28 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		$_("#mgpdbt_st").click(gThis.s.show);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gThis.g.st){
+				case "interim":
 				case "game":
-				case "paused":
 					switch(k){
 						case (gThis.g.kt ? "up" : "w"):
-							if (gThis.g.st == "game") gThis.g.pl.mv(0);
+							gThis.g.pl.mv(0);
 							break;
 						case (gThis.g.kt ? "right" : "d"):
-							if (gThis.g.st == "game") gThis.g.pl.mv(1);
+							gThis.g.pl.mv(1);
 							break;
 						case (gThis.g.kt ? "down" : "s"):
-							if (gThis.g.st == "game") gThis.g.pl.mv(2);
+							gThis.g.pl.mv(2);
 							break;
 						case (gThis.g.kt ? "left" : "a"):
-							if (gThis.g.st == "game") gThis.g.pl.mv(3);
+							gThis.g.pl.mv(3);
 							break;
+					}
+				case "paused":
+					switch(k){
 						case "p":
 							if ((gThis.g.st == "game" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="game" ? "paused" : "game");
 							break;
-					}
+					}				
 				break;
 			}
 		});
@@ -904,7 +908,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		if (gThis.g.bg.v){
 			if ((new Date()).getTime()-gThis.mm.str < 1000 && gThis.g.bg.dt==0)
 				gThis.g.bg.o = Math.pow(((new Date()).getTime()-gThis.mm.str)/1000,2);
-			if (gThis.g.st == "game" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
+			if (gThis.g.st == "interim" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
 			if (gThis.g.bg.dt >= 0 && (new Date()).getTime()-gThis.g.bg.dt < 1000)
 				gThis.g.bg.o = 1-Math.pow(((new Date()).getTime()-gThis.g.bg.dt)/1000,2);
 			else if ((new Date()).getTime()-gThis.g.bg.dt >= 1000 && gThis.g.bg.dt != 0)
@@ -955,9 +959,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
 			if (gThis.g.st !== "interim") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
 			if (gThis.g.st=="interim"){ //if we're at the very start of the game's level
-				if (gThis.g.pl.n != ""){
-					gThis.g.en.push(ai.createEnem()); //create a new enemy
+				gThis.g.olv=gThis.g.lv;
+				if ((gThis.g.lv==0||gThis.g.lv!==gThis.g.olv)&&gThis.g.pl.n!==""){
+					if (gThis.g.en.length==0)gThis.g.en.push(ai.createEnem()); //create a new enemy
 					gThis.g.lv++;
+					gThis.g.olv=gThis.g.lv;
 				}
 				gThis.g.pl.lu = gThis.g.gt;
 				with(Math)gThis.g.gl = floor(5*(log(pow(gThis.g.lv,0.6))+1)); //set the goal for the current level
@@ -965,9 +971,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (!gThis.g.tb.v) gThis.g.tb.s(); //show the top bar
 				$get("mga").pause();
 				$get("mga2").pause();
+				if (gThis.g.pl.hm){
+					gThis.g.st="game";
+					gThis.g.pl.hm=false;
+				}
 			} else if (gThis.g.st=="game"||gThis.g.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
 				if (gThis.g.en.length==0) //if there are no current enemies
 					gThis.g.en.push(ai.createEnem());
+				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10))
+					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup, and set the last pickup addition time
 				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
 					switch(gThis.g.a.ls[i].t){
 						case 0: //sparkle animation
@@ -1001,8 +1013,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}
 				}
-				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10))
-					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup
 				for (var i=0; i<gThis.g.pk.length; i++){ //render all of the pickups
 					if (gThis.g.gt-gThis.g.pk[i].i < 750)
 						gThis.g.pk[i].c.a = Math.pow((gThis.g.gt-gThis.g.pk[i].i)/750,3);
