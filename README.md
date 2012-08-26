@@ -13,7 +13,7 @@ A list of features to implement:
 * Introductive tutorial (**todo**)
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
-* Game state management (between pausing, playing, etc...) (**W.I.P.**)
+* Game state management (between pausing, playing, etc...) (**done**)
 * More fluid/aesthetic Pause Menu UI (**done**)
 * Music?
 * More sound effects?
