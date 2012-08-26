@@ -597,7 +597,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		pt: 0, //the time of pausing
 		rt: 0, //the time of resuming
 		to: 0, //the time offset (current time - to)
-		glA: 1 //the global alpha value
+		glA: 1, //the global alpha value
+		nl: function(){ //make preparations for the next level
+			if (gThis.g.st=="interim") return false;
+			gThis.g.st = "interim";
+			
+		}
 	};
 	this.init = function(){ //the main initialization function
 		if (!("width" in gThis.cnv && "style" in gThis.stdiv && "style" in gThis.mmdiv))
@@ -967,12 +972,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "complete" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
 			if (gThis.g.st == "game") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
-			if (gThis.g.pl.s/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0){ //level has been completed
+			if (gThis.g.pl.s/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
 				gThis.g.glc=true;
 				gThis.g.glct=(new Date()).getTime(); //set time for goal completion
-			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000)
+			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000 && gThis.g.st!=="complete")
 				gThis.g.glA = 1-Math.pow(((new Date()).getTime()-gThis.g.glct)/1000,2);
-			else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct>=1000){
+			else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct>=1000 && gThis.g.st!=="complete"){
 				gThis.g.glA = 0;
 				for (var i=0;i<gThis.g.en.length;i++){
 					gThis.g.en.splice(i,1);
