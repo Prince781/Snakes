@@ -991,6 +991,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					i--;
 				}
 				gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
+				gThis.g.pl.l=10;
 				gThis.g.glc=false;
 				gThis.g.glct=false;
 				$_("#mg_lo_d span").html(gThis.g.lv);
