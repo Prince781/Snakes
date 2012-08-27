@@ -598,10 +598,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		rt: 0, //the time of resuming
 		to: 0, //the time offset (current time - to)
 		glA: 1, //the global alpha value
+		glAat: 0, //time of global alpha animation start time
 		nl: function(){ //make preparations for the next level
 			if (gThis.g.st=="interim") return false;
+			if (gThis.g.st=="complete")
+				$_("#mg_lo").effects.fadeTo(0,1000);
+			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
+			gThis.g.pl.s+=gThis.g.pl.cs; //reset scores
+			gThis.g.pl.cs=0;
 			gThis.g.st = "interim";
-			
 		}
 	};
 	this.init = function(){ //the main initialization function
@@ -637,6 +642,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				d: dir, //the direction of the player, at move time
 				qd: dir, //the queued direction of the player, prior to move time
 				s: 0, //the score of the player
+				cs: 0, //the current, level-based score of the player
 				n: "", //the name of the player
 				lu: gThis.g.gt, //the last time the player's position was updated
 				l: len, //the length of the player
@@ -788,12 +794,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (localStorage.SGpn) gThis.g.pl.n = localStorage.SGpn;
 			if (localStorage.SGkt) gThis.g.kt = parseFloat(localStorage.SGkt);
 		}
+		$_("#mg_lo_bt_cntnu").click(gThis.g.nl); //prepare for the next level, when clicked
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
 		$get("mga3").volume = gThis.g.sn.e;
-		$_("#md_sd_sl_cr .md_sd_slh").css("margin-left", Math.round(((gThis.g.pl.c.r-25)/230)*parseInt($_("#md_sd_sl_cr").css("width")))-8+"px");
-		$_("#md_sd_sl_cg .md_sd_slh").css("margin-left", Math.round(((gThis.g.pl.c.g-25)/230)*parseInt($_("#md_sd_sl_cg").css("width")))-8+"px");
-		$_("#md_sd_sl_cb .md_sd_slh").css("margin-left", Math.round(((gThis.g.pl.c.b-25)/230)*parseInt($_("#md_sd_sl_cb").css("width")))-8+"px");
+		$_("#md_sd_sl_cr .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.r/255)*parseInt($_("#md_sd_sl_cr").css("width")))-8+"px");
+		$_("#md_sd_sl_cg .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.g/255)*parseInt($_("#md_sd_sl_cg").css("width")))-8+"px");
+		$_("#md_sd_sl_cb .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.b/255)*parseInt($_("#md_sd_sl_cb").css("width")))-8+"px");
 		$_("#mg_sd_cl_l").css("background-color", "rgb("+gThis.g.pl.c.r+","+gThis.g.pl.c.g+","+gThis.g.pl.c.b+")");
 		$_("#mg_sd_snda .md_sd_slh").css("margin-left", Math.round(gThis.g.sn.a*parseInt($_("#mg_sd_snda").css("width")))-8+"px");
 		$_("#mg_sd_sndm .md_sd_slh").css("margin-left", Math.round(gThis.g.sn.m*parseInt($_("#mg_sd_sndm").css("width")))-8+"px");
@@ -972,7 +979,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "complete" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
 			if (gThis.g.st == "game") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
-			if (gThis.g.pl.s/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
+			if (gThis.g.pl.cs/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
 				gThis.g.glc=true;
 				gThis.g.glct=(new Date()).getTime(); //set time for goal completion
 			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000 && gThis.g.st!=="complete")
@@ -983,15 +990,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					gThis.g.en.splice(i,1);
 					i--;
 				}
+				gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
+				gThis.g.glc=false;
+				gThis.g.glct=false;
 				$_("#mg_lo_d span").html(gThis.g.lv);
 				gThis.g.st = "complete";
+				gThis.g.olv = gThis.g.lv;
+			} else if (gThis.g.glAat&&(new Date()).getTime()-gThis.g.glAat<1000)
+				gThis.g.glA = Math.pow(((new Date()).getTime()-gThis.g.glAat)/1000,2);
+			else if (gThis.g.glAat&&(new Date()).getTime()-gThis.g.glAat>=1000){
+				gThis.g.glA = 1;
+				gThis.g.glAat = false;
 			}
 			if (gThis.g.st=="interim"){ //if we're at the very start of the game's level
-				gThis.g.olv=gThis.g.lv;
-				if ((gThis.g.lv==0||gThis.g.lv!==gThis.g.olv)&&gThis.g.pl.n!==""){
+				if ((gThis.g.lv==0||gThis.g.lv==gThis.g.olv)&&gThis.g.pl.n!==""){
 					if (gThis.g.en.length==0)gThis.g.en.push(ai.createEnem()); //create a new enemy
 					gThis.g.lv++;
-					gThis.g.olv=gThis.g.lv;
+					gThis.g.olv=gThis.g.lv-1;
 				}
 				gThis.g.pl.lu = gThis.g.gt;
 				with(Math)gThis.g.gl = floor(5*(log(pow(gThis.g.lv,0.6))+1)); //set the goal for the current level
@@ -1003,6 +1018,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					gThis.g.st="game";
 					gThis.g.pl.hm=false;
 				}
+				if (!gThis.g.glAat&&gThis.g.glA!==1) gThis.g.glAat = (new Date()).getTime();
 			} else if (gThis.g.st=="game"||gThis.g.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
 				if (gThis.g.en.length==0 && !gThis.g.glc) //if there are no current enemies
 					gThis.g.en.push(ai.createEnem());
@@ -1058,18 +1074,18 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused" && !gThis.g.pk[i].f){
 						switch (gThis.g.pk[i].t){
 							case 0: //pickup
-								gThis.g.pl.s+=20; //increase the player's score
+								gThis.g.pl.cs+=20; //increase the player's score
 								gThis.g.pl.l+=5; //increase the player's length
 								break;
 							case 1: //poison
 								gThis.g.pl.pn.p = true; 
 								gThis.g.pl.pn.ipt = gThis.g.gt;
-								if(gThis.g.pl.s-20>=0)gThis.g.pl.s-=20;
+								if(gThis.g.pl.cs-20>=0)gThis.g.pl.cs-=20;
 								break;
 							case 2: //life
 								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
 								gThis.g.pl.l+=5;
-								gThis.g.pl.s+=60;
+								gThis.g.pl.cs+=60;
 								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 								break;
 						}
@@ -1387,7 +1403,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.textBaseline = "top";
 					cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
 					cx.fillStyle = "rgba(186,244,255,"+((dc.a+0.3)*gThis.g.glA)+")";
-					cx.fillText(gThis.g.pl.s, dp.x+54, dp.y+gThis.g.tb.to.y);
+					cx.fillText((gThis.g.pl.s+gThis.g.pl.cs), dp.x+54, dp.y+gThis.g.tb.to.y);
 					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*gThis.g.glA)+")";
 					cx.textAlign = "center";
 					cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
@@ -1406,7 +1422,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.textBaseline = "top";
 					cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
 					cx.fillStyle = "rgba(186,244,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
-					cx.fillText(gThis.g.pl.s, gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.fillText((gThis.g.pl.s+gThis.g.pl.cs), gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
 					cx.fillStyle = "rgba(240,255,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
 					cx.textAlign = "center";
 					cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
@@ -1424,7 +1440,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				cx.fillStyle="rgba("+(pgcl.r+35)+","+(pgcl.g+35)+","+(pgcl.b+35)+","+(pgcl.a*0.7)+")";
 				cx.lineWidth=1;
 				cx.lineJoin="round";
-				gThis.g.pg.ib.nd.w = Mathf.limit((gThis.g.pg.d.w-2)*gThis.g.pl.s/20/gThis.g.gl,0,gThis.g.pg.d.w-2);
+				gThis.g.pg.ib.nd.w = Mathf.limit((gThis.g.pg.d.w-2)*gThis.g.pl.cs/20/gThis.g.gl,0,gThis.g.pg.d.w-2);
 				if (gThis.g.pg.ib.nd.w!==gThis.g.pg.ib.d.w){
 					if (!gThis.g.pg.an.iat) gThis.g.pg.an.iat=gThis.g.gt;
 					if (gThis.g.gt-gThis.g.pg.an.iat<700){
