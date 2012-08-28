@@ -1135,8 +1135,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							pk.y, 
 							(typeof r2=="undefined"?16:r2)
 						);
-						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")");
-						pkrg.addColorStop(0.3,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3)+")");
+						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*gThis.g.glA)+")");
+						pkrg.addColorStop(0.3,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3*gThis.g.glA)+")");
 						pkrg.addColorStop(1,"rgba("+cl.r+","+cl.g+","+cl.b+",0)");
 						cx.fillStyle=pkrg;
 						cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
@@ -1325,7 +1325,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (gThis.g.bt[0].nsr != gThis.g.bt[0].sr && (new Date()).getTime()-gThis.g.bt[0].srt <= 700) //animate the shadow radius
 					gThis.g.bt[0].sr = gThis.g.bt[0].osr+Math.round((((new Date()).getTime()-gThis.g.bt[0].srt)/700)*(gThis.g.bt[0].nsr-gThis.g.bt[0].osr));
 				var pbcl = gThis.g.bt[0].c;
-				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+pbcl.a+")";
+				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+(pbcl.a*gThis.g.glA)+")";
 				cx.strokeStyle = "rgba(0,0,0,0)";
 				cx.fillRoundedRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h, 10);
 				var r = {x:gThis.g.bt[0].p.x+gThis.g.bt[0].w/2,y:gThis.g.bt[0].p.y+gThis.g.bt[0].h/2};
@@ -1396,7 +1396,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					};
 					if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
 					else gThis.g.tb.v = true;
-					cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+dc.a+")";
+					cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+(dc.a*gThis.g.glA)+")";
 					cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
 					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*gThis.g.glA)+")";
 					cx.textAlign = "left";
@@ -1415,7 +1415,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
 				}
 				if (gThis.g.tb.an==""){
-					cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+gThis.g.tb.c.bg.a+")";
+					cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+(gThis.g.tb.c.bg.a*gThis.g.glA)+")";
 					cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
 					cx.fillStyle = "rgba(240,255,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
 					cx.textAlign = "left";
