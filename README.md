@@ -10,7 +10,7 @@ A list of features to implement:
 * Various pickups and other items (**done**)
 * Player lives (**done**)
 * Fully challenging, aggressive and defensive enemy AI (**done**)
-* Introductive tutorial (**todo**)
+* Introductive tutorial and help menu (**todo**)
 * Full settings menu and customization (**done**)
 * Leaderboards (**todo**)
 * Game state management (between pausing, playing, etc...) (**done**)
