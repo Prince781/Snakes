@@ -607,6 +607,28 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			gThis.g.pl.s+=gThis.g.pl.cs; //reset scores
 			gThis.g.pl.cs=0;
 			gThis.g.st = "interim";
+		},
+		qt: function(){ //quit to the main menu
+			gThis.g.st = "menu";
+			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
+			//hide other items, and reset values
+			$_("#mg_np").effects.fadeTo(0,500, function(){
+				$_("#mg_np").css('display','none');
+			});
+			$_("#mg_pd").effects.fadeTo(0,500, function(){
+				$_("#mg_pd").css('display','none');
+			});
+			gThis.g.tb.h();
+			gThis.g.bg.v = true;
+			gThis.g.bg.dt = 0;
+			gThis.mm.str = (new Date()).getTime(); //reset visibility of radial gradient
+			gThis.g.pl.s = 0;
+			gThis.g.pl.cs = 0;
+			gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
+			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
+			gThis.g.en.splice(0,gThis.g.en.length);
+			gThis.g.pl.lv = 3;
+			gThis.g.pl.pn = false;
 		}
 	};
 	this.init = function(){ //the main initialization function
@@ -856,6 +878,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_4").html("&#x25B6");
 		}
 		$_("#mgpdbt_st").click(gThis.s.show);
+		$_("#mgpdbt_qt").click(gThis.g.qt);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gThis.g.st){
 				case "interim":
@@ -929,8 +952,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		if (gThis.g.bg.v){
 			if ((new Date()).getTime()-gThis.mm.str < 1000 && gThis.g.bg.dt==0)
 				gThis.g.bg.o = Math.pow(((new Date()).getTime()-gThis.mm.str)/1000,2);
-			if (gThis.g.st == "interim" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
-			if (gThis.g.bg.dt >= 0 && (new Date()).getTime()-gThis.g.bg.dt < 1000)
+			if (gThis.g.st != "menu" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
+			if (gThis.g.bg.dt != 0 && (new Date()).getTime()-gThis.g.bg.dt < 1000)
 				gThis.g.bg.o = 1-Math.pow(((new Date()).getTime()-gThis.g.bg.dt)/1000,2);
 			else if ((new Date()).getTime()-gThis.g.bg.dt >= 1000 && gThis.g.bg.dt != 0)
 				gThis.g.bg.v = false;
