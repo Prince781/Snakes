@@ -629,6 +629,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			gThis.g.en.splice(0,gThis.g.en.length);
 			gThis.g.pl.lv = 3;
 			gThis.g.pl.pn = false;
+		},
+		nd: function(){ //end the game; show leaderboards
+			if (gThis.g.st!="over") return false;
+			gThis.g.st = "lboard"; //change to leaderboards
+			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
+			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
+		},
+		sbm: function(){ //submit leaderboards info
 		}
 	};
 	this.init = function(){ //the main initialization function
@@ -817,6 +825,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (localStorage.SGkt) gThis.g.kt = parseFloat(localStorage.SGkt);
 		}
 		$_("#mg_lo_bt_cntnu").click(gThis.g.nl); //prepare for the next level, when clicked
+		$_("#mg_bo_bt_cntnu").click(gThis.g.nd); //end the level
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
 		$get("mga3").volume = gThis.g.sn.e;
