@@ -691,7 +691,7 @@ clear: left;
 margin-top: 10px;
 }
 
-#mg_lo{
+#mg_lo, #mg_go{
 width: 380px;
 height: 120px;
 position: absolute;
@@ -708,7 +708,7 @@ display: none;
 padding: 10px;
 }
 
-#mg_lo_t{
+#mg_lo_t, #mg_go_t{
 font-family: Arial;
 font-size: 24px;
 font-weight: bold;
@@ -720,7 +720,7 @@ margin-top: 0px;
 text-align: left;
 }
 
-#mg_lo_d{
+#mg_lo_d, #mg_go_d{
 width: 370px;
 height: 50px;
 margin-left: auto;
@@ -732,7 +732,7 @@ color: rgba(198,198,198,0.7);
 text-align: left;
 }
 
-.mg_lo_bt{
+.mg_lo_bt, .mg_go_bt{
 display: inline;
 height: 16px;
 padding: 8px;
@@ -756,13 +756,13 @@ transition: color 700ms, background-color 700ms, box-shadow 700ms;
 -o-transition: color 700ms, background-color 700ms, box-shadow 700ms;
 }
 
-.mg_lo_bt:hover{
+.mg_lo_bt:hover, .mg_go_bt:hover{
 color: rgba(234,234,234,0.7);
 background-color: rgba(20,20,20,0.7);
 box-shadow: 0px 0px 5px rgba(8,8,8,0.7), inset 0px 0px 3px rgba(23,23,23,0.7);
 }
 
-.mg_lo_bt:active{
+.mg_lo_bt:active, .mg_go_bt:active{
 color: rgba(144,144,144,0.7);
 background-color: rgba(8,8,8,0.7);
 box-shadow: 0px 0px 5px rgba(0,0,0,0.7), inset 0px 0px 3px rgba(5,5,5,0.7);

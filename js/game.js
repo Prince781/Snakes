@@ -1241,6 +1241,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (gThis.g.gt-gThis.g.pl.rt <= 500) gThis.g.pl.c.a = Math.pow((gThis.g.gt-gThis.g.pl.rt)/500,2);
 					else {
 						if (gThis.g.pl.lv == 0){ //if we're out of lives, too, end the game
+							gThis.g.st = "over";
 						} else {
 							gThis.g.pl.c.a = 1;
 							gThis.g.pl.irs = false;
@@ -1315,7 +1316,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			} else if (gThis.g.st == "complete"){ //if the level is complete
 				if ($_("#mg_lo").css("display")=="none") $_("#mg_lo").effects.fadeTo(100,1000);
 			} else if (gThis.g.st == "over"){ //if the game is over
-				
+				if ($_("#mg_go").css("display")=="none") $_("#mg_go").effects.fadeTo(100,1000);
 			}
 			if (gThis.g.st == "interim" || gThis.g.st == "game" || gThis.g.st == "paused"){ //some additional last-millisecond rendering
 				//update the position of the pause button
