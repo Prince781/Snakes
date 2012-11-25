@@ -732,7 +732,7 @@ color: rgba(198,198,198,0.7);
 text-align: left;
 }
 
-.mg_lo_bt, .mg_go_bt{
+.mg_lo_bt, .mg_go_bt, .mg_lb_bt{
 display: inline;
 height: 16px;
 padding: 8px;
@@ -756,13 +756,13 @@ transition: color 700ms, background-color 700ms, box-shadow 700ms;
 -o-transition: color 700ms, background-color 700ms, box-shadow 700ms;
 }
 
-.mg_lo_bt:hover, .mg_go_bt:hover{
+.mg_lo_bt:hover, .mg_go_bt:hover, .mg_lb_bt:hover{
 color: rgba(234,234,234,0.7);
 background-color: rgba(20,20,20,0.7);
 box-shadow: 0px 0px 5px rgba(8,8,8,0.7), inset 0px 0px 3px rgba(23,23,23,0.7);
 }
 
-.mg_lo_bt:active, .mg_go_bt:active{
+.mg_lo_bt:active, .mg_go_bt:active, .mg_lb_bt:active{
 color: rgba(144,144,144,0.7);
 background-color: rgba(8,8,8,0.7);
 box-shadow: 0px 0px 5px rgba(0,0,0,0.7), inset 0px 0px 3px rgba(5,5,5,0.7);
@@ -772,14 +772,83 @@ box-shadow: 0px 0px 5px rgba(0,0,0,0.7), inset 0px 0px 3px rgba(5,5,5,0.7);
 display: none;
 opacity: 0;
 position: absolute;
-width: 700px;
-height: 400px;
+width: 300px;
+height: 234px;
 left: 50%;
 top: 50%;
-margin-left: -350px;
-margin-top: -200px;
-background-color: rgba(19,33,37,0.7);
-border-radius: 10px;
-box-shadow: 0px 0px 15px rgba(60,74,80,0.3);
+margin-left: -150px;
+margin-top: -117px;
+background-color: rgba(11,25,29,0.7);
+box-shadow: 0px 0px 35px 10px rgba(11,25,29,0.7);
+border-radius: 7px;
 font-family: Arial;
+padding: 10px;
+}
+
+#mg_lb_td{
+width: 290px;
+height: 40px;
+margin-top: 0px;
+margin-left: 0px;
+padding: 5px;
+}
+
+#mg_lb_td_top{
+width: 290px;
+margin-top: 0px;
+margin-left: 0px;
+font-family: Arial;
+font-size: 12px;
+color: #5f5f5f;
+text-align: left;
+}
+
+#mg_lb_td_top span{
+color: #ef2929;
+}
+
+#mg_lb_td_btm {
+width: 290px;
+text-align: center;
+font-family: Arial;
+font-size: 24px;
+font-weight: bold;
+color: #f0f0f0;
+}
+
+#mg_lb_lst_h{
+width: 290px;
+height: 120px;
+padding: 5px;
+margin-top: 10px;
+overflow-y: scroll;
+overflow-x: hidden;
+}
+
+table#mg_lb_lst{
+width: 270px;
+margin-top: 5px;
+margin-left: 5px;
+text-align: center;
+color: #F0F0F0;
+font-family: Arial;
+font-size: 10px;
+}
+
+table#mg_lb_lst td, table#mg_lb_lst th{
+padding-top: 2px;
+padding-bottom: 2px;
+}
+
+table#mg_lb_lst th, table#mg_lb_lst tr:nth-child(2n){
+background-color: rgba(31,59,49,0.7);
+}
+
+table#mg_lb_lst tr:nth-child(2n-1){
+background-color: rgba(1,29,19,0.7);
+}
+
+#mg_lb_bt_qt{
+float: right;
+margin-top: 10px;
 }

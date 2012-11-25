@@ -618,25 +618,47 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_pd").effects.fadeTo(0,500, function(){
 				$_("#mg_pd").css('display','none');
 			});
+			$_("#mg_lo").effects.fadeTo(0,500, function(){
+				$_("#mg_lo").css('display','none');
+			});
+			$_("#mg_lb").effects.fadeTo(0,500, function(){
+				$_("#mg_lo").css('display','none');
+			});
 			gThis.g.tb.h();
 			gThis.g.bg.v = true;
 			gThis.g.bg.dt = 0;
 			gThis.mm.str = (new Date()).getTime(); //reset visibility of radial gradient
 			gThis.g.pl.s = 0;
 			gThis.g.pl.cs = 0;
+			gThis.g.pl.hm = false; //change has_moved attribute
 			gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
 			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
 			gThis.g.en.splice(0,gThis.g.en.length);
 			gThis.g.pl.lv = 3;
 			gThis.g.pl.pn = false;
+			gThis.g.pl.dy = false;
+			gThis.g.pl.irs = false;
+			gThis.g.pl.c.a = 1;
+			gThis.g.lv = 0;
 		},
-		nd: function(){ //end the game; show leaderboards
+		end: function(){ //end the game; show leaderboards
 			if (gThis.g.st!="over") return false;
+			gThis.g.pl.s+=gThis.g.pl.cs; //add on score
 			gThis.g.st = "lboard"; //change to leaderboards
+			if ($_("#mg_lb_td").css('display')=='none') {
+				$_("#mg_lb_td").effects.fadeTo(100,500);
+				console.log("Fading in #mg_lb_td...");
+			}
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
+			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
+			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
+			
 		},
 		sbm: function(){ //submit leaderboards info
+		}, 
+		glb: function(){ //get leaderboards info
+			
 		}
 	};
 	this.init = function(){ //the main initialization function
@@ -825,7 +847,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (localStorage.SGkt) gThis.g.kt = parseFloat(localStorage.SGkt);
 		}
 		$_("#mg_lo_bt_cntnu").click(gThis.g.nl); //prepare for the next level, when clicked
-		$_("#mg_bo_bt_cntnu").click(gThis.g.nd); //end the level
+		$_("#mg_bo_bt_cntnu").click(gThis.g.end); //end the level
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
 		$get("mga3").volume = gThis.g.sn.e;
@@ -887,7 +909,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_4").html("&#x25B6");
 		}
 		$_("#mgpdbt_st").click(gThis.s.show);
-		$_("#mgpdbt_qt").click(gThis.g.qt);
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_lb_bt_qt").click(gThis.g.qt);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gThis.g.st){
 				case "interim":
@@ -1322,10 +1344,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.shadowColor = "rgba(0,0,0,0)";
 					}
 				}
-			} else if (gThis.g.st == "complete"){ //if the level is complete
-				if ($_("#mg_lo").css("display")=="none") $_("#mg_lo").effects.fadeTo(100,1000);
-			} else if (gThis.g.st == "over"){ //if the game is over
-				if ($_("#mg_go").css("display")=="none") $_("#mg_go").effects.fadeTo(100,1000);
+			} else if (gThis.g.st == "complete") {  //if the level is complete
+				if ($_("#mg_lo").css("display")=="none") 
+					$_("#mg_lo").effects.fadeTo(100,1000);
+			} else if (gThis.g.st == "over") { //if the game is over
+				if ($_("#mg_go").css("display")=="none") 
+					$_("#mg_go").effects.fadeTo(100,1000);
 			}
 			if (gThis.g.st == "interim" || gThis.g.st == "game" || gThis.g.st == "paused"){ //some additional last-millisecond rendering
 				//update the position of the pause button
@@ -1506,9 +1530,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 		} else if (gThis.g.st == "help"){
-			
 		} else if (gThis.g.st == "lboards"){
-			
+			if ($_("#mg_lb").css('display')=='none')
+				$_("#mg_lb").effects.fadeTo(100,500);
 		} //otherwise, there's nothing to do
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
