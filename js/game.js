@@ -347,9 +347,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			else return {r:"",v:true};
 		}
 	};
-	this.h = { //info for the appearance of the tutorial
-		
-	};
 	this.is = { //info for the image array
 		l: [], //list
 		a: function(loc){
@@ -606,10 +603,32 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
 			gThis.g.pl.s+=gThis.g.pl.cs; //reset scores
 			gThis.g.pl.cs=0;
-			gThis.g.st = "interim";
+			gThis.g.cSt("interim");
+		},
+		slb: function(){ //show the leaderboards normally
+			if ($_("#mg_lb_td").css('display')!='none')
+				$_("#mg_lb_td").effects.fadeTo(0,500);
+			$_("#mg_mmi").effects.fadeTo(0,500);
+			gThis.g.cSt("lboards");
+			if ($_("#mg_pd").css('display')!='none')
+				$_("#mg_pd").effects.fadeTo(0,500, function(){
+					$_("#mg_pd").css('display','none');
+				}); //hide pause div
+			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
+			$_("#mg_lb").effects.toHeight(204,500);
+		},
+		qlb: function(){ //quit leaderboards
+			if (gThis.g.sst=="paused") {
+				$_("#mg_pd").effects.fadeTo(100,500, function(){
+					gThis.g.rSt(); //revert state
+				});
+				$_("#mg_lb").effects.fadeTo(0,500, function(){
+					$_("#mg_lb").css('display','none');
+				});
+			} else gThis.g.qt(); //quit to main menu
 		},
 		qt: function(){ //quit to the main menu
-			gThis.g.st = "menu";
+			gThis.g.cSt("menu");
 			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
 			//hide other items, and reset values
 			$_("#mg_np").effects.fadeTo(0,500, function(){
@@ -622,7 +641,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				$_("#mg_lo").css('display','none');
 			});
 			$_("#mg_lb").effects.fadeTo(0,500, function(){
-				$_("#mg_lo").css('display','none');
+				$_("#mg_lb").css('display','none');
 			});
 			gThis.g.tb.h();
 			gThis.g.bg.v = true;
@@ -644,20 +663,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		end: function(){ //end the game; show leaderboards
 			if (gThis.g.st!="over") return false;
 			gThis.g.pl.s+=gThis.g.pl.cs; //add on score
-			gThis.g.st = "lboard"; //change to leaderboards
-			if ($_("#mg_lb_td").css('display')=='none') {
+			gThis.g.cSt("lboards"); //change to leaderboards
+			if ($_("#mg_lb_td").css('display')=='none')
 				$_("#mg_lb_td").effects.fadeTo(100,500);
-				console.log("Fading in #mg_lb_td...");
-			}
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
+			$_("#mg_lb").effects.toHeight(234,500);
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
 			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
 			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
-			
 		},
-		sbm: function(){ //submit leaderboards info
+		sbm: function(){ //submit leaderboards info to server
+			
 		}, 
-		glb: function(){ //get leaderboards info
+		glb: function(){ //get leaderboards info from server
 			
 		}
 	};
@@ -909,7 +927,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_4").html("&#x25B6");
 		}
 		$_("#mgpdbt_st").click(gThis.s.show);
-		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_lb_bt_qt").click(gThis.g.qt);
+		$_("#mgpdbt_qt, #mg_lo_bt_qt").click(gThis.g.qt);
+		$_("#mg_lb_bt_qt").click(gThis.g.qlb);
+		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(gThis.g.slb);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gThis.g.st){
 				case "interim":
@@ -1049,7 +1069,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				gThis.g.glc=false;
 				gThis.g.glct=false;
 				$_("#mg_lo_d span").html(gThis.g.lv);
-				gThis.g.st = "complete";
+				gThis.g.cSt("complete");
 				gThis.g.olv = gThis.g.lv;
 			} else if (gThis.g.glAat&&(new Date()).getTime()-gThis.g.glAat<1000)
 				gThis.g.glA = Math.pow(((new Date()).getTime()-gThis.g.glAat)/1000,2);
@@ -1272,7 +1292,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (gThis.g.gt-gThis.g.pl.rt <= 500) gThis.g.pl.c.a = Math.pow((gThis.g.gt-gThis.g.pl.rt)/500,2);
 					else {
 						if (gThis.g.pl.lv == 0){ //if we're out of lives, too, end the game
-							gThis.g.st = "over";
+							gThis.g.cSt("over");
 						} else {
 							gThis.g.pl.c.a = 1;
 							gThis.g.pl.irs = false;
@@ -1531,8 +1551,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		} else if (gThis.g.st == "help"){
 		} else if (gThis.g.st == "lboards"){
-			if ($_("#mg_lb").css('display')=='none')
-				$_("#mg_lb").effects.fadeTo(100,500);
 		} //otherwise, there's nothing to do
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
