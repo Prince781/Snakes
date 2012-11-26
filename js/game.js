@@ -667,7 +667,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if ($_("#mg_lb_td").css('display')=='none')
 				$_("#mg_lb_td").effects.fadeTo(100,500);
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
-			$_("#mg_lb").effects.toHeight(234,500);
+			$_("#mg_lb").effects.toHeight(254,500);
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
 			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
 			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
