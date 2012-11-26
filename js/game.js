@@ -616,6 +616,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}); //hide pause div
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
 			$_("#mg_lb").effects.toHeight(204,500);
+			gThis.g.glb(); //get leaderboards information
 		},
 		qlb: function(){ //quit leaderboards
 			if (gThis.g.sst=="paused") {
@@ -671,25 +672,49 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
 			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
 			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
-			gThis.g.sbm(gThis.g.pl.n, gThis.g.pl.s, gThis.g.lv); //submit
+			gThis.g.sbm(gThis.g.pl.n, gThis.g.pl.s, gThis.g.lv, gThis.g.glb); //submit
 		},
-		sbm: function(name, score, level){ //submit leaderboards info to server
+		sbm: function(name, score, level, onDone){ //submit leaderboards info to server
 			$_.req({
 				method: "post",
 				url: "submit.php",
 				headers: ["Content-Type", "application/x-www-form-urlencoded"],
 				data: { username: name, score: score, level: level },
 				readystatechange: function(ajax) {
-					if (ajax.readyState == 4) {
-						console.log("Successfully submitted leaderboards info.");
-						console.log("Response was:");
-						console.log(ajax.responseText);
-					}
+					if (ajax.readyState == 4) onDone();
 				}
 			});
 		}, 
 		glb: function(){ //get leaderboards info from server
-			
+			$_("table#mg_lb_lst tbody").clear(); //remove previous list
+			try {
+				$_.req({
+					method: "get",
+					url: "lb_list.php",
+					readystatechange: function(ajax) {
+						if (ajax.readyState != 4) return;
+						var rspXML = ajax.responseXML.documentElement;
+						var results = rspXML.getElementsByTagName("player");
+						for (var i=0; i<results.length; i++) {
+							var username, score, level;
+							if ($_.browser().agent == 1) {
+								//use .firstChild.nodeValue;
+								username = results[i].getElementsByTagName("username")[0].firstChild.nodeValue;
+								score = results[i].getElementsByTagName("score")[0].firstChild.nodeValue;
+								level = results[i].getElementsByTagName("level")[0].firstChild.nodeValue;
+							} else {
+								//use .textContent;
+								username = results[i].getElementsByTagName("username")[0].textContent;
+								score = results[i].getElementsByTagName("score")[0].textContent;
+								level = results[i].getElementsByTagName("level")[0].textContent;
+							}
+							$_("table#mg_lb_lst tbody").add("<tr>\n<td>"+username+"</td>\n<td>"+score+"</td>\n<td>"+level+"</td>\n</tr>\n");
+						}
+					}
+				});
+			} catch(e) {
+				console.log("Could not obtain list.");
+			}
 		}
 	};
 	this.init = function(){ //the main initialization function
