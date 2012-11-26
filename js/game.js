@@ -696,19 +696,21 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						var rspXML = ajax.responseXML.documentElement;
 						var results = rspXML.getElementsByTagName("player");
 						for (var i=0; i<results.length; i++) {
-							var username, score, level;
+							var username, score, level, rank;
 							if ($_.browser().agent == 1) {
 								//use .firstChild.nodeValue;
 								username = results[i].getElementsByTagName("username")[0].firstChild.nodeValue;
 								score = results[i].getElementsByTagName("score")[0].firstChild.nodeValue;
 								level = results[i].getElementsByTagName("level")[0].firstChild.nodeValue;
+								rank = results[i].getElementsByTagName("rank")[0].firstChild.nodeValue;
 							} else {
 								//use .textContent;
 								username = results[i].getElementsByTagName("username")[0].textContent;
 								score = results[i].getElementsByTagName("score")[0].textContent;
 								level = results[i].getElementsByTagName("level")[0].textContent;
+								rank = results[i].getElementsByTagName("rank")[0].textContent;
 							}
-							$_("table#mg_lb_lst tbody").add("<tr>\n<td>"+username+"</td>\n<td>"+score+"</td>\n<td>"+level+"</td>\n</tr>\n");
+							$_("table#mg_lb_lst tbody").add("<tr>\n<td>"+username+"</td>\n<td>"+score+"</td>\n<td>"+level+"</td>\n<td>"+rank+"</td>\n</tr>\n");
 						}
 					}
 				});

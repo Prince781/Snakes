@@ -12,7 +12,7 @@ A list of features to implement:
 * Fully challenging, aggressive and defensive enemy AI ( **done** )
 * Introductive tutorial and help menu ( **todo** )
 * Full settings menu and customization ( **done** )
-* Leaderboards ( **started** )
+* Leaderboards ( **done** )
 * Game state management (between pausing, playing, etc...) ( **done** )
 * More fluid/aesthetic Pause Menu UI ( **done** )
 * More fluid/aesthetic level transition menu ( **done** )

@@ -15,7 +15,8 @@ foreach ($xml_data->children() as $user) //get users from userlist
 			}
 $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
-$query = mysql_query("SELECT * FROM Snakes_Game") or die(mysql_error());
+$query = mysql_query("SELECT * FROM Snakes_Game ORDER BY Score DESC") or die(mysql_error());
+$rank = 1;
 echo "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?>\n";
 echo "<playerlist>\n";
 while ($row = mysql_fetch_array($query)) {
@@ -23,7 +24,9 @@ while ($row = mysql_fetch_array($query)) {
 	echo "\t\t<username>".$row["Username"]."</username>\n";
 	echo "\t\t<score>".$row["Score"]."</score>\n";
 	echo "\t\t<level>".$row["Level"]."</level>\n";
+	echo "\t\t<rank>$rank</rank>\n";
 	echo "\t</player>\n";
+	$rank++;
 }
 echo "</playerlist>\n";
 mysql_close($con);
