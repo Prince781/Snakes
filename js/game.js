@@ -644,6 +644,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_lb").effects.fadeTo(0,500, function(){
 				$_("#mg_lb").css('display','none');
 			});
+			$_("#mg_go").effects.fadeTo(0,500, function(){
+				$_("#mg_go").css('display','none');
+			});
 			gThis.g.tb.h();
 			gThis.g.bg.v = true;
 			gThis.g.bg.dt = 0;
@@ -967,7 +970,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_4").html("&#x25B6");
 		}
 		$_("#mgpdbt_st").click(gThis.s.show);
-		$_("#mgpdbt_qt, #mg_lo_bt_qt").click(gThis.g.qt);
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(gThis.g.qt);
 		$_("#mg_lb_bt_qt").click(gThis.g.qlb);
 		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(gThis.g.slb);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
