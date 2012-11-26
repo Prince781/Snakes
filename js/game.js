@@ -671,9 +671,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
 			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
 			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
+			gThis.g.sbm(gThis.g.pl.n, gThis.g.pl.s, gThis.g.lv); //submit
 		},
-		sbm: function(){ //submit leaderboards info to server
-			
+		sbm: function(name, score, level){ //submit leaderboards info to server
+			$_.req({
+				method: "post",
+				url: "submit.php",
+				headers: ["Content-Type", "application/x-www-form-urlencoded"],
+				data: { username: name, score: score, level: level },
+				readystatechange: function(ajax) {
+					if (ajax.readyState == 4)
+						console.log("Successfully submitted leaderboards info.");
+				}
+			});
 		}, 
 		glb: function(){ //get leaderboards info from server
 			
