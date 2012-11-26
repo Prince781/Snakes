@@ -20,7 +20,7 @@ foreach ($xml_data->children() as $user) //get users from userlist
 			}
 $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
-mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ($username, $score, $level)") or die(mysql_error());
+mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
 mysql_close($con);
 exit("Successfully updated information.");
 ?>

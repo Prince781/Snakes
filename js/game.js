@@ -680,8 +680,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				headers: ["Content-Type", "application/x-www-form-urlencoded"],
 				data: { username: name, score: score, level: level },
 				readystatechange: function(ajax) {
-					if (ajax.readyState == 4)
+					if (ajax.readyState == 4) {
 						console.log("Successfully submitted leaderboards info.");
+						console.log("Response was:");
+						console.log(ajax.responseText);
+					}
 				}
 			});
 		}, 
