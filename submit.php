@@ -13,6 +13,12 @@ if (isset($_POST["username"]) && isset($_POST["score"]) && isset($_POST["level"]
 //otherwise, perform
 if (preg_match("/\s/",$username.$score.$level) || preg_match("/\W/i",$username.$score.$level))
 	exit("Improper values given.");
+$mingoal = 0;
+for ($i=1; $i<=$level; $i++)
+	$mingoal += floor(5*(log(pow($i,0.6))+1));
+$maxgoal = $mingoal+floor(5*(log(pow($level-1,0.6))+1));
+if ($score < $mingoal || $score > $maxgoal)
+	exit("Your score is far too high for that level. Nice try. :P");
 $db_pass = "";
 $xml_data = simplexml_load_file("../../../server_info/server.conf.xml");
 foreach ($xml_data->children() as $user) //get users from userlist
