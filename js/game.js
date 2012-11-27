@@ -514,7 +514,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 			if (pc.length==0) return false;
-			var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); //the type of pickup
+			//var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); 
+			var pType = Mathf.rand(0,100)>80+(gThis.g.pl.lv*6)?2:(Mathf.rand(0,100)>90?1:0);  //the type of pickup
 			var rCl = Hue(Math.random());
 			gThis.g.pk.push({ //add the new pickup
 				p: Mathf.randVal(pc), //choose a random coordinate
