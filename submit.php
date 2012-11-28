@@ -9,16 +9,13 @@ if (isset($_POST["username"]) && isset($_POST["score"]) && isset($_POST["level"]
 	$level = $_POST["level"];
 } elseif (!$_SERVER['SERVER_ADDR'] == $_SERVER['REMOTE_ADDR'])
 	exit("Hmm....so you thought you could hack using this method?");
-  else exit("There's nothing to see here...");
+else exit("There's nothing to see here...");
 //otherwise, perform
 if (preg_match("/\s/",$username.$score.$level) || preg_match("/\W/i",$username.$score.$level))
 	exit("Improper values given.");
-$mingoal = 0;
-for ($i=1; $i<=$level; $i++)
-	$mingoal += floor(5*(log(pow($i,0.6))+1));
-$maxgoal = $mingoal+floor(5*(log(pow($level-1,0.6))+1));
-if ($score < $mingoal || $score > $maxgoal)
-	exit("Your score is far too high for that level. Nice try. :P");
+if (isset($_SESSION['lastaccess']) && time()-$_SESSION['lastaccess'] < 5000)
+	exit("Blocking overloading attempt.");
+else $_SESSION['lastaccess'] = time();
 $db_pass = "";
 $xml_data = simplexml_load_file("../../../server_info/server.conf.xml");
 foreach ($xml_data->children() as $user) //get users from userlist
@@ -30,7 +27,12 @@ foreach ($xml_data->children() as $user) //get users from userlist
 			}
 $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
-mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
+if (isset($_SESSION['Username']) && $_SESSION['Username']==$username)
+	mysql_quert("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username'") or die(mysql_error());
+else if (!isset($_SESSION['Username']){
+	mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
+	$_SESSION['Username'] = $username;
+}
 mysql_close($con);
 exit("Successfully updated information.");
 ?>
