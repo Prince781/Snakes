@@ -29,7 +29,7 @@ $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
 if (isset($_SESSION['Username']) && $_SESSION['Username']==$username)
 	mysql_quert("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username'") or die(mysql_error());
-else if (!isset($_SESSION['Username']){
+elseif (!isset($_SESSION['Username']) {
 	mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
 	$_SESSION['Username'] = $username;
 }
