@@ -11,6 +11,7 @@ if (isset($_POST["username"]) && isset($_POST["score"]) && isset($_POST["level"]
 	exit("Hmm....so you thought you could hack using this method?");
 else exit("There's nothing to see here...");
 //otherwise, perform
+session_start(); //start or resume session
 if (preg_match("/\s/",$username.$score.$level) || preg_match("/\W/i",$username.$score.$level))
 	exit("Improper values given.");
 if (isset($_SESSION['lastaccess']) && time()-$_SESSION['lastaccess'] < 5000)
@@ -28,7 +29,7 @@ foreach ($xml_data->children() as $user) //get users from userlist
 $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
 if (isset($_SESSION['Username']) && $_SESSION['Username']==$username)
-	mysql_quert("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username'") or die(mysql_error());
+	mysql_quert("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username' AND Score<$score") or die(mysql_error());
 elseif (!isset($_SESSION['Username'])) {
 	mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
 	$_SESSION['Username'] = $username;
