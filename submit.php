@@ -17,6 +17,7 @@ if (preg_match("/\s/",$username.$score.$level) || preg_match("/\W/i",$username.$
 if (isset($_SESSION['lastaccess']) && time()-$_SESSION['lastaccess'] < 5000)
 	exit("Blocking overloading attempt.");
 else $_SESSION['lastaccess'] = time();
+
 $db_pass = "";
 $xml_data = simplexml_load_file("../../../server_info/server.conf.xml");
 foreach ($xml_data->children() as $user) //get users from userlist
@@ -29,7 +30,7 @@ foreach ($xml_data->children() as $user) //get users from userlist
 $con = mysql_connect("localhost", "bumbuuco_sendata", $db_pass);
 mysql_select_db("bumbuuco_miscInfo", $con) or die("Unable to select bumbuuco_miscInfo");
 if (isset($_SESSION['Username']) && $_SESSION['Username']==$username)
-	mysql_quert("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username' AND Score<$score") or die(mysql_error());
+	mysql_query("UPDATE Snakes_Game SET Score='$score', Level='$level' WHERE Username='$username' AND Score<$score") or die(mysql_error());
 elseif (!isset($_SESSION['Username'])) {
 	mysql_query("INSERT INTO Snakes_Game (Username, Score, Level) VALUES ('$username', '$score', '$level')") or die(mysql_error());
 	$_SESSION['Username'] = $username;
