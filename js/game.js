@@ -1097,7 +1097,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "complete" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
 			if (gThis.g.st == "game") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
-			if (gThis.g.pl.cs/20==gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
+			if (gThis.g.pl.cs/20>=gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
 				gThis.g.glc=true;
 				gThis.g.glct=(new Date()).getTime(); //set time for goal completion
 			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000 && gThis.g.st!=="complete")
@@ -1594,12 +1594,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 		} else if (gThis.g.st == "help"){
-		} else if (gThis.g.st == "lboards"){
-		} //otherwise, there's nothing to do
+		}
+		/* else if (gThis.g.st == "lboards"){
+		} */ //otherwise, there's nothing to do
 		$get("mga").volume = gThis.g.sn.a;
 		$get("mga2").volume = gThis.g.sn.a;
 		$get("mga3").volume = gThis.g.sn.e;
-		if (Storage){ //save data
+		if (Storage) { //save data
 			localStorage.SGsnda = gThis.g.sn.a;
 			localStorage.SGsnde = gThis.g.sn.e;
 			localStorage.SGpn = gThis.g.pl.n;
