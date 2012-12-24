@@ -16,6 +16,7 @@ A list of features to implement:
 * Game state management (between pausing, playing, etc...) ( **done** )
 * More fluid/aesthetic Pause Menu UI ( **done** )
 * More fluid/aesthetic level transition menu ( **done** )
-* Music?
+* Multiplayer gameplay ( **todo** )
+* Music ( **todo** )
 * More sound effects?
 * Level barriers/walls?
