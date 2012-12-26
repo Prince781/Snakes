@@ -16,15 +16,15 @@
 		</div>
 		<div id="main_mid">
 			<div id="main_game">
-				<audio id="mga" preload>
+				<audio id="mgAudio_ambience" preload loop>
 					<source src="snd/str_ambience.ogg" type="audio/ogg">
 					<source src="snd/str_ambience.mp3" type="audio/mpeg">
 				</audio>
-				<audio id="mga2" preload>
+				<audio id="mgAudio_music" preload loop>
 					<source src="snd/str_ambience.ogg" type="audio/ogg">
 					<source src="snd/str_ambience.mp3" type="audio/mpeg">
 				</audio>
-				<audio id="mga3" preload>
+				<audio id="mgAudio_effects" preload>
 					<source src="snd/pickup.ogg" type="audio/ogg">
 					<source src="snd/pickup.mp3" type="audio/mpeg">
 				</audio>
@@ -73,33 +73,36 @@
 						<div id="mg_sd_cb">Close</div>
 						<div id="mg_sd_t">Settings</div>
 						<div class="mg_sd_s" id="mg_sd_1">
-							<div id="md_sd_inun_ntf">
-								<img src="img/md_sd_inun_ntf_pnt.png">
+							<div id="mg_sd_inun_ntf">
+								<img src="img/mg_sd_inun_ntf_pnt.png">
 								<div></div>
 								<span></span>
 							</div>
 							<div class="mg_sd_lb">Name</div>
-							<input id="mg_sd_inun" class="md_sd_in" type="text">
+							<input id="mg_sd_inun" class="mg_sd_in" type="text">
 							<div class="mg_sd_lb" style="margin-top: 10px;">Color</div>
 							<div id="mg_sd_cl">
 								<div id="mg_sd_cl_l">
 								</div>
 								<div id="mg_sd_cl_r">
 									<div class="mg_sd_cl_h">
-										<div class="md_sd_sll">r</div>
-										<div class="md_sd_sl" id="md_sd_sl_cr" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+										<div class="mg_sd_sll">r</div>
+										<div class="mg_sd_sl" id="mg_sd_sl_cr" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 									</div>
 									<div class="mg_sd_cl_h">
-										<div class="md_sd_sll">g</div>
-										<div class="md_sd_sl" id="md_sd_sl_cg" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+										<div class="mg_sd_sll">g</div>
+										<div class="mg_sd_sl" id="mg_sd_sl_cg" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 									</div>
 									<div class="mg_sd_cl_h">
-										<div class="md_sd_sll">b</div>
-										<div class="md_sd_sl" id="md_sd_sl_cb" style="margin-top: 7px;"><div class="md_sd_slh"></div></div>
+										<div class="mg_sd_sll">b</div>
+										<div class="mg_sd_sl" id="mg_sd_sl_cb" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 									</div>
 								</div>
 							</div>
-							<div class="mg_sd_lb" style="margin-top: 10px;">Controls</div>
+							<div class="mg_sd_lb" style="margin-top: 10px;">Primary Controls</div>
+							<div class="mg_sd_lb_descr">
+								When playing in multiplayer mode, secondary controls will be used for the opposing player.
+							</div>
 							<div id="mg_sd_cn">
 								<div class="mg_sd_cnk" id="mg_sd_cnk_1" style="margin-left: auto; margin-right: auto;">W</div>
 								<div class="mg_sd_cnk" id="mg_sd_cnk_2" style="margin-left: 47px; float: left; clear: none;">A</div>
@@ -112,16 +115,33 @@
 							</div>
 							<div class="mg_sd_lb" style="margin-top: 10px;">Volume</div>
 							<div class="mg_sd_snh">
-								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Ambience</div>
-								<div class="md_sd_sl" type="mg_snd" id="mg_sd_snda" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+								<div class="mg_sd_sll" style="text-indent: 4px;">Ambience</div>
+								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_ambience" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
 							</div>
 							<div class="mg_sd_snh">
-								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Music</div>
-								<div class="md_sd_sl" type="mg_snd" id="mg_sd_sndm" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+								<div class="mg_sd_sll" style="text-indent: 4px;">Music</div>
+								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_music" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
 							</div>
 							<div class="mg_sd_snh">
-								<div class="md_sd_sll" style="text-indent: 4px; font-size: 9px; color: #090909;">Effects</div>
-								<div class="md_sd_sl" type="mg_snd" id="mg_sd_snde" style="margin-top: 7px; width: 200px;"><div class="md_sd_slh"></div></div>
+								<div class="mg_sd_sll" style="text-indent: 4px;">Effects</div>
+								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_effects" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
+							</div>
+						</div>
+						<div class="mg_sd_s" id="mg_sd_2">
+							<div class="mg_sd_lb">Player 2's Name</div>
+							<input id="mg_sd_inun_2" class="mg_sd_in" type="text">
+							<div class="mg_sd_lb" style="margin-top: 10px;">Gameplay</div>
+							<div class="mg_sd_lblh">
+								<div class="mg_sd_lbl">Multiplayer (Local)</div>
+								<div class="mg_sd_chkbx" id="mg_sd_chkbx_ismultiplayer"></div>
+							</div>
+							<div class="mg_sd_lblh">
+								<div class="mg_sd_lbl">Special Effects</div>
+								<div class="mg_sd_chkbx" id="mg_sd_chkbx_specialeffects"></div>
+							</div>
+							<div class="mg_sd_lblh">
+								<div class="mg_sd_lbl">Hints</div>
+								<div class="mg_sd_chkbx" id="mg_sd_chkbx_hints"></div>
 							</div>
 						</div>
 					</div>

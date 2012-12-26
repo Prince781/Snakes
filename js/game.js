@@ -14,6 +14,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	var gThis = this;
 	var intervs = []; //the intervals, used for looping all functions. Specifically a private variable for ease
 	var cx = {}; //additional ScriJe "2d+" context for canvas
+	var g = {};
 	function Hue(hue){ //hue=0->1
 		//generates a hsv color, with saturation and value at 1
 		var h=hue*360;
@@ -53,34 +54,499 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				y: bd.os().y1+(c.y*10)
 			};
 		},
-		invalid: function(px,py){ //determine whether or not the point is invalid
-			var validity = true; //the validity, or invalidity
-			for (var a=0; a<gThis.mm.en.length; a++){
-				for (var b=0; b<gThis.mm.en[a].p.length; b++){
-					if (gThis.mm.en[a].p[b].x==px&&gThis.mm.en[a].p[b].y==py){
-						validity = false;
-						break;
+	};
+	this.cnv = {}; //the game's canvas. MUST be defined before initialization
+	this.stdiv = {}; //the game's "Settings" <div> element. MUST be defined before initialization
+	this.mmdiv = {}; //the game's "Main Menu" <div> element. MUST be defined before initialization
+	var gen = { //list of "general" variables, such as game states and audio
+		/*******************************************************************
+		* The current state of the game. Can be one of the following:
+		* menu --> The main menu is visible.
+		* game --> The game is playing, and current visible.
+		* paused --> The game is paused, and currently visible.
+		* interim --> A new level has loaded, but the player has not given
+		* 			  input yet.
+		* complete --> The level has ended, and there is a prompt for the 
+		* 			   user to continue.
+		* over --> The game has finished and is currently visible, as well
+		* 		   as the score upload prompt.
+		* help --> The help menu is visible.
+		* lboards --> The leaderboards are currently visible.
+		********************************************************************/
+		st: "menu", //the current state of the game
+		sst: "menu",
+		/* the previous state of the game. This is especially useful for transitions between
+		   pause menus and back to gameplay */
+		snd: {
+			ambience: {
+				vol: 0.3,
+				on: false
+			},
+			music: {
+				vol: 0.5,
+				on: false
+			},
+			effects: {
+				vol: 0.7,
+				on: false
+			}
+		}
+	};
+	var mm = { //the main components of the main menu, when the game has not been started. Has a similar structure to this.g
+		str: (new Date()).getTime(), //the starting time of the appearance of the main menu
+		en: [] //the array of enemies, except as passive creatures
+		/*
+		am: { //the sound array, containing info for ambience
+			is: false, //whether or not we have background sound playing already
+			pl: function(){ //function to begin playing
+				if (mm.am.is) return false; //if background sound is already initialized
+				mm.am.is = true;
+				var aud = document.getElementById("mgAudio_ambience"); //the game's main audio component
+				var aud2 = document.getElementById("mgAudio_music"); //the second audio component (used for looping)
+				//aud.volume = 0.2;
+				//aud2.volume = 0.2;
+				aud.play();
+				aud.addEventListener("ended", function(){
+					aud.currentTime = 0;
+					if (gen.st=="menu")aud2.play();
+				}, false);
+				aud2.addEventListener("ended", function(){
+					aud2.currentTime = 0;
+					if (gen.st=="menu")aud.play();
+				}, false);
+			}
+		}
+		*/
+	};
+	var s = { //info for the appearance of the settings menu
+		v: false, //the visibility
+		show: function(){
+			if (s.v) return false;
+			s.v = true;
+			$_("#mg_sd").effects.fadeTo(100, 500);
+			$_("#mg_sd").effects.toPosition("margin-left", -1, 500);
+			$_("#mg_sd_inun").value(g.pl.n);
+		},
+		hide: function(){
+			var rs = gThis.un.chk($_("#mg_sd_inun").value());
+			if (!s.v) return false;
+			else if (!rs.v){
+				s.ntfy(rs.r);
+				return false;
+			}
+			$_("#mg_sd").effects.fadeTo(0, 500);
+			$_("#mg_sd").effects.toPosition("margin-left", -$_("#mg_sd").offsetWidth(), 500, function(){
+				s.v = false;
+			});
+			g.pl.n = $_("#mg_sd_inun").value(); //set the game player's name
+		},
+		ntfy: function(msg){ //show notification
+			if (s.t[0]) clearTimeout(s.t[0]);
+			$_("#mg_sd_inun_ntf span").html(msg);
+			$_("#mg_sd_inun_ntf").effects.fadeTo(100,400);
+			s.t[0] = setTimeout(function(){
+				$_("#mg_sd_inun_ntf").effects.fadeTo(0,400);
+			},3000);
+		},
+		t: [] //array of timers
+	};
+	this.un = { //info for username
+		chk: function(username){ //validation
+			if (!username||typeof username=="undefined"||username=="")
+				return {r:"The text field is currently blank. Please provide a username.",v:false};
+			else if (username.length<3)
+				return {r:"Too short. Your username should be at least 3 characters.",v:false};
+			else if (username.length>29)
+				return {r:"Your username is too long. Please shorten it to under 30 characters.",v:false};
+			else if (/\W/gi.test(username))
+				return {r: (/\s/gi.test(username) ? "Please remove all spaces from your username." : "Only alphanumeric characters are permitted."),v:false};
+			else return {r:"",v:true};
+		}
+	};
+	this.is = { //info for the image array
+		l: [], //list
+		a: function(loc){
+			var img = new Image();
+			img.src = loc;
+			gThis.is.l.push(img);
+		}
+	};
+	g = { //the main components of the game, when started
+		pst: "single", //the play style of the game: single or multiplayer
+		cSt: function(s){ //function to change the current game state
+			if (s=="paused"){
+				g.pt=(new Date()).getTime();
+				$_("#mg_pd").effects.fadeTo(100,300);
+			} else if (s=="game"&&gen.st=="paused"){
+				g.rt=(new Date()).getTime();
+				g.to += g.rt-g.pt;
+				$_("#mg_pd").effects.fadeTo(0,300);
+			}
+			gen.sst = gen.st;
+			gen.st = s;
+		},
+		rSt: function(){ //function to revert the game state to the previous saved state
+			var rv = gen.sst;
+			if (rv=="paused"){
+				g.pt=(new Date()).getTime();
+				$_("#mg_pd").effects.fadeTo(100,300);
+			} else if (rv=="game"&&gen.st=="paused"){
+				g.rt=(new Date()).getTime();
+				g.to += g.rt-g.pt;
+				$_("#mg_pd").effects.fadeTo(0,300);
+			}
+			gen.sst = gen.st;
+			gen.st = rv;
+			return rv;
+		},
+		bg: { //the array for the background gradient
+			c: { //the list of colors
+				0: $_.newColor(21,79,90,0.9),
+				0.1: $_.newColor(21,79,90,0.6),
+				0.8: $_.newColor(21,79,90,0)
+			},
+			o: 0, //the overall opacity of the radial gradient
+			v: true, //whether or not it is visible
+			dt: 0 //disappearance time
+		},
+		tb: { //the array for the top bar
+			v: false, //visibility
+			an: "", //current animation
+			at: 0, //animation timestamp
+			p: { //position
+				x: 0,
+				y: -24
+			},
+			np: { //new position
+				x: 0,
+				y: -24
+			},
+			to: { //text offset
+				y: 6
+			},
+			d: { //dimensions
+				w: 0, //width
+				h: 24, //height
+			},
+			c: { //colors
+				bg: $_.newColor(32,45,52,0) //background color
+			},
+			nc: { //new colors
+				bg: $_.newColor(32,45,52,0)
+			},
+			s: function(){ //show
+				if (g.tb.an=="show") return;
+				g.tb.an = "show";
+				g.tb.np.y = 0;
+				g.tb.nc.bg.a = 0.4;
+				g.tb.at = (new Date()).getTime();
+			},
+			h: function(){ //hide
+				if (g.tb.an=="hide") return;
+				g.tb.an = "hide";
+				g.tb.np.y = -24;
+				g.tb.nc.bg.a = 0;
+				g.tb.at = (new Date()).getTime();
+			}
+		},
+		pg: { //info for the progress bar
+			d: { //dimensions
+				w: 140,
+				h: 10
+			},
+			p: { //position
+				x: 0, //defined at init
+				y: 0  //defined at init
+			},
+			c: $_.newColor(54,164,204,0.8),
+			ib: { //inside bar
+				d: {w:0}, //width set at init
+				nd: {w:0} //set at init
+			},
+			an: { //animation values
+				iat: false,
+				iit: false
+			}
+		},
+		a: { //list of instanced animations
+			ls:[],
+			a: function(px,py,t,c){ //add
+				/*****
+				 * types:
+				 * 0 - sparkle effect
+				******/
+				g.a.ls.push({
+					int: 0, //initial time
+					p: {x:px,y:py}, //position
+					t: ([1][t]?t:0), //type
+					cl: (typeof c!="object"?{r:0,g:0,b:0,a:1}:c)
+				});
+			}
+		},
+		lv: 0, //the current game level
+		olv: 0, //the original game level, prior to initialization
+		gl: 0, //goal for the current level
+		glc: false, //whether or not the goal has been completed
+		glct: 0, //the time of goal completion
+		pl: {}, //the player (defined during initialization)
+		pll: [], //the player list (defined during initialization)
+		en: [], //the array of enemies
+		kt: 0, //the type of key input used. 0 for WASD, and 1 for arrow keys
+		pk: [], //the list of pickups
+		lpa: 0, //the last time a pickup was added
+		ap: function(){ //function to add a new pickup to the game
+			var pc = [];
+			for (var i=1; i<bd.gd().x-1; i++){
+				for (var j=1; j<bd.gd().y-1; j++){
+					var conflict = false;
+					for (var k=0; k<g.en.length; k++){
+						for (var l=0; l<g.en[k].p.length; l++)
+							conflict = (g.en[k].p[l].x == i && g.en[k].p[l].y == j ? true : conflict);
+					}
+					for (var k=0; k<g.pl.p.length; k++)
+						conflict = (g.pl.p[k].x == i && g.pl.p[k].y == j ? true : conflict);
+					for (var k=0; k<g.pk.length; k++)
+						conflict = (g.pk[k].p.x == i && g.pk[k].p.y == j ? true : conflict);
+					if (!conflict) pc.push({x:i,y:j}); //if the coordinate is good
+				}
+			}
+			if (pc.length==0) return false;
+			//var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); 
+			var pType = Mathf.rand(0,100)>80+(g.pl.lv*6)?2:(Mathf.rand(0,100)>90?1:0);  //the type of pickup
+			var rCl = Hue(Math.random());
+			g.pk.push({ //add the new pickup
+				p: Mathf.randVal(pc), //choose a random coordinate
+				c: { //add a new color
+					r: rCl.r,
+					g: rCl.g,
+					b: rCl.b,
+					a: 0,
+					oa: 0 //old opacity
+				},
+				i: g.gt, //the time of instantiation
+				f: false, //whether or not the item is fading
+				ft: 0, //the time of fading
+				t: pType
+				/********************
+				 * Pickup types are:
+				 * 0 - normal
+				 * 1 - poison
+				 * 2 - life
+				*********************/
+			});
+			return true;
+		},
+		bt: [ //the button array; used to store all current canvas-drawn UI elements conveniently
+		/************************************************
+		 * Five basic array keys:
+		 * n --> (name) useful label
+		 * w --> (width)
+		 * h --> (height)
+		 * p --> (position) object containing x and y
+		 * c --> (color) stores rgba data
+		 * e --> (event) list of interactive functions
+		 ************************************************/
+			{
+				n: "pauseButton",
+				w: 40,
+				h: 40,
+				p: {
+					x: 0, //to be later defined
+					y: 0  //in an additional function...
+				},
+				c: {
+					r: 24,
+					g: 24,
+					b: 24,
+					a: 0.6
+				},
+				r: false, //whether or not the button is to the right
+				m: false, //whether or not the button is moving
+				mt: 0, //the start of the button moving
+				mo: false, //whether or not the mouse is over the button
+				sr: 20, //the shadow radius
+				nsr: 20, //the new shadow radius
+				srt: 0,  //the shadow radius time
+				osr: 20, //the old shadow radius
+				e: {
+					ismouseover: false,
+					mouseover: function(){
+						g.bt[0].srt = (new Date()).getTime();
+						g.bt[0].osr = g.bt[0].sr;
+						g.bt[0].nsr = 30;
+						g.bt[0].e.ismouseover = true;
+					},
+					mouseout: function(){
+						g.bt[0].srt = (new Date()).getTime();
+						g.bt[0].osr = g.bt[0].sr;
+						g.bt[0].nsr = 20;
+						g.bt[0].e.ismouseover = false;
+					},
+					click: function(){
+						if ((gen.st == "game" || gen.st == "paused")&&!s.v) g.cSt(gen.st=="game" ? "paused" : "game");
 					}
 				}
 			}
-			for (var a=0; a<gThis.g.en.length; a++){
-				for (var b=0; b<gThis.g.en[a].p.length; b++){
-					if (gThis.g.en[a].p[b].x==px&&gThis.g.en[a].p[b].y==py){
-						validity = false;
-						break;
-					}
+		],
+		gt: 0, //the game time interval
+		pt: 0, //the time of pausing
+		rt: 0, //the time of resuming
+		to: 0, //the time offset (current time - to)
+		glA: 1, //the global alpha value
+		glAat: 0, //time of global alpha animation start time
+		nl: function(){ //make preparations for the next level
+			if (gen.st=="interim") return false;
+			if (gen.st=="complete")
+				$_("#mg_lo").effects.fadeTo(0,1000);
+			g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
+			g.pl.s+=g.pl.cs; //reset scores
+			g.pl.cs=0;
+			g.cSt("interim");
+		},
+		slb: function(){ //show the leaderboards normally
+			if ($_("#mg_lb_td").css('display')!='none')
+				$_("#mg_lb_td").effects.fadeTo(0,500);
+			$_("#mg_mmi").effects.fadeTo(0,500);
+			g.cSt("lboards");
+			if ($_("#mg_pd").css('display')!='none')
+				$_("#mg_pd").effects.fadeTo(0,500, function(){
+					$_("#mg_pd").css('display','none');
+				}); //hide pause div
+			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
+			$_("#mg_lb").effects.toHeight(204,500);
+			g.glb(); //get leaderboards information
+		},
+		qlb: function(){ //quit leaderboards
+			if (gen.sst=="paused") {
+				$_("#mg_pd").effects.fadeTo(100,500, function(){
+					g.rSt(); //revert state
+				});
+				$_("#mg_lb").effects.fadeTo(0,500, function(){
+					$_("#mg_lb").css('display','none');
+				});
+			} else g.qt(); //quit to main menu
+		},
+		qt: function(){ //quit to the main menu
+			g.cSt("menu");
+			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
+			//hide other items, and reset values
+			$_("#mg_np").effects.fadeTo(0,500, function(){
+				$_("#mg_np").css('display','none');
+			});
+			$_("#mg_pd").effects.fadeTo(0,500, function(){
+				$_("#mg_pd").css('display','none');
+			});
+			$_("#mg_lo").effects.fadeTo(0,500, function(){
+				$_("#mg_lo").css('display','none');
+			});
+			$_("#mg_lb").effects.fadeTo(0,500, function(){
+				$_("#mg_lb").css('display','none');
+			});
+			$_("#mg_go").effects.fadeTo(0,500, function(){
+				$_("#mg_go").css('display','none');
+			});
+			g.tb.h();
+			g.bg.v = true;
+			g.bg.dt = 0;
+			mm.str = (new Date()).getTime(); //reset visibility of radial gradient
+			g.pl.s = 0;
+			g.pl.cs = 0;
+			g.pl.hm = false; //change has_moved attribute
+			g.pl.p.splice(0,g.pl.p.length);
+			g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
+			g.en.splice(0,g.en.length);
+			g.pl.lv = 3;
+			g.pl.pn = false;
+			g.pl.dy = false;
+			g.pl.irs = false;
+			g.pl.c.a = 1;
+			g.lv = 0;
+		},
+		end: function(){ //end the game; show leaderboards
+			if (gen.st!="over") return false;
+			g.pl.s+=g.pl.cs; //add on score
+			g.cSt("lboards"); //change to leaderboards
+			if ($_("#mg_lb_td").css('display')=='none')
+				$_("#mg_lb_td").effects.fadeTo(100,500);
+			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
+			$_("#mg_lb").effects.toHeight(254,500);
+			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
+			$_("#mg_lb_td_top span").html(g.pl.n);
+			$_("#mg_lb_td_btm span").html(g.pl.s);
+			g.sbm(g.pl.n, g.pl.s, g.lv, g.glb); //submit
+		},
+		sbm: function(name, score, level, onDone){ //submit leaderboards info to server
+			$_.req({
+				method: "post",
+				url: "submit.php",
+				headers: ["Content-Type", "application/x-www-form-urlencoded"],
+				data: { username: name, score: score, level: level },
+				readystatechange: function(ajax) {
+					if (ajax.readyState == 4) onDone();
 				}
+			});
+		}, 
+		glb: function(){ //get leaderboards info from server
+			$_("table#mg_lb_lst tbody").clear(); //remove previous list
+			try {
+				$_.req({
+					method: "get",
+					url: "lb_list.php",
+					readystatechange: function(ajax) {
+						if (ajax.readyState != 4) return;
+						var rspXML = ajax.responseXML.documentElement;
+						var results = rspXML.getElementsByTagName("player");
+						for (var i=0; i<results.length; i++) {
+							var username, score, level, rank;
+							if ($_.browser().agent == 1) {
+								//use .firstChild.nodeValue;
+								username = results[i].getElementsByTagName("username")[0].firstChild.nodeValue;
+								score = results[i].getElementsByTagName("score")[0].firstChild.nodeValue;
+								level = results[i].getElementsByTagName("level")[0].firstChild.nodeValue;
+								rank = results[i].getElementsByTagName("rank")[0].firstChild.nodeValue;
+							} else {
+								//use .textContent;
+								username = results[i].getElementsByTagName("username")[0].textContent;
+								score = results[i].getElementsByTagName("score")[0].textContent;
+								level = results[i].getElementsByTagName("level")[0].textContent;
+								rank = results[i].getElementsByTagName("rank")[0].textContent;
+							}
+							$_("table#mg_lb_lst tbody").add("<tr>\n<td>"+username+"</td>\n<td>"+score+"</td>\n<td>"+level+"</td>\n<td>"+rank+"</td>\n</tr>\n");
+						}
+					}
+				});
+			} catch(e) {
+				console.log("Could not obtain list.");
 			}
-			for (var a=0; a<gThis.g.pl.p.length; a++){
-				if (gThis.g.pl.p[a].x==px&&gThis.g.pl.p[a].y==py){
+		}
+	};
+	bd.invalid = function(px,py){ //determine whether or not the point is invalid
+		var validity = true; //the validity, or invalidity
+		for (var a=0; a<mm.en.length; a++){
+			for (var b=0; b<mm.en[a].p.length; b++){
+				if (mm.en[a].p[b].x==px&&mm.en[a].p[b].y==py){
 					validity = false;
 					break;
 				}
 			}
-			if (px<0||px>bd.gd().x||py<0||py>bd.gd().y) validity = false;
-			if (typeof px=="undefined"||typeof py=="undefined") validity = false;
-			return !validity;
 		}
+		for (var a=0; a<g.en.length; a++){
+			for (var b=0; b<g.en[a].p.length; b++){
+				if (g.en[a].p[b].x==px&&g.en[a].p[b].y==py){
+					validity = false;
+					break;
+				}
+			}
+		}
+		for (var a=0; a<g.pl.p.length; a++){
+			if (g.pl.p[a].x==px&&g.pl.p[a].y==py){
+				validity = false;
+				break;
+			}
+		}
+		if (px<0||px>bd.gd().x||py<0||py>bd.gd().y) validity = false;
+		if (typeof px=="undefined"||typeof py=="undefined") validity = false;
+		return !validity;
 	};
 	var ai = { //various artificial intelligence functions
 		createEnem: function(){
@@ -93,7 +559,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			******/
 			var len = 10;
 			var diff = 0.1;
-			var rClr=Hue(gThis.g.st=="interim"||gThis.g.st=="game"?Mathf.randVal([Math.random()*(gThis.g.pl.c.h*(1-diff)),gThis.g.pl.c.h*(1+diff)+Math.random()*(1-gThis.g.pl.c.h)]):Math.random());
+			var rClr=Hue(gen.st=="interim"||gen.st=="game"?Mathf.randVal([Math.random()*(g.pl.c.h*(1-diff)),g.pl.c.h*(1+diff)+Math.random()*(1-g.pl.c.h)]):Math.random());
 			return { //return a new object, as a game enemy
 				c: { //the array of colors (r, g, b, a)
 					r: rClr.r,
@@ -121,7 +587,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					*/
 					return pnts;
 				})(),
-				lu: 0,//(gThis.g.st == "game" ? gThis.g.gt : (new Date()).getTime()),
+				lu: 0,//(gen.st == "game" ? g.gt : (new Date()).getTime()),
 				dy: false, //whether or not the enemy is dying
 				dc: 0,
 				l: len, //the length of the enemy
@@ -144,13 +610,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		nextDir: function(c){ //the modified version of ai.nextDir
 			var pkd = [];
 			//calculate the nearest distance of a pickup
-			for (var i=0; i<gThis.g.pk.length; i++)
-				if (gThis.g.pk[i].t!=1&&!gThis.g.pk[i].f) //avoid poison
+			for (var i=0; i<g.pk.length; i++)
+				if (g.pk[i].t!=1&&!g.pk[i].f) //avoid poison
 					pkd.push({
-						d: Math.sqrt(Math.pow(gThis.g.pk[i].p.x-c.p[0].x,2)+Math.pow(gThis.g.pk[i].p.y-c.p[0].y,2)),
+						d: Math.sqrt(Math.pow(g.pk[i].p.x-c.p[0].x,2)+Math.pow(g.pk[i].p.y-c.p[0].y,2)),
 						p: {
-							x: gThis.g.pk[i].p.x,
-							y: gThis.g.pk[i].p.y
+							x: g.pk[i].p.x,
+							y: g.pk[i].p.y
 						},
 						i: i
 					});
@@ -201,9 +667,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			 * 1 - aggressive; will try to limit moves of player
 			 * 2 - economical; will try to find shortest available path to nearest pickups
 			*************/
-			var fp = typeof gThis.g.pl.p[0] == "undefined" ? false : gThis.g.pl.p[0];
-			var dir = gThis.g.pl.d;
-			mode=gThis.g.st=="game"?(npkd?2:((gThis.g.pl.irs||gThis.g.pl.dy||!fp)?0:1)):0;
+			var fp = typeof g.pl.p[0] == "undefined" ? false : g.pl.p[0];
+			var dir = g.pl.d;
+			mode=gen.st=="game"?(npkd?2:((g.pl.irs||g.pl.dy||!fp)?0:1)):0;
 			c.m = mode;
 			//console.log("Current mode: "+["default","aggressive","economical"][c.m]);
 			var nDir = -1;
@@ -275,459 +741,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			return nDir;
 		}
 	};
-	this.cnv = {}; //the game's canvas. MUST be defined before initialization
-	this.stdiv = {}; //the game's "Settings" <div> element. MUST be defined before initialization
-	this.mmdiv = {}; //the game's "Main Menu" <div> element. MUST be defined before initialization
-	this.mm = { //the main components of the main menu, when the game has not been started. Has a similar structure to this.g
-		str: (new Date()).getTime(), //the starting time of the appearance of the main menu
-		en: [], //the array of enemies, except as passive creatures
-		am: { //the sound array, containing info for ambience
-			is: false, //whether or not we have background sound playing already
-			pl: function(){ //function to begin playing
-				if (gThis.mm.am.is) return false; //if background sound is already initialized
-				gThis.mm.am.is = true;
-				var aud = document.getElementById("mga"); //the game's main audio component
-				var aud2 = document.getElementById("mga2"); //the second audio component (used for looping)
-				//aud.volume = 0.2;
-				//aud2.volume = 0.2;
-				aud.play();
-				aud.addEventListener("ended", function(){
-					aud.currentTime = 0;
-					if (gThis.g.st=="menu")aud2.play();
-				}, false);
-				aud2.addEventListener("ended", function(){
-					aud2.currentTime = 0;
-					if (gThis.g.st=="menu")aud.play();
-				}, false);
-			}
-		}
-	};
-	this.s = { //info for the appearance of the settings menu
-		v: false, //the visibility
-		show: function(){
-			if (gThis.s.v) return false;
-			gThis.s.v = true;
-			$_("#mg_sd").effects.fadeTo(100, 500);
-			$_("#mg_sd").effects.toPosition("margin-left", -1, 500);
-			$_("#mg_sd_inun").value(gThis.g.pl.n);
-		},
-		hide: function(){
-			var rs = gThis.un.chk($_("#mg_sd_inun").value());
-			if (!gThis.s.v) return false;
-			else if (!rs.v){
-				gThis.s.ntfy(rs.r);
-				return false;
-			}
-			$_("#mg_sd").effects.fadeTo(0, 500);
-			$_("#mg_sd").effects.toPosition("margin-left", -340, 500, function(){
-				gThis.s.v = false;
-			});
-			gThis.g.pl.n = $_("#mg_sd_inun").value(); //set the game player's name
-		},
-		ntfy: function(msg){ //show notification
-			if (gThis.s.t[0]) clearTimeout(gThis.s.t[0]);
-			$_("#md_sd_inun_ntf span").html(msg);
-			$_("#md_sd_inun_ntf").effects.fadeTo(100,400);
-			gThis.s.t[0] = setTimeout(function(){
-				$_("#md_sd_inun_ntf").effects.fadeTo(0,400);
-			},3000);
-		},
-		t: [] //array of timers
-	};
-	this.un = { //info for username
-		chk: function(username){ //validation
-			if (!username||typeof username=="undefined"||username=="")
-				return {r:"The text field is currently blank. Please provide a username.",v:false};
-			else if (username.length<3)
-				return {r:"Too short. Your username should be at least 3 characters.",v:false};
-			else if (username.length>29)
-				return {r:"Your username is too long. Please shorten it to under 30 characters.",v:false};
-			else if (/\W/gi.test(username))
-				return {r: (/\s/gi.test(username) ? "Please remove all spaces from your username." : "Only alphanumeric characters are permitted."),v:false};
-			else return {r:"",v:true};
-		}
-	};
-	this.is = { //info for the image array
-		l: [], //list
-		a: function(loc){
-			var img = new Image();
-			img.src = loc;
-			gThis.is.l.push(img);
-		}
-	};
-	this.g = { //the main components of the game, when started
-		st: "menu",
-		/*******************************************************************
-		* The current state of the game. Can be one of the following:
-		* menu --> The main menu is visible.
-		* game --> The game is playing, and current visible.
-		* paused --> The game is paused, and currently visible.
-		* interim --> A new level has loaded, but the player has not given
-		* 			  input yet.
-		* complete --> The level has ended, and there is a prompt for the 
-		* 			   user to continue.
-		* over --> The game has finished and is currently visible, as well
-		* 		   as the score upload prompt.
-		* help --> The help menu is visible.
-		* lboards --> The leaderboards are currently visible.
-		********************************************************************/
-		sst: "menu", //the saved state of the previous game state
-		cSt: function(s){ //function to change the current game state
-			if (s=="paused"){
-				gThis.g.pt=(new Date()).getTime();
-				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (s=="game"&&gThis.g.st=="paused"){
-				gThis.g.rt=(new Date()).getTime();
-				gThis.g.to += gThis.g.rt-gThis.g.pt;
-				$_("#mg_pd").effects.fadeTo(0,300);
-			}
-			gThis.g.sst = gThis.g.st;
-			gThis.g.st = s;
-		},
-		rSt: function(){ //function to revert the game state to the previous saved state
-			var rv = gThis.g.sst;
-			if (rv=="paused"){
-				gThis.g.pt=(new Date()).getTime();
-				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (rv=="game"&&gThis.g.st=="paused"){
-				gThis.g.rt=(new Date()).getTime();
-				gThis.g.to += gThis.g.rt-gThis.g.pt;
-				$_("#mg_pd").effects.fadeTo(0,300);
-			}
-			gThis.g.sst = gThis.g.st;
-			gThis.g.st = rv;
-			return rv;
-		},
-		bg: { //the array for the background gradient
-			c: { //the list of colors
-				0: $_.newColor(21,79,90,0.9),
-				0.1: $_.newColor(21,79,90,0.6),
-				0.8: $_.newColor(21,79,90,0)
-			},
-			o: 0, //the overall opacity of the radial gradient
-			v: true, //whether or not it is visible
-			dt: 0 //disappearance time
-		},
-		tb: { //the array for the top bar
-			v: false, //visibility
-			an: "", //current animation
-			at: 0, //animation timestamp
-			p: { //position
-				x: 0,
-				y: -24
-			},
-			np: { //new position
-				x: 0,
-				y: -24
-			},
-			to: { //text offset
-				y: 6
-			},
-			d: { //dimensions
-				w: 0, //width
-				h: 24, //height
-			},
-			c: { //colors
-				bg: $_.newColor(32,45,52,0) //background color
-			},
-			nc: { //new colors
-				bg: $_.newColor(32,45,52,0)
-			},
-			s: function(){ //show
-				if (gThis.g.tb.an=="show") return;
-				gThis.g.tb.an = "show";
-				gThis.g.tb.np.y = 0;
-				gThis.g.tb.nc.bg.a = 0.4;
-				gThis.g.tb.at = (new Date()).getTime();
-			},
-			h: function(){ //hide
-				if (gThis.g.tb.an=="hide") return;
-				gThis.g.tb.an = "hide";
-				gThis.g.tb.np.y = -24;
-				gThis.g.tb.nc.bg.a = 0;
-				gThis.g.tb.at = (new Date()).getTime();
-			}
-		},
-		pg: { //info for the progress bar
-			d: { //dimensions
-				w: 140,
-				h: 10
-			},
-			p: { //position
-				x: 0, //defined at init
-				y: 0  //defined at init
-			},
-			c: $_.newColor(54,164,204,0.8),
-			ib: { //inside bar
-				d: {w:0}, //width set at init
-				nd: {w:0} //set at init
-			},
-			an: { //animation values
-				iat: false,
-				iit: false
-			}
-		},
-		a: { //list of instanced animations
-			ls:[],
-			a: function(px,py,t,c){ //add
-				/*****
-				 * types:
-				 * 0 - sparkle effect
-				******/
-				gThis.g.a.ls.push({
-					int: 0, //initial time
-					p: {x:px,y:py}, //position
-					t: ([1][t]?t:0), //type
-					cl: (typeof c!="object"?{r:0,g:0,b:0,a:1}:c)
-				});
-			}
-		},
-		lv: 0, //the current game level
-		olv: 0, //the original game level, prior to initialization
-		gl: 0, //goal for the current level
-		glc: false, //whether or not the goal has been completed
-		glct: 0, //the time of goal completion
-		pl: {}, //the player (defined during initialization)
-		en: [], //the array of enemies
-		kt: 0, //the type of key input used. 0 for WASD, and 1 for arrow keys
-		sn: {//the sound array, for information pertaining to the volume and sound of the game
-			a: 0.1, //ambient volume
-			e: 0.6, //effects volume
-			m: 0.3 //music volume
-		},
-		pk: [], //the list of pickups
-		lpa: 0, //the last time a pickup was added
-		ap: function(){ //function to add a new pickup to the game
-			var pc = [];
-			for (var i=1; i<bd.gd().x-1; i++){
-				for (var j=1; j<bd.gd().y-1; j++){
-					var conflict = false;
-					for (var k=0; k<gThis.g.en.length; k++){
-						for (var l=0; l<gThis.g.en[k].p.length; l++)
-							conflict = (gThis.g.en[k].p[l].x == i && gThis.g.en[k].p[l].y == j ? true : conflict);
-					}
-					for (var k=0; k<gThis.g.pl.p.length; k++)
-						conflict = (gThis.g.pl.p[k].x == i && gThis.g.pl.p[k].y == j ? true : conflict);
-					for (var k=0; k<gThis.g.pk.length; k++)
-						conflict = (gThis.g.pk[k].p.x == i && gThis.g.pk[k].p.y == j ? true : conflict);
-					if (!conflict) pc.push({x:i,y:j}); //if the coordinate is good
-				}
-			}
-			if (pc.length==0) return false;
-			//var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); 
-			var pType = Mathf.rand(0,100)>80+(gThis.g.pl.lv*6)?2:(Mathf.rand(0,100)>90?1:0);  //the type of pickup
-			var rCl = Hue(Math.random());
-			gThis.g.pk.push({ //add the new pickup
-				p: Mathf.randVal(pc), //choose a random coordinate
-				c: { //add a new color
-					r: rCl.r,
-					g: rCl.g,
-					b: rCl.b,
-					a: 0,
-					oa: 0 //old opacity
-				},
-				i: gThis.g.gt, //the time of instantiation
-				f: false, //whether or not the item is fading
-				ft: 0, //the time of fading
-				t: pType
-				/********************
-				 * Pickup types are:
-				 * 0 - normal
-				 * 1 - poison
-				 * 2 - life
-				*********************/
-			});
-			return true;
-		},
-		bt: [ //the button array; used to store all current canvas-drawn UI elements conveniently
-		/************************************************
-		 * Five basic array keys:
-		 * n --> (name) useful label
-		 * w --> (width)
-		 * h --> (height)
-		 * p --> (position) object containing x and y
-		 * c --> (color) stores rgba data
-		 * e --> (event) list of interactive functions
-		 ************************************************/
-			{
-				n: "pauseButton",
-				w: 40,
-				h: 40,
-				p: {
-					x: 0, //to be later defined
-					y: 0  //in an additional function...
-				},
-				c: {
-					r: 24,
-					g: 24,
-					b: 24,
-					a: 0.6
-				},
-				r: false, //whether or not the button is to the right
-				m: false, //whether or not the button is moving
-				mt: 0, //the start of the button moving
-				mo: false, //whether or not the mouse is over the button
-				sr: 20, //the shadow radius
-				nsr: 20, //the new shadow radius
-				srt: 0,  //the shadow radius time
-				osr: 20, //the old shadow radius
-				e: {
-					ismouseover: false,
-					mouseover: function(){
-						gThis.g.bt[0].srt = (new Date()).getTime();
-						gThis.g.bt[0].osr = gThis.g.bt[0].sr;
-						gThis.g.bt[0].nsr = 30;
-						gThis.g.bt[0].e.ismouseover = true;
-					},
-					mouseout: function(){
-						gThis.g.bt[0].srt = (new Date()).getTime();
-						gThis.g.bt[0].osr = gThis.g.bt[0].sr;
-						gThis.g.bt[0].nsr = 20;
-						gThis.g.bt[0].e.ismouseover = false;
-					},
-					click: function(){
-						if ((gThis.g.st == "game" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="game" ? "paused" : "game");
-					}
-				}
-			}
-		],
-		gt: 0, //the game time interval
-		pt: 0, //the time of pausing
-		rt: 0, //the time of resuming
-		to: 0, //the time offset (current time - to)
-		glA: 1, //the global alpha value
-		glAat: 0, //time of global alpha animation start time
-		nl: function(){ //make preparations for the next level
-			if (gThis.g.st=="interim") return false;
-			if (gThis.g.st=="complete")
-				$_("#mg_lo").effects.fadeTo(0,1000);
-			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
-			gThis.g.pl.s+=gThis.g.pl.cs; //reset scores
-			gThis.g.pl.cs=0;
-			gThis.g.cSt("interim");
-		},
-		slb: function(){ //show the leaderboards normally
-			if ($_("#mg_lb_td").css('display')!='none')
-				$_("#mg_lb_td").effects.fadeTo(0,500);
-			$_("#mg_mmi").effects.fadeTo(0,500);
-			gThis.g.cSt("lboards");
-			if ($_("#mg_pd").css('display')!='none')
-				$_("#mg_pd").effects.fadeTo(0,500, function(){
-					$_("#mg_pd").css('display','none');
-				}); //hide pause div
-			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
-			$_("#mg_lb").effects.toHeight(204,500);
-			gThis.g.glb(); //get leaderboards information
-		},
-		qlb: function(){ //quit leaderboards
-			if (gThis.g.sst=="paused") {
-				$_("#mg_pd").effects.fadeTo(100,500, function(){
-					gThis.g.rSt(); //revert state
-				});
-				$_("#mg_lb").effects.fadeTo(0,500, function(){
-					$_("#mg_lb").css('display','none');
-				});
-			} else gThis.g.qt(); //quit to main menu
-		},
-		qt: function(){ //quit to the main menu
-			gThis.g.cSt("menu");
-			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
-			//hide other items, and reset values
-			$_("#mg_np").effects.fadeTo(0,500, function(){
-				$_("#mg_np").css('display','none');
-			});
-			$_("#mg_pd").effects.fadeTo(0,500, function(){
-				$_("#mg_pd").css('display','none');
-			});
-			$_("#mg_lo").effects.fadeTo(0,500, function(){
-				$_("#mg_lo").css('display','none');
-			});
-			$_("#mg_lb").effects.fadeTo(0,500, function(){
-				$_("#mg_lb").css('display','none');
-			});
-			$_("#mg_go").effects.fadeTo(0,500, function(){
-				$_("#mg_go").css('display','none');
-			});
-			gThis.g.tb.h();
-			gThis.g.bg.v = true;
-			gThis.g.bg.dt = 0;
-			gThis.mm.str = (new Date()).getTime(); //reset visibility of radial gradient
-			gThis.g.pl.s = 0;
-			gThis.g.pl.cs = 0;
-			gThis.g.pl.hm = false; //change has_moved attribute
-			gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
-			gThis.g.pl.p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
-			gThis.g.en.splice(0,gThis.g.en.length);
-			gThis.g.pl.lv = 3;
-			gThis.g.pl.pn = false;
-			gThis.g.pl.dy = false;
-			gThis.g.pl.irs = false;
-			gThis.g.pl.c.a = 1;
-			gThis.g.lv = 0;
-		},
-		end: function(){ //end the game; show leaderboards
-			if (gThis.g.st!="over") return false;
-			gThis.g.pl.s+=gThis.g.pl.cs; //add on score
-			gThis.g.cSt("lboards"); //change to leaderboards
-			if ($_("#mg_lb_td").css('display')=='none')
-				$_("#mg_lb_td").effects.fadeTo(100,500);
-			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
-			$_("#mg_lb").effects.toHeight(254,500);
-			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
-			$_("#mg_lb_td_top span").html(gThis.g.pl.n);
-			$_("#mg_lb_td_btm span").html(gThis.g.pl.s);
-			gThis.g.sbm(gThis.g.pl.n, gThis.g.pl.s, gThis.g.lv, gThis.g.glb); //submit
-		},
-		sbm: function(name, score, level, onDone){ //submit leaderboards info to server
-			$_.req({
-				method: "post",
-				url: "submit.php",
-				headers: ["Content-Type", "application/x-www-form-urlencoded"],
-				data: { username: name, score: score, level: level },
-				readystatechange: function(ajax) {
-					if (ajax.readyState == 4) onDone();
-				}
-			});
-		}, 
-		glb: function(){ //get leaderboards info from server
-			$_("table#mg_lb_lst tbody").clear(); //remove previous list
-			try {
-				$_.req({
-					method: "get",
-					url: "lb_list.php",
-					readystatechange: function(ajax) {
-						if (ajax.readyState != 4) return;
-						var rspXML = ajax.responseXML.documentElement;
-						var results = rspXML.getElementsByTagName("player");
-						for (var i=0; i<results.length; i++) {
-							var username, score, level, rank;
-							if ($_.browser().agent == 1) {
-								//use .firstChild.nodeValue;
-								username = results[i].getElementsByTagName("username")[0].firstChild.nodeValue;
-								score = results[i].getElementsByTagName("score")[0].firstChild.nodeValue;
-								level = results[i].getElementsByTagName("level")[0].firstChild.nodeValue;
-								rank = results[i].getElementsByTagName("rank")[0].firstChild.nodeValue;
-							} else {
-								//use .textContent;
-								username = results[i].getElementsByTagName("username")[0].textContent;
-								score = results[i].getElementsByTagName("score")[0].textContent;
-								level = results[i].getElementsByTagName("level")[0].textContent;
-								rank = results[i].getElementsByTagName("rank")[0].textContent;
-							}
-							$_("table#mg_lb_lst tbody").add("<tr>\n<td>"+username+"</td>\n<td>"+score+"</td>\n<td>"+level+"</td>\n<td>"+rank+"</td>\n</tr>\n");
-						}
-					}
-				});
-			} catch(e) {
-				console.log("Could not obtain list.");
-			}
-		}
-	};
 	this.init = function(){ //the main initialization function
 		if (!("width" in gThis.cnv && "style" in gThis.stdiv && "style" in gThis.mmdiv))
 			return false;
-		gThis.mm.str = (new Date()).getTime();
-		gThis.g.pl = (function(){ //the player
+		mm.str = (new Date()).getTime();
+		g.pl = (function(){ //the player
 			var dir = Mathf.rand(0,3); //create a random direction
 			var pnts = [];
 			var len = 10;
@@ -758,23 +776,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				s: 0, //the score of the player
 				cs: 0, //the current, level-based score of the player
 				n: "", //the name of the player
-				lu: gThis.g.gt, //the last time the player's position was updated
+				lu: g.gt, //the last time the player's position was updated
 				l: len, //the length of the player
 				pn: { //poison info, if the player is poisoned
 					p: false, //whether or not the player is poisoned
 					pt: function(){ //poison time interval, for player, to decrease length
-						return (gThis.g.pl.pn.p&&!gThis.g.pl.dy)?Math.round(1+1000*Math.pow(gThis.g.pl.lv,-gThis.g.pl.lv/20)):false;
+						return (g.pl.pn.p&&!g.pl.dy)?Math.round(1+1000*Math.pow(g.pl.lv,-g.pl.lv/20)):false;
 					},
-					ipt: gThis.g.gt, //initial poison time
-					lpt: gThis.g.gt, //last poison time
+					ipt: g.gt, //initial poison time
+					lpt: g.gt, //last poison time
 					af: function(){ //affect
-						if (!gThis.g.pl.pn.p||gThis.g.gt-gThis.g.pl.pn.lpt<gThis.g.pl.pn.pt()||gThis.g.pl.dy) return false;
-						gThis.g.pl.pn.lpt = gThis.g.gt;
-						gThis.g.pl.pn.lpt = gThis.g.gt;
-						gThis.g.pl.l--;
-						if (gThis.g.pl.l<=1){ //kill player
-							gThis.g.pl.dy = true;
-							gThis.g.pl.dt = gThis.g.gt;
+						if (!g.pl.pn.p||g.gt-g.pl.pn.lpt<g.pl.pn.pt()||g.pl.dy) return false;
+						g.pl.pn.lpt = g.gt;
+						g.pl.pn.lpt = g.gt;
+						g.pl.l--;
+						if (g.pl.l<=1){ //kill player
+							g.pl.dy = true;
+							g.pl.dt = g.gt;
 						}
 					}
 				},
@@ -783,12 +801,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				irs: false, //whether or not the player is resurrecting
 				rt: 0, //the time of resurrection
 				rs: function(){ //resurrect the player after a death
-					gThis.g.pl.d = -1;
-					gThis.g.pl.irs = true;
-					gThis.g.pl.dy = false;
-					gThis.g.pl.p.splice(0,gThis.g.pl.p.length); //remove every point
-					gThis.g.pl.lv--;
-					if (gThis.g.pl.lv==0) return false;
+					g.pl.d = -1;
+					g.pl.irs = true;
+					g.pl.dy = false;
+					g.pl.p.splice(0,g.pl.p.length); //remove every point
+					g.pl.lv--;
+					if (g.pl.lv==0) return false;
 					/*
 					var safeCoords = [];
 					for (var x=10; x<=bd.gd().x-10; x++){
@@ -796,61 +814,61 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							if (!bd.invalid(x,y)) safeCoords.push({x:x,y:y});
 						}
 					}
-					gThis.g.pl.p.push(Mathf.randVal(safeCoords));
+					g.pl.p.push(Mathf.randVal(safeCoords));
 					*/
-					gThis.g.pl.p.push({x:Mathf.rand(10,bd.gd().x-10),y:Mathf.rand(10,bd.gd().y-10)});
-					gThis.g.pl.l = 10;
-					gThis.g.pl.rt = gThis.g.gt;
+					g.pl.p.push({x:Mathf.rand(10,bd.gd().x-10),y:Mathf.rand(10,bd.gd().y-10)});
+					g.pl.l = 10;
+					g.pl.rt = g.gt;
 					var dList = [];
 					function room(dir){
-						var x=gThis.g.pl.p[0].x+[0,1,0,-1][dir],y=gThis.g.pl.p[0].y+[-1,0,1,0][dir];
+						var x=g.pl.p[0].x+[0,1,0,-1][dir],y=g.pl.p[0].y+[-1,0,1,0][dir];
 						switch(dir){
 							case 0:
 								for (y;y>-2;y--)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,gThis.g.pl.p[0].y)});
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
 								break;
 							case 1:
 								for (x;x<=bd.gd().x+1;x++)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,gThis.g.pl.p[0].x,y)});
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
 								break;
 							case 2:
 								for (y;y<=bd.gd().y+1;y++)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,gThis.g.pl.p[0].y)});
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
 								break;
 							case 3:
 								for (x;x>-2;x--)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,gThis.g.pl.p[0].x,y)});
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
 								break;
 						}
 					}
 					//for (var d=0; d<=3; d++) room(d);
-					gThis.g.pl.d = Mathf.rand(0,3);//$_.assort(dList,false,"d")[0].t;
+					g.pl.d = Mathf.rand(0,3);//$_.assort(dList,false,"d")[0].t;
 				},
 				hm: false, //whether or not the player has decided to move
 				mv: function(d){ //function to move the player according to direction
-					if (gThis.g.pl.dy || gThis.g.pl.irs) return false;
-					else if ([2,3,0,1][d]==gThis.g.pl.d){
-						if (gThis.g.st=="interim")gThis.g.pl.hm = true;
+					if (g.pl.dy || g.pl.irs) return false;
+					else if ([2,3,0,1][d]==g.pl.d){
+						if (gen.st=="interim")g.pl.hm = true;
 						return false;
 					}
-					if (gThis.g.st=="interim")gThis.g.pl.hm = true;
-					gThis.g.pl.qd = d;
+					if (gen.st=="interim")g.pl.hm = true;
+					g.pl.qd = d;
 				},
 				pf: function(){
-					if (gThis.g.pl.dy || gThis.g.pl.irs) return false;
+					if (g.pl.dy || g.pl.irs) return false;
 					var coord = {
-						x:gThis.g.pl.p[0].x+[0,1,0,-1][gThis.g.pl.qd],
-						y:gThis.g.pl.p[0].y+[-1,0,1,0][gThis.g.pl.qd]
+						x:g.pl.p[0].x+[0,1,0,-1][g.pl.qd],
+						y:g.pl.p[0].y+[-1,0,1,0][g.pl.qd]
 					};
 					var conflict = false;
-					for (var a=1; a<gThis.g.pl.p.length; a++){
-						if (coord.x==gThis.g.pl.p[a].x && coord.y==gThis.g.pl.p[a].y){
+					for (var a=1; a<g.pl.p.length; a++){
+						if (coord.x==g.pl.p[a].x && coord.y==g.pl.p[a].y){
 							conflict = true;
 							break;
 						}
 					}
-					for (var a=0; a<gThis.g.en.length; a++){
-						var en = gThis.g.en[a];
+					for (var a=0; a<g.en.length; a++){
+						var en = g.en[a];
 						for (var b=0; b<en.p.length; b++){
 							if (coord.x==en.p[b].x && coord.y==en.p[b].y){
 								conflict = true;
@@ -860,21 +878,21 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 					if (coord.x<0||coord.x>bd.gd().x||coord.y<0||coord.y>bd.gd().y) conflict = true;
 					if (conflict){
-						gThis.g.pl.dy = true;
-						gThis.g.pl.dt = gThis.g.gt;
-					} else gThis.g.pl.p.splice(0,0,coord);
+						g.pl.dy = true;
+						g.pl.dt = g.gt;
+					} else g.pl.p.splice(0,0,coord);
 				},
 				lv: 3 //the amount of lives left in the player
 			};
 		})();
-		gThis.g.bt[0].p = { //the position of the pause button
+		g.bt[0].p = { //the position of the pause button
 			x: bd.os().x1+10,
-			y: bd.os().y1+bd.cv().y-gThis.g.bt[0].h-10
+			y: bd.os().y1+bd.cv().y-g.bt[0].h-10
 		};
-		gThis.g.tb.d.w = gThis.cnv.width;
-		gThis.g.pg.p = {
-			x: gThis.cnv.width-10-gThis.g.pg.d.w, //position of progress bar
-			y: gThis.g.tb.p.y+gThis.g.tb.d.h+10
+		g.tb.d.w = gThis.cnv.width;
+		g.pg.p = {
+			x: gThis.cnv.width-10-g.pg.d.w, //position of progress bar
+			y: g.tb.p.y+g.tb.d.h+10
 		};
 		gThis.is.a("img/heart.png");
 		gThis.is.a("img/heart_gs.png");
@@ -882,12 +900,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			intervs.draw = setInterval(gThis.draw, 1); //start the interval for the drawing of the main canvas
 		});
 		$_("#mg_mmpn").click(function(){
-			if (gThis.s.v) return false;
+			if (s.v) return false;
 			$_("#mg_mmi").effects.fadeTo(0,200);
-			if (gThis.g.pl.n == ""){
+			if (g.pl.n == ""){
 				$_("#mg_np").effects.fadeTo(100,500);
-				$_("#mg_np_dun").value(gThis.g.pl.n);
-			} else gThis.g.cSt("interim"); //start at new level
+				$_("#mg_np_dun").value(g.pl.n);
+			} else g.cSt("interim"); //start at new level
 		});
 		$_("#mg_np_dc").click(function(){ //start the game, if there is a valid username
 			var rs = gThis.un.chk($_("#mg_np_dun").value());
@@ -897,46 +915,49 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				return;
 			}
 			$_("#mg_np").effects.fadeTo(0,500);
-			gThis.g.pl.n = $_("#mg_np_dun").value();
-			gThis.g.cSt("interim"); //start at new level
+			g.pl.n = $_("#mg_np_dun").value();
+			g.cSt("interim"); //start at new level
 		});
-		$_("#mg_mms").click(gThis.s.show); //start the settings div's appearance, and pause everything else
-		$_("#mg_sd_cb").click(gThis.s.hide); //close the settings div, and revert back to previous game state
-		if (Storage){
-			if (localStorage.SGsnda) gThis.g.sn.a = parseFloat(localStorage.SGsnda);
-			if (localStorage.SGsnde) gThis.g.sn.e = parseFloat(localStorage.SGsnde);
-			if (localStorage.SGpn) gThis.g.pl.n = localStorage.SGpn;
-			if (localStorage.SGkt) gThis.g.kt = parseFloat(localStorage.SGkt);
+		$_("#mg_mms").click(s.show); //start the settings div's appearance, and pause everything else
+		$_("#mg_sd_cb").click(s.hide); //close the settings div, and revert back to previous game state
+		if (Storage) {
+			if (localStorage.SGsnda) gen.snd.ambience.vol = parseFloat(localStorage.SGsnda);
+			if (localStorage.SGsndm) gen.snd.music.vol = parseFloat(localStorage.SGsndm);
+			if (localStorage.SGsnde) gen.snd.effects.vol = parseFloat(localStorage.SGsnde);
+			if (localStorage.SGpn) g.pl.n = localStorage.SGpn;
+			if (localStorage.SGkt) g.kt = parseFloat(localStorage.SGkt);
 		}
-		$_("#mg_lo_bt_cntnu").click(gThis.g.nl); //prepare for the next level, when clicked
-		$_("#mg_bo_bt_cntnu").click(gThis.g.end); //end the level
-		$get("mga").volume = gThis.g.sn.a;
-		$get("mga2").volume = gThis.g.sn.a;
-		$get("mga3").volume = gThis.g.sn.e;
-		$_("#md_sd_sl_cr .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.r/255)*parseInt($_("#md_sd_sl_cr").css("width")))-8+"px");
-		$_("#md_sd_sl_cg .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.g/255)*parseInt($_("#md_sd_sl_cg").css("width")))-8+"px");
-		$_("#md_sd_sl_cb .md_sd_slh").css("margin-left", Math.round((gThis.g.pl.c.b/255)*parseInt($_("#md_sd_sl_cb").css("width")))-8+"px");
-		$_("#mg_sd_cl_l").css("background-color", "rgb("+gThis.g.pl.c.r+","+gThis.g.pl.c.g+","+gThis.g.pl.c.b+")");
-		$_("#mg_sd_snda .md_sd_slh").css("margin-left", Math.round(gThis.g.sn.a*parseInt($_("#mg_sd_snda").css("width")))-8+"px");
-		$_("#mg_sd_sndm .md_sd_slh").css("margin-left", Math.round(gThis.g.sn.m*parseInt($_("#mg_sd_sndm").css("width")))-8+"px");
-		$_("#mg_sd_snde .md_sd_slh").css("margin-left", Math.round(gThis.g.sn.e*parseInt($_("#mg_sd_snde").css("width")))-8+"px");
-		$_(".md_sd_sl .md_sd_slh").mousedown(function(){
+		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
+		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
+		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
+		$get("mgAudio_music").volume = gen.snd.music.vol;
+		$get("mgAudio_effects").volume = gen.snd.effects.vol;
+		$_("#mg_sd_sl_cr .mg_sd_slh").css("margin-left", Math.round((g.pl.c.r/255)*parseInt($_("#mg_sd_sl_cr").css("width")))-8+"px");
+		$_("#mg_sd_sl_cg .mg_sd_slh").css("margin-left", Math.round((g.pl.c.g/255)*parseInt($_("#mg_sd_sl_cg").css("width")))-8+"px");
+		$_("#mg_sd_sl_cb .mg_sd_slh").css("margin-left", Math.round((g.pl.c.b/255)*parseInt($_("#mg_sd_sl_cb").css("width")))-8+"px");
+		$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
+		$_("#mg_sd_snd_ambience .mg_sd_slh").css("margin-left", Math.round(gen.snd.ambience.vol*parseInt($_("#mg_sd_snd_ambience").css("width")))-8+"px");
+		$_("#mg_sd_snd_music .mg_sd_slh").css("margin-left", Math.round(gen.snd.music.vol*parseInt($_("#mg_sd_snd_music").css("width")))-8+"px");
+		$_("#mg_sd_snd_effects .mg_sd_slh").css("margin-left", Math.round(gen.snd.effects.vol*parseInt($_("#mg_sd_snd_effects").css("width")))-8+"px");
+		$_(".mg_sd_sl .mg_sd_slh").mousedown(function(ev){
+			if (ev.preventDefault) ev.preventDefault();
+			else window.event.returnValue = false;
 			var cHandle = this;
 			var cBar = this.parentNode;
 			if ($_(cBar).attr("type")=="mg_snd"){
-				var sType = cBar.id.charAt(9);
+				var sType = cBar.id.substring(10); //capture sound type
 			} else var cType = cBar.id.charAt(10);
 			window.onmousemove = function(e){
 				var off = $_(cBar).offset().x;
-				var offset = Mathf.limit(e.pageX-off, 0, cBar.offsetWidth);
+				var offset = Mathf.limit(e.pageX-off, 0, $_(cBar).offsetWidth());
 				$_(cHandle).css("margin-left", (offset-8)+"px");
 				if ($_(cBar).attr("type")=="mg_snd"){
-					var nsnd = offset/cBar.offsetWidth;
-					gThis.g.sn[sType] = nsnd;
+					var nsnd = offset/$_(cBar).offsetWidth();
+					gen.snd[sType].vol = nsnd;
 				} else {
-					var cl = 25+Math.round((offset/cBar.offsetWidth)*230);
-					gThis.g.pl.c[cType] = cl;
-					$_("#mg_sd_cl_l").css("background-color", "rgb("+gThis.g.pl.c.r+","+gThis.g.pl.c.g+","+gThis.g.pl.c.b+")");
+					var cl = 25+Math.round((offset/$_(cBar).offsetWidth())*230);
+					g.pl.c[cType] = cl;
+					$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
 				}
 				return false;
 			};
@@ -950,52 +971,52 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_2").html("A");
 			$_("#mg_sd_cnk_3").html("S");
 			$_("#mg_sd_cnk_4").html("D");
-			gThis.g.kt=0;
+			g.kt=0;
 		});
 		$_("#mg_sd_cnkoa").click(function(){ //change the default input to arrow keys
 			$_("#mg_sd_cnk_1").html("&#x25B2");
 			$_("#mg_sd_cnk_2").html("&#x25C0");
 			$_("#mg_sd_cnk_3").html("&#x25BC");
 			$_("#mg_sd_cnk_4").html("&#x25B6");
-			gThis.g.kt=1;
+			g.kt=1;
 		});
-		if (gThis.g.kt==0){
+		if (g.kt==0){
 			$_("#mg_sd_cnk_1").html("W");
 			$_("#mg_sd_cnk_2").html("A");
 			$_("#mg_sd_cnk_3").html("S");
 			$_("#mg_sd_cnk_4").html("D");
-		} else if (gThis.g.kt==1){
+		} else if (g.kt==1){
 			$_("#mg_sd_cnk_1").html("&#x25B2");
 			$_("#mg_sd_cnk_2").html("&#x25C0");
 			$_("#mg_sd_cnk_3").html("&#x25BC");
 			$_("#mg_sd_cnk_4").html("&#x25B6");
 		}
-		$_("#mgpdbt_st").click(gThis.s.show);
-		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(gThis.g.qt);
-		$_("#mg_lb_bt_qt").click(gThis.g.qlb);
-		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(gThis.g.slb);
+		$_("#mgpdbt_st").click(s.show);
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt);
+		$_("#mg_lb_bt_qt").click(g.qlb);
+		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb);
 		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
-			switch(gThis.g.st){
+			switch(gen.st){
 				case "interim":
 				case "game":
 					switch(k){
-						case (gThis.g.kt ? "up" : "w"):
-							gThis.g.pl.mv(0);
+						case (g.kt ? "up" : "w"):
+							g.pl.mv(0);
 							break;
-						case (gThis.g.kt ? "right" : "d"):
-							gThis.g.pl.mv(1);
+						case (g.kt ? "right" : "d"):
+							g.pl.mv(1);
 							break;
-						case (gThis.g.kt ? "down" : "s"):
-							gThis.g.pl.mv(2);
+						case (g.kt ? "down" : "s"):
+							g.pl.mv(2);
 							break;
-						case (gThis.g.kt ? "left" : "a"):
-							gThis.g.pl.mv(3);
+						case (g.kt ? "left" : "a"):
+							g.pl.mv(3);
 							break;
 					}
 				case "paused":
 					switch(k){
 						case "p":
-							if ((gThis.g.st == "game" || gThis.g.st == "paused")&&!gThis.s.v) gThis.g.cSt(gThis.g.st=="game" ? "paused" : "game");
+							if ((gen.st == "game" || gen.st == "paused")&&!s.v) g.cSt(gen.st=="game" ? "paused" : "game");
 							break;
 					}				
 				break;
@@ -1006,15 +1027,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				x: e.pageX-$_(gThis.cnv).offset().x,
 				y: e.pageY-$_(gThis.cnv).offset().y
 			};
-			for (var i=0; i<gThis.g.bt.length; i++){
-				var hovering = (mouse.y-gThis.g.bt[i].p.y >= 0 
-								&& mouse.y-gThis.g.bt[i].p.y<=gThis.g.bt[i].h 
-								&& mouse.x-gThis.g.bt[i].p.x >= 0
-								&& mouse.x-gThis.g.bt[i].p.x<=gThis.g.bt[i].w);
-				if (typeof gThis.g.bt[i].e.mouseover == "function" && hovering && !gThis.g.bt[i].e.ismouseover)
-					gThis.g.bt[i].e.mouseover(); //invoke mouseover event
-				else if (typeof gThis.g.bt[i].e.mouseout == "function" && gThis.g.bt[i].e.ismouseover && !hovering)
-					gThis.g.bt[i].e.mouseout(); //invoke mouseout event
+			for (var i=0; i<g.bt.length; i++){
+				var hovering = (mouse.y-g.bt[i].p.y >= 0 
+								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
+								&& mouse.x-g.bt[i].p.x >= 0
+								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
+				if (typeof g.bt[i].e.mouseover == "function" && hovering && !g.bt[i].e.ismouseover)
+					g.bt[i].e.mouseover(); //invoke mouseover event
+				else if (typeof g.bt[i].e.mouseout == "function" && g.bt[i].e.ismouseover && !hovering)
+					g.bt[i].e.mouseout(); //invoke mouseout event
 			}
 		});
 		$_(gThis.cnv).click(function(e){
@@ -1022,13 +1043,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				x: e.pageX-$_(gThis.cnv).offset().x,
 				y: e.pageY-$_(gThis.cnv).offset().y
 			};
-			for (var i=0; i<gThis.g.bt.length; i++){
-				var hovering = (mouse.y-gThis.g.bt[i].p.y >= 0 
-								&& mouse.y-gThis.g.bt[i].p.y<=gThis.g.bt[i].h 
-								&& mouse.x-gThis.g.bt[i].p.x >= 0
-								&& mouse.x-gThis.g.bt[i].p.x<=gThis.g.bt[i].w);
-				if (typeof gThis.g.bt[i].e.click == "function" && hovering)
-					gThis.g.bt[i].e.click(); //invoke click event
+			for (var i=0; i<g.bt.length; i++){
+				var hovering = (mouse.y-g.bt[i].p.y >= 0 
+								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
+								&& mouse.x-g.bt[i].p.x >= 0
+								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
+				if (typeof g.bt[i].e.click == "function" && hovering)
+					g.bt[i].e.click(); //invoke click event
 			}
 		});
 	};
@@ -1044,129 +1065,130 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			lineWidth=0;
 			lineJoin="miter";
 		}
-		if (gThis.g.bg.v){
-			if ((new Date()).getTime()-gThis.mm.str < 1000 && gThis.g.bg.dt==0)
-				gThis.g.bg.o = Math.pow(((new Date()).getTime()-gThis.mm.str)/1000,2);
-			if (gThis.g.st != "menu" && gThis.g.bg.dt==0) gThis.g.bg.dt = (new Date()).getTime();
-			if (gThis.g.bg.dt != 0 && (new Date()).getTime()-gThis.g.bg.dt < 1000)
-				gThis.g.bg.o = 1-Math.pow(((new Date()).getTime()-gThis.g.bg.dt)/1000,2);
-			else if ((new Date()).getTime()-gThis.g.bg.dt >= 1000 && gThis.g.bg.dt != 0)
-				gThis.g.bg.v = false;
+		if (g.bg.v){
+			if ((new Date()).getTime()-mm.str < 1000 && g.bg.dt==0)
+				g.bg.o = Math.pow(((new Date()).getTime()-mm.str)/1000,2);
+			if (gen.st != "menu" && g.bg.dt==0) g.bg.dt = (new Date()).getTime();
+			if (g.bg.dt != 0 && (new Date()).getTime()-g.bg.dt < 1000)
+				g.bg.o = 1-Math.pow(((new Date()).getTime()-g.bg.dt)/1000,2);
+			else if ((new Date()).getTime()-g.bg.dt >= 1000 && g.bg.dt != 0)
+				g.bg.v = false;
 			var rg = cx.createRadialGradient(Math.round(gThis.cnv.width/2), Math.round(gThis.cnv.height/2), gThis.cnv.height*0.1, Math.round(gThis.cnv.width/2), Math.round(gThis.cnv.height/2), gThis.cnv.height);
-			for (var a in gThis.g.bg.c){
-				var col = gThis.g.bg.c[a];
-				rg.addColorStop(a,"rgba("+col.r+","+col.g+","+col.b+","+(col.a*gThis.g.bg.o)+")");
+			for (var a in g.bg.c){
+				var col = g.bg.c[a];
+				rg.addColorStop(a,"rgba("+col.r+","+col.g+","+col.b+","+(col.a*g.bg.o)+")");
 			}
 			cx.fillStyle=rg;
 			cx.fillRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		}
-		if (gThis.g.st == "menu"){ //render the main menu
+		if (gen.st == "menu"){ //render the main menu
 			if ($_(gThis.mmdiv).css("display") != "block")
 				$_(gThis.mmdiv).effects.fadeTo(100,700);
-			gThis.mm.am.pl(); //play the ambient music
-			if (gThis.mm.en.length==0) //create more enemies, if none exist
-				gThis.mm.en.push(ai.createEnem()); //create a new random enemy, and store it
-			for (var i=0; i<gThis.mm.en.length; i++){
-				if ((new Date()).getTime()-gThis.mm.en[i].lu >= 50 || gThis.mm.en[i].dy){ //don't perform if the enemy's position has been updated recently, or if it is dying
-					gThis.mm.en[i].lu = (new Date()).getTime();
-						gThis.mm.en[i].d = ai.nextDir(gThis.mm.en[i]); //find the next direction, based on the AI
-					if (![1,1,1,1][(gThis.mm.en[i].d)]){ //if there are no more directions
-						if (!gThis.mm.en[i].dy)
-							gThis.mm.en[i].dc = (new Date()).getTime(); //set the decay time
-						gThis.mm.en[i].dy = true; //set the dying attribute to be true
-						var delta = (new Date()).getTime()-gThis.mm.en[i].dc;
-						gThis.mm.en[i].c.a = 1-Math.pow(delta/1000,2);
+			//mm.am.pl(); 
+			$get("mgAudio_ambience").play();//play the ambient music
+			if (mm.en.length==0) //create more enemies, if none exist
+				mm.en.push(ai.createEnem()); //create a new random enemy, and store it
+			for (var i=0; i<mm.en.length; i++){
+				if ((new Date()).getTime()-mm.en[i].lu >= 50 || mm.en[i].dy){ //don't perform if the enemy's position has been updated recently, or if it is dying
+					mm.en[i].lu = (new Date()).getTime();
+						mm.en[i].d = ai.nextDir(mm.en[i]); //find the next direction, based on the AI
+					if (![1,1,1,1][(mm.en[i].d)]){ //if there are no more directions
+						if (!mm.en[i].dy)
+							mm.en[i].dc = (new Date()).getTime(); //set the decay time
+						mm.en[i].dy = true; //set the dying attribute to be true
+						var delta = (new Date()).getTime()-mm.en[i].dc;
+						mm.en[i].c.a = 1-Math.pow(delta/1000,2);
 						if (delta >= 1000){
-							gThis.mm.en.splice(i,1); //remove the enemy
+							mm.en.splice(i,1); //remove the enemy
 							i--;
 							continue;
 						}
 					} else {
-						gThis.mm.en[i].p.splice(0, 0, ai.nextPos(gThis.mm.en[i])); //create a new position
-						if (gThis.mm.en[i].p.length > gThis.mm.en[i].l)
-							gThis.mm.en[i].p.splice(gThis.mm.en[i].p.length-1, 1); //remove the last position
+						mm.en[i].p.splice(0, 0, ai.nextPos(mm.en[i])); //create a new position
+						if (mm.en[i].p.length > mm.en[i].l)
+							mm.en[i].p.splice(mm.en[i].p.length-1, 1); //remove the last position
 					}
 				}
-				var cl = gThis.mm.en[i].c;
-				for (var j=0; j<gThis.mm.en[i].p.length; j++){
-					var p = gThis.mm.en[i].p[j];
+				var cl = mm.en[i].c;
+				for (var j=0; j<mm.en[i].p.length; j++){
+					var p = mm.en[i].p[j];
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
 					cx.strokeStyle = "rgba(0,0,0,0)";
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 				}
 			}
-		} else if (gThis.g.st == "game" || gThis.g.st == "paused" || gThis.g.st == "interim" || gThis.g.st == "complete" || gThis.g.st == "over"){ //render the main game, if currently running, paused, or over
-			if (gThis.g.st == "game") gThis.g.gt = (new Date()).getTime()-gThis.g.to;
-			if (gThis.g.pl.cs/20>=gThis.g.gl && !gThis.g.glc && gThis.g.gl!==0 && gThis.g.st!=="complete"){ //level has been completed
-				gThis.g.glc=true;
-				gThis.g.glct=(new Date()).getTime(); //set time for goal completion
-			} else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct<1000 && gThis.g.st!=="complete")
-				gThis.g.glA = 1-Math.pow(((new Date()).getTime()-gThis.g.glct)/1000,2);
-			else if (gThis.g.glc && (new Date()).getTime()-gThis.g.glct>=1000 && gThis.g.st!=="complete"){
-				gThis.g.glA = 0;
-				for (var i=0;i<gThis.g.en.length;i++){
-					gThis.g.en.splice(i,1);
+		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over"){ //render the main game, if currently running, paused, or over
+			if (gen.st == "game") g.gt = (new Date()).getTime()-g.to;
+			if (g.pl.cs/20>=g.gl && !g.glc && g.gl!==0 && gen.st!=="complete"){ //level has been completed
+				g.glc=true;
+				g.glct=(new Date()).getTime(); //set time for goal completion
+			} else if (g.glc && (new Date()).getTime()-g.glct<1000 && gen.st!=="complete")
+				g.glA = 1-Math.pow(((new Date()).getTime()-g.glct)/1000,2);
+			else if (g.glc && (new Date()).getTime()-g.glct>=1000 && gen.st!=="complete"){
+				g.glA = 0;
+				for (var i=0;i<g.en.length;i++){
+					g.en.splice(i,1);
 					i--;
 				}
-				gThis.g.pl.p.splice(0,gThis.g.pl.p.length);
-				gThis.g.pl.l=10;
-				gThis.g.glc=false;
-				gThis.g.glct=false;
-				$_("#mg_lo_d span").html(gThis.g.lv);
-				gThis.g.cSt("complete");
-				gThis.g.olv = gThis.g.lv;
-			} else if (gThis.g.glAat&&(new Date()).getTime()-gThis.g.glAat<1000)
-				gThis.g.glA = Math.pow(((new Date()).getTime()-gThis.g.glAat)/1000,2);
-			else if (gThis.g.glAat&&(new Date()).getTime()-gThis.g.glAat>=1000){
-				gThis.g.glA = 1;
-				gThis.g.glAat = false;
+				g.pl.p.splice(0,g.pl.p.length);
+				g.pl.l=10;
+				g.glc=false;
+				g.glct=false;
+				$_("#mg_lo_d span").html(g.lv);
+				g.cSt("complete");
+				g.olv = g.lv;
+			} else if (g.glAat&&(new Date()).getTime()-g.glAat<1000)
+				g.glA = Math.pow(((new Date()).getTime()-g.glAat)/1000,2);
+			else if (g.glAat&&(new Date()).getTime()-g.glAat>=1000){
+				g.glA = 1;
+				g.glAat = false;
 			}
-			if (gThis.g.st=="interim"){ //if we're at the very start of the game's level
-				if ((gThis.g.lv==0||gThis.g.lv==gThis.g.olv)&&gThis.g.pl.n!==""){
-					if (gThis.g.en.length==0)gThis.g.en.push(ai.createEnem()); //create a new enemy
-					gThis.g.lv++;
-					gThis.g.olv=gThis.g.lv-1;
+			if (gen.st=="interim"){ //if we're at the very start of the game's level
+				if ((g.lv==0||g.lv==g.olv)&&g.pl.n!==""){
+					if (g.en.length==0)g.en.push(ai.createEnem()); //create a new enemy
+					g.lv++;
+					g.olv=g.lv-1;
 				}
-				gThis.g.pl.lu = gThis.g.gt;
-				with(Math)gThis.g.gl = floor(5*(log(pow(gThis.g.lv,0.6))+1)); //set the goal for the current level
-				gThis.g.lpa = gThis.g.gt;
-				if (!gThis.g.tb.v) gThis.g.tb.s(); //show the top bar
-				$get("mga").pause();
-				$get("mga2").pause();
-				if (gThis.g.pl.hm){
-					gThis.g.st="game";
-					gThis.g.pl.hm=false;
+				g.pl.lu = g.gt;
+				with(Math)g.gl = floor(5*(log(pow(g.lv,0.6))+1)); //set the goal for the current level
+				g.lpa = g.gt;
+				if (!g.tb.v) g.tb.s(); //show the top bar
+				$get("mgAudio_ambience").pause();
+				//$get("mgAudio_music").pause();
+				if (g.pl.hm){
+					gen.st="game";
+					g.pl.hm=false;
 				}
-				if (!gThis.g.glAat&&gThis.g.glA!==1) gThis.g.glAat = (new Date()).getTime();
-			} else if (gThis.g.st=="game"||gThis.g.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
-				if (gThis.g.en.length==0 && !gThis.g.glc) //if there are no current enemies
-					gThis.g.en.push(ai.createEnem());
-				if (gThis.g.gt-gThis.g.lpa >= 10000 && (gThis.g.pk.length==0||gThis.g.pk.length<=10) && !gThis.g.glc)
-					if (gThis.g.ap()) gThis.g.lpa = gThis.g.gt; //add a pickup, and set the last pickup addition time
-				for (var i=0;i<gThis.g.a.ls.length;i++){ //render all animations
-					switch(gThis.g.a.ls[i].t){
+				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
+			} else if (gen.st=="game"||gen.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
+				if (g.en.length==0 && !g.glc) //if there are no current enemies
+					g.en.push(ai.createEnem());
+				if (g.gt-g.lpa >= 10000 && (g.pk.length==0||g.pk.length<=10) && !g.glc)
+					if (g.ap()) g.lpa = g.gt; //add a pickup, and set the last pickup addition time
+				for (var i=0;i<g.a.ls.length;i++){ //render all animations
+					switch(g.a.ls[i].t){
 						case 0: //sparkle animation
-							var pn={x:gThis.g.a.ls[i].p.x,y:gThis.g.a.ls[i].p.y};
+							var pn={x:g.a.ls[i].p.x,y:g.a.ls[i].p.y};
 							var pnts=[]; //particles
-							if (gThis.g.a.ls[i].int==0){ //initialize
-								gThis.g.a.ls[i].int=gThis.g.gt;
-								gThis.g.a.ls[i].r=10; //radius
+							if (g.a.ls[i].int==0){ //initialize
+								g.a.ls[i].int=g.gt;
+								g.a.ls[i].r=10; //radius
 							}
-							if (gThis.g.gt-gThis.g.a.ls[i].int<=1700){
-								var dlt=(gThis.g.gt-gThis.g.a.ls[i].int)/1700;
+							if (g.gt-g.a.ls[i].int<=1700){
+								var dlt=(g.gt-g.a.ls[i].int)/1700;
 								var mr=100; //md=maximum diameter
-								gThis.g.a.ls[i].r=dlt*mr;
-								gThis.g.a.ls[i].cl.a=1-dlt;
+								g.a.ls[i].r=dlt*mr;
+								g.a.ls[i].cl.a=1-dlt;
 								function g(x,y,d,r){with(Math)return{x:x+r*parseFloat(cos(PI*d/180).toFixed(14)),y:y+r*parseFloat(sin(PI*d/180).toFixed(14))};}
 								for (var deg=0;deg<360;deg+=360/30)
-									pnts.push(g(pn.x,pn.y,deg,gThis.g.a.ls[i].r));
-							} else if(gThis.g.gt-gThis.g.a.ls[i].int>1700){
-								gThis.g.a.ls.splice(i,1);
+									pnts.push(g(pn.x,pn.y,deg,g.a.ls[i].r));
+							} else if(g.gt-g.a.ls[i].int>1700){
+								g.a.ls.splice(i,1);
 								i--;
 								continue;
 							}
-							var cl = gThis.g.a.ls[i].cl;
-							cx.fillStyle="rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*gThis.g.glA)+")";
+							var cl = g.a.ls[i].cl;
+							cx.fillStyle="rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
 							for (var j=0;j<pnts.length;j++){
 								cx.beginPath();
 								cx.arc(pnts[j].x,pnts[j].y,1,0,Math.PI*2,false);
@@ -1176,74 +1198,74 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}
 				}
-				for (var i=0; i<gThis.g.pk.length; i++){ //render all of the pickups
-					if (gThis.g.gt-gThis.g.pk[i].i < 750)
-						gThis.g.pk[i].c.a = Math.pow((gThis.g.gt-gThis.g.pk[i].i)/750,3);
+				for (var i=0; i<g.pk.length; i++){ //render all of the pickups
+					if (g.gt-g.pk[i].i < 750)
+						g.pk[i].c.a = Math.pow((g.gt-g.pk[i].i)/750,3);
 					var eg = { g: false, e: 0 };
-					for (var j=0; j<gThis.g.en.length; j++){
-						if (gThis.g.pk[i].f) break;
-						if (gThis.g.en[j].p[0].x == gThis.g.pk[i].p.x && gThis.g.en[j].p[0].y == gThis.g.pk[i].p.y){
+					for (var j=0; j<g.en.length; j++){
+						if (g.pk[i].f) break;
+						if (g.en[j].p[0].x == g.pk[i].p.x && g.en[j].p[0].y == g.pk[i].p.y){
 							eg.g = true;
 							eg.e = j;
 							break;
 						}
 					}
-					var cl = gThis.g.pk[i].c;
-					var pk = { x: bd.os().x1+bd.ps(gThis.g.pk[i].p).x+5, y: bd.os().y1+bd.ps(gThis.g.pk[i].p).y+5 };
-					if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.pl.p[0].x == gThis.g.pk[i].p.x && gThis.g.pl.p[0].y == gThis.g.pk[i].p.y && !gThis.g.pk[i].f && gThis.g.st != "paused" && !gThis.g.pk[i].f){
-						switch (gThis.g.pk[i].t){
+					var cl = g.pk[i].c;
+					var pk = { x: bd.os().x1+bd.ps(g.pk[i].p).x+5, y: bd.os().y1+bd.ps(g.pk[i].p).y+5 };
+					if (!g.pl.irs && !g.pl.dy && g.pl.p[0].x == g.pk[i].p.x && g.pl.p[0].y == g.pk[i].p.y && !g.pk[i].f && gen.st != "paused" && !g.pk[i].f){
+						switch (g.pk[i].t){
 							case 0: //pickup
-								gThis.g.pl.cs+=20; //increase the player's score
-								gThis.g.pl.l+=5; //increase the player's length
+								g.pl.cs+=20; //increase the player's score
+								g.pl.l+=5; //increase the player's length
 								break;
 							case 1: //poison
-								gThis.g.pl.pn.p = true; 
-								gThis.g.pl.pn.ipt = gThis.g.gt;
-								if(gThis.g.pl.cs-20>=0)gThis.g.pl.cs-=20;
+								g.pl.pn.p = true; 
+								g.pl.pn.ipt = g.gt;
+								if(g.pl.cs-20>=0)g.pl.cs-=20;
 								break;
 							case 2: //life
-								gThis.g.pl.lv+=(gThis.g.pl.lv<3?1:0);
-								gThis.g.pl.l+=5;
-								gThis.g.pl.cs+=60;
-								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
+								g.pl.lv+=(g.pl.lv<3?1:0);
+								g.pl.l+=5;
+								g.pl.cs+=60;
+								g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 								break;
 						}
-						gThis.g.pk[i].f = true; //set the item to fade away
-						gThis.g.pk[i].ft = gThis.g.gt;
-						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
-						$get("mga3").currentTime = 0;
-						$get("mga3").play(); //play a sound
-					} else if (eg.g && gThis.g.st != "paused" && !gThis.g.pk[i].f){ //if an enemy took the pickup instead
-						switch (gThis.g.pk[i].t){
+						g.pk[i].f = true; //set the item to fade away
+						g.pk[i].ft = g.gt;
+						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
+						$get("mgAudio_effects").currentTime = 0;
+						$get("mgAudio_effects").play(); //play a sound
+					} else if (eg.g && gen.st != "paused" && !g.pk[i].f){ //if an enemy took the pickup instead
+						switch (g.pk[i].t){
 							case 0: //pickup
-								gThis.g.en[eg.e].l+=5; //increase the enemy's length
+								g.en[eg.e].l+=5; //increase the enemy's length
 								break;
 							case 1: //poison
-								gThis.g.en[eg.e].pn.p = true;
-								gThis.g.en[eg.e].pn.ipt = gThis.g.gt;
+								g.en[eg.e].pn.p = true;
+								g.en[eg.e].pn.ipt = g.gt;
 								break;
 							case 2: //life
-								gThis.g.en[eg.e].l+=20;
-								gThis.g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
+								g.en[eg.e].l+=20;
+								g.a.a(pk.x,pk.y,0,{r:cl.r,g:cl.g,b:cl.b,a:cl.a}); //animation
 								break;
 						}
-						gThis.g.pk[i].f = true; //set the item to fade away
-						gThis.g.pk[i].ft = gThis.g.gt;
-						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
-					} else if (gThis.g.gt-gThis.g.pk[i].i > 10000 && !gThis.g.pk[i].f){ //if existing time > 10 seconds
-						gThis.g.pk[i].f = true; //set the item to fade away
-						gThis.g.pk[i].ft = gThis.g.gt;
-						gThis.g.pk[i].c.oa = gThis.g.pk[i].c.a; //save the old opacity
+						g.pk[i].f = true; //set the item to fade away
+						g.pk[i].ft = g.gt;
+						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
+					} else if (g.gt-g.pk[i].i > 10000 && !g.pk[i].f){ //if existing time > 10 seconds
+						g.pk[i].f = true; //set the item to fade away
+						g.pk[i].ft = g.gt;
+						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
 					}
-					if (gThis.g.pk[i].f){
-						if (gThis.g.gt-gThis.g.pk[i].ft > 750){
-							gThis.g.pk.splice(i,1); //remove the item
+					if (g.pk[i].f){
+						if (g.gt-g.pk[i].ft > 750){
+							g.pk.splice(i,1); //remove the item
 							i--;
 							continue;
-						} else gThis.g.pk[i].c.a = gThis.g.pk[i].c.oa-Math.pow(gThis.g.pk[i].c.oa*(gThis.g.gt-gThis.g.pk[i].ft)/750,2);
-					} else if (gThis.g.gt-gThis.g.pk[i].i >= 750 && gThis.g.st != "paused")//render the fading in and out of the pickup
-						with(Math)gThis.g.pk[i].c.a = abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1500*PI).toFixed(14)));
-					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*gThis.g.glA)+")";
+						} else g.pk[i].c.a = g.pk[i].c.oa-Math.pow(g.pk[i].c.oa*(g.gt-g.pk[i].ft)/750,2);
+					} else if (g.gt-g.pk[i].i >= 750 && gen.st != "paused")//render the fading in and out of the pickup
+						with(Math)g.pk[i].c.a = abs(parseFloat(sin((g.gt-g.pk[i].i)/1500*PI).toFixed(14)));
+					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
 					function pkGradient(r1,r2){
 						var pkrg = cx.createRadialGradient(
 							pk.x, 
@@ -1253,11 +1275,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							pk.y, 
 							(typeof r2=="undefined"?16:r2)
 						);
-						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*gThis.g.glA)+")");
-						pkrg.addColorStop(0.3,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3*gThis.g.glA)+")");
+						pkrg.addColorStop(0,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")");
+						pkrg.addColorStop(0.3,"rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.3*g.glA)+")");
 						pkrg.addColorStop(1,"rgba("+cl.r+","+cl.g+","+cl.b+",0)");
 						cx.fillStyle=pkrg;
-						cx.fillRect(bd.os().x1+bd.ps(gThis.g.pk[i].p).x-10, bd.os().y1+bd.ps(gThis.g.pk[i].p).y-10, 30, 30);
+						cx.fillRect(bd.os().x1+bd.ps(g.pk[i].p).x-10, bd.os().y1+bd.ps(g.pk[i].p).y-10, 30, 30);
 					}
 					function drawSquig(px,py,rd,fld,vr){
 						function squig(x,r,fl,v){with(Math)return sqrt(4*((4-v*4)+sin(fl*x))-pow(x,2));}
@@ -1272,7 +1294,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.stroke();
 						cx.closePath();
 					}
-					switch (gThis.g.pk[i].t){
+					switch (g.pk[i].t){
 						case 0: //normal
 							cx.beginPath();
 							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
@@ -1287,10 +1309,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
 							cx.fill();
 							cx.closePath();
-							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*gThis.g.glA)+")";
+							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*g.glA)+")";
 							cx.lineWidth = 1;
 							for (var r=8; r<=16; r+=4){
-								cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16)*gThis.g.glA)+")";
+								cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16)*g.glA)+")";
 								cx.beginPath();
 								cx.arc(pk.x, pk.y, r, 0.618*Math.PI, 1.382*Math.PI, false);
 								cx.stroke();
@@ -1309,48 +1331,48 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.lineWidth = 1;
 							pkGradient();
 							with(Math)
-								var delta=abs(parseFloat(sin((gThis.g.gt-gThis.g.pk[i].i)/1700*PI).toFixed(14)));
+								var delta=abs(parseFloat(sin((g.gt-g.pk[i].i)/1700*PI).toFixed(14)));
 							var vrt=delta*0.3;//radial variation (0-1)
 							var fldy=delta*1.2;//roughness
-							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*gThis.g.glA)+")";
+							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*g.glA)+")";
 							drawSquig(pk.x,pk.y,10,fldy,vrt);
 							break;
 					}
 				}
-				if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.lpt>=gThis.g.pl.pn.pt()&&gThis.g.gt-gThis.g.pl.pn.ipt<5000)
-					gThis.g.pl.pn.af(); //affect the player, if poisoned
-				else if (gThis.g.pl.pn.p&&gThis.g.gt-gThis.g.pl.pn.ipt>=5000) gThis.g.pl.pn.p = false;
-				if (!gThis.g.pl.irs && !gThis.g.pl.dy && gThis.g.gt-gThis.g.pl.lu >= 50 && gThis.g.st != "paused" && !gThis.g.glc){ //update the player
-					gThis.g.pl.lu = gThis.g.gt;
-					gThis.g.pl.pf(); //update the player's coordinates
-					gThis.g.pl.d = gThis.g.pl.qd;
-					if (gThis.g.pl.p.length > gThis.g.pl.l) //sychronize player length with array length
-						gThis.g.pl.p.splice(gThis.g.pl.p.length-(gThis.g.pl.p.length-gThis.g.pl.l), gThis.g.pl.p.length-gThis.g.pl.l);
-				} else if (gThis.g.pl.dy && !gThis.g.pl.irs && !gThis.g.glc){ //if the player is dying
-					if (gThis.g.gt-gThis.g.pl.dt <= 500) gThis.g.pl.c.a = 1-Math.pow((gThis.g.gt-gThis.g.pl.dt)/500,2);
+				if (g.pl.pn.p&&g.gt-g.pl.pn.lpt>=g.pl.pn.pt()&&g.gt-g.pl.pn.ipt<5000)
+					g.pl.pn.af(); //affect the player, if poisoned
+				else if (g.pl.pn.p&&g.gt-g.pl.pn.ipt>=5000) g.pl.pn.p = false;
+				if (!g.pl.irs && !g.pl.dy && g.gt-g.pl.lu >= 50 && gen.st != "paused" && !g.glc){ //update the player
+					g.pl.lu = g.gt;
+					g.pl.pf(); //update the player's coordinates
+					g.pl.d = g.pl.qd;
+					if (g.pl.p.length > g.pl.l) //sychronize player length with array length
+						g.pl.p.splice(g.pl.p.length-(g.pl.p.length-g.pl.l), g.pl.p.length-g.pl.l);
+				} else if (g.pl.dy && !g.pl.irs && !g.glc){ //if the player is dying
+					if (g.gt-g.pl.dt <= 500) g.pl.c.a = 1-Math.pow((g.gt-g.pl.dt)/500,2);
 					else {
-						gThis.g.pl.c.a = 0;
-						gThis.g.pl.rs(); //resurrect the player
+						g.pl.c.a = 0;
+						g.pl.rs(); //resurrect the player
 					}
-				} else if (gThis.g.pl.irs && !gThis.g.pl.dy && !gThis.g.glc){ //if the player is resurrecting
-					if (gThis.g.gt-gThis.g.pl.rt <= 500) gThis.g.pl.c.a = Math.pow((gThis.g.gt-gThis.g.pl.rt)/500,2);
+				} else if (g.pl.irs && !g.pl.dy && !g.glc){ //if the player is resurrecting
+					if (g.gt-g.pl.rt <= 500) g.pl.c.a = Math.pow((g.gt-g.pl.rt)/500,2);
 					else {
-						if (gThis.g.pl.lv == 0){ //if we're out of lives, too, end the game
-							gThis.g.cSt("over");
+						if (g.pl.lv == 0){ //if we're out of lives, too, end the game
+							g.cSt("over");
 						} else {
-							gThis.g.pl.c.a = 1;
-							gThis.g.pl.irs = false;
+							g.pl.c.a = 1;
+							g.pl.irs = false;
 						}
 					}
 				}
-				var pcl = gThis.g.pl.c;
-				for (var i=0; i<gThis.g.pl.p.length; i++){ //render the player
-					var p = gThis.g.pl.p[i];
-					cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*gThis.g.glA)+")";
+				var pcl = g.pl.c;
+				for (var i=0; i<g.pl.p.length; i++){ //render the player
+					var p = g.pl.p[i];
+					cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
 					cx.strokeStyle = "none";
-					if (gThis.g.pl.pn.p){ //poison rendering
+					if (g.pl.pn.p){ //poison rendering
 						with(Math)
-							cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((gThis.g.gt-gThis.g.pl.pn.ipt)/1000*PI).toFixed(14)))*gThis.g.glA)+")";
+							cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((g.gt-g.pl.pn.ipt)/1000*PI).toFixed(14)))*g.glA)+")";
 						cx.shadowBlur = 20;
 						cx.shadowOffsetX = 0;
 						cx.shadowoffSetY = 0;
@@ -1359,46 +1381,46 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.shadowBlur = 0;
 					cx.shadowColor = "rgba(0,0,0,0)";
 				}
-				for (var i=0; i<gThis.g.en.length; i++){ //render all of the enemies
-					if (gThis.g.en[i].dy && !gThis.g.glc){
-						var delta = gThis.g.gt-gThis.g.en[i].dc;
-						gThis.g.en[i].c.a = 1-Math.pow(delta/1000,2);
+				for (var i=0; i<g.en.length; i++){ //render all of the enemies
+					if (g.en[i].dy && !g.glc){
+						var delta = g.gt-g.en[i].dc;
+						g.en[i].c.a = 1-Math.pow(delta/1000,2);
 						if (delta >= 1000){
-							gThis.g.en.splice(i,1); //remove the enemy
+							g.en.splice(i,1); //remove the enemy
 							i--;
 							continue;
 						}
-					} else if (gThis.g.gt-gThis.g.en[i].lu >= 50 && !gThis.g.en[i].dy && gThis.g.st != "paused" && !gThis.g.glc){ //update the enemy
-						if (gThis.g.en[i].pn.p&&gThis.g.gt-gThis.g.en[i].pn.lpt>gThis.g.en[i].pn.pt){ //if the enemy is poisoned
-							gThis.g.en[i].pn.lpt = gThis.g.gt;
-							gThis.g.en[i].l--;
-							if (gThis.g.en[i].l <= 1){
-								gThis.g.en[i].dc = gThis.g.gt; //set the decay time
-								gThis.g.en[i].dy = true; //set the dying attribute to be true
+					} else if (g.gt-g.en[i].lu >= 50 && !g.en[i].dy && gen.st != "paused" && !g.glc){ //update the enemy
+						if (g.en[i].pn.p&&g.gt-g.en[i].pn.lpt>g.en[i].pn.pt){ //if the enemy is poisoned
+							g.en[i].pn.lpt = g.gt;
+							g.en[i].l--;
+							if (g.en[i].l <= 1){
+								g.en[i].dc = g.gt; //set the decay time
+								g.en[i].dy = true; //set the dying attribute to be true
 							}								
-						} else if (gThis.g.gt-gThis.g.en[i].pn.ipt>5000) //if time is up
-							gThis.g.en[i].pn.p = false;
-						if ([1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if a valid point is reached
-							gThis.g.en[i].lu = gThis.g.gt; //set the last update time
-							gThis.g.en[i].d = ai.nextDir(gThis.g.en[i]); //generate next direction, based on the AI
-						} else if (![1,1,1,1][(gThis.g.en[i].d)]&&!gThis.g.en[i].dy){ //if there are no more directions
-							gThis.g.en[i].dc = gThis.g.gt; //set the decay time
-							gThis.g.en[i].dy = true; //set the dying attribute to be true
+						} else if (g.gt-g.en[i].pn.ipt>5000) //if time is up
+							g.en[i].pn.p = false;
+						if ([1,1,1,1][(g.en[i].d)]&&!g.en[i].dy){ //if a valid point is reached
+							g.en[i].lu = g.gt; //set the last update time
+							g.en[i].d = ai.nextDir(g.en[i]); //generate next direction, based on the AI
+						} else if (![1,1,1,1][(g.en[i].d)]&&!g.en[i].dy){ //if there are no more directions
+							g.en[i].dc = g.gt; //set the decay time
+							g.en[i].dy = true; //set the dying attribute to be true
 						}
-						if (!gThis.g.en[i].dy){
-							gThis.g.en[i].p.splice(0, 0, ai.nextPos(gThis.g.en[i])); //create a new position
-							if (gThis.g.en[i].p.length > gThis.g.en[i].l) //synchronize enemy length with array length
-								gThis.g.en[i].p.splice(gThis.g.en[i].p.length-(gThis.g.en[i].p.length-gThis.g.en[i].l), gThis.g.en[i].p.length-gThis.g.en[i].l);
+						if (!g.en[i].dy){
+							g.en[i].p.splice(0, 0, ai.nextPos(g.en[i])); //create a new position
+							if (g.en[i].p.length > g.en[i].l) //synchronize enemy length with array length
+								g.en[i].p.splice(g.en[i].p.length-(g.en[i].p.length-g.en[i].l), g.en[i].p.length-g.en[i].l);
 						}
 					}
-					var cl = gThis.g.en[i].c;
-					for (var j=0; j<gThis.g.en[i].p.length; j++){
-						var p = gThis.g.en[i].p[j];
-						cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*gThis.g.glA)+")";
+					var cl = g.en[i].c;
+					for (var j=0; j<g.en[i].p.length; j++){
+						var p = g.en[i].p[j];
+						cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
 						cx.strokeStyle = "none";
-						if (gThis.g.en[i].pn.p){ //poison rendering
+						if (g.en[i].pn.p){ //poison rendering
 							with(Math)
-								cx.shadowColor = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*abs(parseFloat(sin((gThis.g.gt-gThis.g.en[i].pn.ipt)/1000*PI).toFixed(14)))*gThis.g.glA)+")";
+								cx.shadowColor = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*abs(parseFloat(sin((g.gt-g.en[i].pn.ipt)/1000*PI).toFixed(14)))*g.glA)+")";
 							cx.shadowBlur = 20;
 							cx.shadowOffsetX = 0;
 							cx.shadowOffsetY = 0;
@@ -1408,72 +1430,72 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.shadowColor = "rgba(0,0,0,0)";
 					}
 				}
-			} else if (gThis.g.st == "complete") {  //if the level is complete
+			} else if (gen.st == "complete") {  //if the level is complete
 				if ($_("#mg_lo").css("display")=="none") 
 					$_("#mg_lo").effects.fadeTo(100,1000);
-			} else if (gThis.g.st == "over") { //if the game is over
+			} else if (gen.st == "over") { //if the game is over
 				if ($_("#mg_go").css("display")=="none") 
 					$_("#mg_go").effects.fadeTo(100,1000);
 			}
-			if (gThis.g.st == "interim" || gThis.g.st == "game" || gThis.g.st == "paused"){ //some additional last-millisecond rendering
+			if (gen.st == "interim" || gen.st == "game" || gen.st == "paused"){ //some additional last-millisecond rendering
 				//update the position of the pause button
 				var pbcflct = false;
-				if (!gThis.g.pl.irs && !gThis.g.pl.dy && bd.ps(gThis.g.pl.p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.pl.p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.pl.p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.pl.p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
+				if (!g.pl.irs && !g.pl.dy && bd.ps(g.pl.p[0]).x >= g.bt[0].p.x && bd.ps(g.pl.p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.pl.p[0]).y >= g.bt[0].p.y && bd.ps(g.pl.p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
 				/* -- use the following below only for enemies -- *
-				for (var i=0; i<gThis.g.en.length; i++)
-					if (bd.ps(gThis.g.en[i].p[0]).x >= gThis.g.bt[0].p.x && bd.ps(gThis.g.en[i].p[0]).x <= gThis.g.bt[0].p.x+gThis.g.bt[0].w && bd.ps(gThis.g.en[i].p[0]).y >= gThis.g.bt[0].p.y && bd.ps(gThis.g.en[i].p[0]).y <= gThis.g.bt[0].p.y+gThis.g.bt[0].h) pbcflct = true;
+				for (var i=0; i<g.en.length; i++)
+					if (bd.ps(g.en[i].p[0]).x >= g.bt[0].p.x && bd.ps(g.en[i].p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.en[i].p[0]).y >= g.bt[0].p.y && bd.ps(g.en[i].p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
 				*/
-				if (pbcflct && !gThis.g.bt[0].m){
-					gThis.g.bt[0].m = true;
-					gThis.g.bt[0].r = !gThis.g.bt[0].r; //switch orientations 
+				if (pbcflct && !g.bt[0].m){
+					g.bt[0].m = true;
+					g.bt[0].r = !g.bt[0].r; //switch orientations 
 				}
-				if (gThis.g.bt[0].m){ //if the pause button is moving
-					var rc = bd.os().x1+bd.cv().x-gThis.g.bt[0].w-10; //right coord
+				if (g.bt[0].m){ //if the pause button is moving
+					var rc = bd.os().x1+bd.cv().x-g.bt[0].w-10; //right coord
 					var lc = bd.os().x1+10; //left coord
-					if (gThis.g.bt[0].mt == 0)
-						gThis.g.bt[0].mt = gThis.g.gt;
-					else if (gThis.g.gt-gThis.g.bt[0].mt < 700){
-						var dlt = (gThis.g.gt-gThis.g.bt[0].mt)/700;
+					if (g.bt[0].mt == 0)
+						g.bt[0].mt = g.gt;
+					else if (g.gt-g.bt[0].mt < 700){
+						var dlt = (g.gt-g.bt[0].mt)/700;
 						dlt = Math.pow(dlt,1-dlt);
-						gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
-						with(Math)gThis.g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
+						g.bt[0].p.x = (g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
+						with(Math)g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
 					} else {
-						gThis.g.bt[0].m = false;
-						gThis.g.bt[0].mt = 0;
-						gThis.g.bt[0].p.x = (gThis.g.bt[0].r ? rc : lc);
+						g.bt[0].m = false;
+						g.bt[0].mt = 0;
+						g.bt[0].p.x = (g.bt[0].r ? rc : lc);
 					}
 				}
-				if (gThis.g.bt[0].nsr != gThis.g.bt[0].sr && (new Date()).getTime()-gThis.g.bt[0].srt <= 700) //animate the shadow radius
-					gThis.g.bt[0].sr = gThis.g.bt[0].osr+Math.round((((new Date()).getTime()-gThis.g.bt[0].srt)/700)*(gThis.g.bt[0].nsr-gThis.g.bt[0].osr));
-				var pbcl = gThis.g.bt[0].c;
-				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+(pbcl.a*gThis.g.glA)+")";
+				if (g.bt[0].nsr != g.bt[0].sr && (new Date()).getTime()-g.bt[0].srt <= 700) //animate the shadow radius
+					g.bt[0].sr = g.bt[0].osr+Math.round((((new Date()).getTime()-g.bt[0].srt)/700)*(g.bt[0].nsr-g.bt[0].osr));
+				var pbcl = g.bt[0].c;
+				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+(pbcl.a*g.glA)+")";
 				cx.strokeStyle = "rgba(0,0,0,0)";
-				cx.fillRoundedRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h, 10);
-				var r = {x:gThis.g.bt[0].p.x+gThis.g.bt[0].w/2,y:gThis.g.bt[0].p.y+gThis.g.bt[0].h/2};
-				var shdw = cx.createRadialGradient(r.x, r.y, 0, r.x, r.y, gThis.g.bt[0].sr);
-				shdw.addColorStop(0, "rgba("+pbcl.r+80+","+pbcl.g+80+","+pbcl.b+80+","+(pbcl.a*gThis.g.glA)+")");
+				cx.fillRoundedRect(g.bt[0].p.x, g.bt[0].p.y, g.bt[0].w, g.bt[0].h, 10);
+				var r = {x:g.bt[0].p.x+g.bt[0].w/2,y:g.bt[0].p.y+g.bt[0].h/2};
+				var shdw = cx.createRadialGradient(r.x, r.y, 0, r.x, r.y, g.bt[0].sr);
+				shdw.addColorStop(0, "rgba("+pbcl.r+80+","+pbcl.g+80+","+pbcl.b+80+","+(pbcl.a*g.glA)+")");
 				shdw.addColorStop(0.82, "rgba(0,0,0,0)");
 				cx.fillStyle = shdw;
-				cx.fillRect(gThis.g.bt[0].p.x, gThis.g.bt[0].p.y, gThis.g.bt[0].w, gThis.g.bt[0].h);
-				cx.fillStyle = "rgba("+pbcl.r+100+","+pbcl.g+100+","+pbcl.b+100+","+(pbcl.a*gThis.g.glA)+")";
+				cx.fillRect(g.bt[0].p.x, g.bt[0].p.y, g.bt[0].w, g.bt[0].h);
+				cx.fillStyle = "rgba("+pbcl.r+100+","+pbcl.g+100+","+pbcl.b+100+","+(pbcl.a*g.glA)+")";
 				//pause rectangles
 				cx.shadowOffsetX = 0;
 				cx.shadowOffsetY = 0;
 				cx.shadowBlur = 5;
-				cx.shadowColor = "rgba(20,20,20,"+(pbcl.a*gThis.g.glA)+")";
-				if (gThis.g.st == "paused"){
+				cx.shadowColor = "rgba(20,20,20,"+(pbcl.a*g.glA)+")";
+				if (gen.st == "paused"){
 					var crds = [
 						{
-							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
-							y: gThis.g.bt[0].p.y+10
+							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2),
+							y: g.bt[0].p.y+10
 						},
 						{
-							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2),
-							y: gThis.g.bt[0].p.y+30
+							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2),
+							y: g.bt[0].p.y+30
 						},
 						{
-							x: gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+18,
-							y: gThis.g.bt[0].p.y+20
+							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2)+18,
+							y: g.bt[0].p.y+20
 						}
 					];
 					cx.beginPath();
@@ -1484,127 +1506,128 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.closePath();
 					cx.fill();	
 				} else {
-					cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2), gThis.g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
-					cx.fillRect(gThis.g.bt[0].p.x+Math.round((gThis.g.bt[0].w-18)/2)+12, gThis.g.bt[0].p.y+10, 6, 20);
+					cx.fillRect(g.bt[0].p.x+Math.round((g.bt[0].w-18)/2), g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
+					cx.fillRect(g.bt[0].p.x+Math.round((g.bt[0].w-18)/2)+12, g.bt[0].p.y+10, 6, 20);
 				}
 				cx.shadowBlur = 0;
 				cx.shadowColor = null;
-				if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at >= 700){//update the top bar
-					gThis.g.tb.p = {
-						x: gThis.g.tb.np.x,
-						y: gThis.g.tb.np.y
+				if (g.tb.an!="" && (new Date()).getTime()-g.tb.at >= 700){//update the top bar
+					g.tb.p = {
+						x: g.tb.np.x,
+						y: g.tb.np.y
 					};
-					gThis.g.tb.c.bg = { 
-						r: gThis.g.tb.nc.bg.r,
-						g: gThis.g.tb.nc.bg.g,
-						b: gThis.g.tb.nc.bg.b,
-						a: gThis.g.tb.nc.bg.a 
+					g.tb.c.bg = { 
+						r: g.tb.nc.bg.r,
+						g: g.tb.nc.bg.g,
+						b: g.tb.nc.bg.b,
+						a: g.tb.nc.bg.a 
 					};
-					if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-800||gThis.g.tb.p.y<=-24) gThis.g.tb.v = false;
-					else gThis.g.tb.v = true;
-					gThis.g.tb.an = "";
-				} else if (gThis.g.tb.an!="" && (new Date()).getTime()-gThis.g.tb.at < 700){
-					var dlta = ((new Date()).getTime()-gThis.g.tb.at)/700;
+					if (g.tb.c.bg.a==0||g.tb.p.x<=-800||g.tb.p.y<=-24) g.tb.v = false;
+					else g.tb.v = true;
+					g.tb.an = "";
+				} else if (g.tb.an!="" && (new Date()).getTime()-g.tb.at < 700){
+					var dlta = ((new Date()).getTime()-g.tb.at)/700;
 					var dc = {
-						r: gThis.g.tb.c.bg.r+Math.round(dlta*(gThis.g.tb.nc.bg.r-gThis.g.tb.c.bg.r)),
-						g: gThis.g.tb.c.bg.g+Math.round(dlta*(gThis.g.tb.nc.bg.g-gThis.g.tb.c.bg.g)),
-						b: gThis.g.tb.c.bg.b+Math.round(dlta*(gThis.g.tb.nc.bg.b-gThis.g.tb.c.bg.b)),
-						a: gThis.g.tb.c.bg.a+(dlta*(gThis.g.tb.nc.bg.a-gThis.g.tb.c.bg.a))
+						r: g.tb.c.bg.r+Math.round(dlta*(g.tb.nc.bg.r-g.tb.c.bg.r)),
+						g: g.tb.c.bg.g+Math.round(dlta*(g.tb.nc.bg.g-g.tb.c.bg.g)),
+						b: g.tb.c.bg.b+Math.round(dlta*(g.tb.nc.bg.b-g.tb.c.bg.b)),
+						a: g.tb.c.bg.a+(dlta*(g.tb.nc.bg.a-g.tb.c.bg.a))
 					};
 					var dp = {
-						x: gThis.g.tb.p.x+Math.round(dlta*(gThis.g.tb.np.x-gThis.g.tb.p.x)),
-						y: gThis.g.tb.p.y+Math.round(dlta*(gThis.g.tb.np.y-gThis.g.tb.p.y))
+						x: g.tb.p.x+Math.round(dlta*(g.tb.np.x-g.tb.p.x)),
+						y: g.tb.p.y+Math.round(dlta*(g.tb.np.y-g.tb.p.y))
 					};
-					if (gThis.g.tb.c.bg.a==0||gThis.g.tb.p.x<=-gThis.g.tb.d.w||gThis.g.tb.p.y<=-gThis.g.tb.d.h) gThis.g.tb.v = false;
-					else gThis.g.tb.v = true;
-					cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+(dc.a*gThis.g.glA)+")";
-					cx.fillRect(dp.x, dp.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*gThis.g.glA)+")";
+					if (g.tb.c.bg.a==0||g.tb.p.x<=-g.tb.d.w||g.tb.p.y<=-g.tb.d.h) g.tb.v = false;
+					else g.tb.v = true;
+					cx.fillStyle = "rgba("+dc.r+","+dc.g+","+dc.b+","+(dc.a*g.glA)+")";
+					cx.fillRect(dp.x, dp.y, g.tb.d.w, g.tb.d.h);
+					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")";
 					cx.textAlign = "left";
 					cx.font = "14px Arial";
 					cx.textBaseline = "top";
-					cx.fillText("Score:", dp.x+10, dp.y+gThis.g.tb.to.y);
-					cx.fillStyle = "rgba(186,244,255,"+((dc.a+0.3)*gThis.g.glA)+")";
-					cx.fillText((gThis.g.pl.s+gThis.g.pl.cs), dp.x+54, dp.y+gThis.g.tb.to.y);
-					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*gThis.g.glA)+")";
+					cx.fillText("Score:", dp.x+10, dp.y+g.tb.to.y);
+					cx.fillStyle = "rgba(186,244,255,"+((dc.a+0.3)*g.glA)+")";
+					cx.fillText((g.pl.s+g.pl.cs), dp.x+54, dp.y+g.tb.to.y);
+					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")";
 					cx.textAlign = "center";
-					cx.fillText("Level "+gThis.g.lv, dp.x+(gThis.g.tb.d.w/2), dp.y+gThis.g.tb.to.y);
+					cx.fillText("Level "+g.lv, dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
 					cx.textAlign = "right";
-					cx.fillText(gThis.g.pl.n, dp.x+gThis.g.tb.d.w-80, dp.y+gThis.g.tb.to.y);
+					cx.fillText(g.pl.n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
 					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
 						for (var i=0; i<3; i++)
-							cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], dp.x+gThis.g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
+							cx.drawImage(gThis.is.l[(i>2-g.pl.lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
 				}
-				if (gThis.g.tb.an==""){
-					cx.fillStyle = "rgba("+gThis.g.tb.c.bg.r+","+gThis.g.tb.c.bg.g+","+gThis.g.tb.c.bg.b+","+(gThis.g.tb.c.bg.a*gThis.g.glA)+")";
-					cx.fillRect(gThis.g.tb.p.x, gThis.g.tb.p.y, gThis.g.tb.d.w, gThis.g.tb.d.h);
-					cx.fillStyle = "rgba(240,255,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
+				if (g.tb.an==""){
+					cx.fillStyle = "rgba("+g.tb.c.bg.r+","+g.tb.c.bg.g+","+g.tb.c.bg.b+","+(g.tb.c.bg.a*g.glA)+")";
+					cx.fillRect(g.tb.p.x, g.tb.p.y, g.tb.d.w, g.tb.d.h);
+					cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
 					cx.textAlign = "left";
 					cx.font = "14px Arial";
 					cx.textBaseline = "top";
-					cx.fillText("Score:", gThis.g.tb.p.x+10, gThis.g.tb.p.y+gThis.g.tb.to.y);
-					cx.fillStyle = "rgba(186,244,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
-					cx.fillText((gThis.g.pl.s+gThis.g.pl.cs), gThis.g.tb.p.x+54, gThis.g.tb.p.y+gThis.g.tb.to.y);
-					cx.fillStyle = "rgba(240,255,255,"+((gThis.g.tb.c.bg.a+0.3)*gThis.g.glA)+")";
+					cx.fillText("Score:", g.tb.p.x+10, g.tb.p.y+g.tb.to.y);
+					cx.fillStyle = "rgba(186,244,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
+					cx.fillText((g.pl.s+g.pl.cs), g.tb.p.x+54, g.tb.p.y+g.tb.to.y);
+					cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
 					cx.textAlign = "center";
-					cx.fillText("Level "+gThis.g.lv, gThis.g.tb.p.x+(gThis.g.tb.d.w/2), gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.fillText("Level "+g.lv, g.tb.p.x+(g.tb.d.w/2), g.tb.p.y+g.tb.to.y);
 					cx.textAlign = "right";
-					cx.fillText(gThis.g.pl.n, gThis.g.tb.p.x+gThis.g.tb.d.w-80, gThis.g.tb.p.y+gThis.g.tb.to.y);
+					cx.fillText(g.pl.n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
 					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined")
 						for (var i=0; i<3; i++)
-							cx.drawImage(gThis.is.l[(i>2-gThis.g.pl.lv?0:1)], gThis.g.tb.p.x+gThis.g.tb.d.w-30-(20*i), gThis.g.tb.p.y+2, 20, 20);
+							cx.drawImage(gThis.is.l[(i>2-g.pl.lv?0:1)], g.tb.p.x+g.tb.d.w-30-(20*i), g.tb.p.y+2, 20, 20);
 				}
-				gThis.g.pg.p.y=(gThis.g.tb.an!=""?dp.y+gThis.g.tb.d.h+10:gThis.g.tb.p.y+gThis.g.tb.d.h+10); //drawing progress bar
-				if(!gThis.g.pg.an.iit)gThis.g.pg.an.iit=gThis.g.gt;
-				with(Math)var shdwA=abs(parseFloat(sin((gThis.g.gt-gThis.g.pg.an.iit)/1200*PI/2).toFixed(14)));
-				var pgcl=gThis.g.pg.c;
+				g.pg.p.y=(g.tb.an!=""?dp.y+g.tb.d.h+10:g.tb.p.y+g.tb.d.h+10); //drawing progress bar
+				if(!g.pg.an.iit)g.pg.an.iit=g.gt;
+				with(Math)var shdwA=abs(parseFloat(sin((g.gt-g.pg.an.iit)/1200*PI/2).toFixed(14)));
+				var pgcl=g.pg.c;
 				cx.strokeStyle="rgba("+pgcl.r+","+pgcl.g+","+pgcl.b+","+pgcl.a+")";
 				cx.fillStyle="rgba("+(pgcl.r+35)+","+(pgcl.g+35)+","+(pgcl.b+35)+","+(pgcl.a*0.7)+")";
 				cx.lineWidth=1;
 				cx.lineJoin="round";
-				gThis.g.pg.ib.nd.w = Mathf.limit((gThis.g.pg.d.w-2)*gThis.g.pl.cs/20/gThis.g.gl,0,gThis.g.pg.d.w-2);
-				if (gThis.g.pg.ib.nd.w!==gThis.g.pg.ib.d.w){
-					if (!gThis.g.pg.an.iat) gThis.g.pg.an.iat=gThis.g.gt;
-					if (gThis.g.gt-gThis.g.pg.an.iat<700){
-						with(Math)var delta = pow((gThis.g.gt-gThis.g.pg.an.iat)/700,2);
-						var nw = gThis.g.pg.ib.d.w+delta*(gThis.g.pg.ib.nd.w-gThis.g.pg.ib.d.w);
-						cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
-						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*gThis.g.glA)+")";
+				g.pg.ib.nd.w = Mathf.limit((g.pg.d.w-2)*g.pl.cs/20/g.gl,0,g.pg.d.w-2);
+				if (g.pg.ib.nd.w!==g.pg.ib.d.w){
+					if (!g.pg.an.iat) g.pg.an.iat=g.gt;
+					if (g.gt-g.pg.an.iat<700){
+						with(Math)var delta = pow((g.gt-g.pg.an.iat)/700,2);
+						var nw = g.pg.ib.d.w+delta*(g.pg.ib.nd.w-g.pg.ib.d.w);
+						cx.strokeRect(g.pg.p.x+0.5,g.pg.p.y+0.5,g.pg.d.w,g.pg.d.h);
+						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*g.glA)+")";
 						cx.shadowBlur=7;
-						cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,nw,gThis.g.pg.d.h-2);
+						cx.fillRect(g.pg.p.x+1.5,g.pg.p.y+1.5,nw,g.pg.d.h-2);
 						cx.shadowColor="rgba(0,0,0,0)";
 						cx.shadowBlur=0;
-					} else if (gThis.g.gt-gThis.g.pg.an.iat>=700){
-						gThis.g.pg.ib.d.w = gThis.g.pg.ib.nd.w;
-						gThis.g.pg.an.iat = false;
-						cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
-						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*gThis.g.glA)+")";
+					} else if (g.gt-g.pg.an.iat>=700){
+						g.pg.ib.d.w = g.pg.ib.nd.w;
+						g.pg.an.iat = false;
+						cx.strokeRect(g.pg.p.x+0.5,g.pg.p.y+0.5,g.pg.d.w,g.pg.d.h);
+						cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*g.glA)+")";
 						cx.shadowBlur=7;
-						cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
+						cx.fillRect(g.pg.p.x+1.5,g.pg.p.y+1.5,g.pg.ib.d.w,g.pg.d.h-2);
 						cx.shadowColor="rgba(0,0,0,0)";
 						cx.shadowBlur=0;
 					}
 				} else {
-					cx.strokeRect(gThis.g.pg.p.x+0.5,gThis.g.pg.p.y+0.5,gThis.g.pg.d.w,gThis.g.pg.d.h);
-					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*gThis.g.glA)+")";
+					cx.strokeRect(g.pg.p.x+0.5,g.pg.p.y+0.5,g.pg.d.w,g.pg.d.h);
+					cx.shadowColor="rgba("+(pgcl.r+70)+","+(pgcl.g+70)+","+(pgcl.b+70)+","+(shdwA*g.glA)+")";
 					cx.shadowBlur=7;
-					cx.fillRect(gThis.g.pg.p.x+1.5,gThis.g.pg.p.y+1.5,gThis.g.pg.ib.d.w,gThis.g.pg.d.h-2);
+					cx.fillRect(g.pg.p.x+1.5,g.pg.p.y+1.5,g.pg.ib.d.w,g.pg.d.h-2);
 					cx.shadowColor="rgba(0,0,0,0)";
 					cx.shadowBlur=0;
 				}
 			}
-		} else if (gThis.g.st == "help"){
+		} else if (gen.st == "help"){
 		}
-		/* else if (gThis.g.st == "lboards"){
+		/* else if (gen.st == "lboards"){
 		} */ //otherwise, there's nothing to do
-		$get("mga").volume = gThis.g.sn.a;
-		$get("mga2").volume = gThis.g.sn.a;
-		$get("mga3").volume = gThis.g.sn.e;
+		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
+		$get("mgAudio_music").volume = gen.snd.music.vol;
+		$get("mgAudio_effects").volume = gen.snd.effects.vol;
 		if (Storage) { //save data
-			localStorage.SGsnda = gThis.g.sn.a;
-			localStorage.SGsnde = gThis.g.sn.e;
-			localStorage.SGpn = gThis.g.pl.n;
-			localStorage.SGkt = gThis.g.kt;
+			localStorage.SGsnda = gen.snd.ambience.vol;
+			localStorage.SGsndm = gen.snd.music.vol;
+			localStorage.SGsnde = gen.snd.effects.vol;
+			localStorage.SGpn = g.pl.n;
+			localStorage.SGkt = g.kt;
 		}
 	};
 	this.intrvlist = function(){ //lists all current intervals, outputted to an array
