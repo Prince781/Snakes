@@ -187,20 +187,22 @@ height: 494px;
 padding: 1px;
 background-color: rgba(0,0,0,0);
 opacity: 0;
-filter: alpha(opacity=0);
 display: none;
 position: absolute;
 }
 
 #mg_sd{
-margin-left: -340px;
-margin-top: -1px;
+margin-left: -310px;
+margin-top: -221px;
+left: 50%;
+top: 50%;
 width: 578px;
-height: 455px;
+height: 400px;
 padding: 21px;
 background-color: #202020;
 box-shadow: 0px 0px 15px #000000;
 position: absolute;
+opacity: 0;
 z-index: 1001;
 display: none;
 }
@@ -763,7 +765,6 @@ background-color: rgba(11,25,29,0.7);
 box-shadow: 0px 0px 35px 10px rgba(11,25,29,0.7);
 border-radius: 7px;
 opacity: 0;
-filter: alpha(opacity=0);
 display: none;
 padding: 10px;
 }

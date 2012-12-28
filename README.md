@@ -17,7 +17,7 @@ A list of features to implement:
 * More fluid/aesthetic Pause Menu UI ( **done** )
 * More fluid/aesthetic level transition menu ( **done** )
 * Multiplayer gameplay ( **started** )
-  - Local multiplayer ( **todo**)
+  - Local multiplayer ( **started**)
   - Server multiplayer ( **todo** )
 * Music ( **todo** )
 * Special effects toggling ( **todo** )

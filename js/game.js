@@ -95,28 +95,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	var mm = { //the main components of the main menu, when the game has not been started. Has a similar structure to this.g
 		str: (new Date()).getTime(), //the starting time of the appearance of the main menu
 		en: [] //the array of enemies, except as passive creatures
-		/*
-		am: { //the sound array, containing info for ambience
-			is: false, //whether or not we have background sound playing already
-			pl: function(){ //function to begin playing
-				if (mm.am.is) return false; //if background sound is already initialized
-				mm.am.is = true;
-				var aud = document.getElementById("mgAudio_ambience"); //the game's main audio component
-				var aud2 = document.getElementById("mgAudio_music"); //the second audio component (used for looping)
-				//aud.volume = 0.2;
-				//aud2.volume = 0.2;
-				aud.play();
-				aud.addEventListener("ended", function(){
-					aud.currentTime = 0;
-					if (gen.st=="menu")aud2.play();
-				}, false);
-				aud2.addEventListener("ended", function(){
-					aud2.currentTime = 0;
-					if (gen.st=="menu")aud.play();
-				}, false);
-			}
-		}
-		*/
 	};
 	var s = { //info for the appearance of the settings menu
 		v: false, //the visibility
@@ -124,7 +102,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (s.v) return false;
 			s.v = true;
 			$_("#mg_sd").effects.fadeTo(100, 500);
-			$_("#mg_sd").effects.toPosition("margin-left", -1, 500);
+			//$_("#mg_sd").effects.toPosition("margin-left", -1, 500);
 			$_("#mg_sd_inun").value(g.pl.n);
 		},
 		hide: function(){
@@ -134,10 +112,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				s.ntfy(rs.r);
 				return false;
 			}
-			$_("#mg_sd").effects.fadeTo(0, 500);
-			$_("#mg_sd").effects.toPosition("margin-left", -$_("#mg_sd").offsetWidth(), 500, function(){
+			$_("#mg_sd").effects.fadeTo(0, 500, function(){
 				s.v = false;
 			});
+			/*$_("#mg_sd").effects.toPosition("margin-left", -$_("#mg_sd").offsetWidth(), 500, function(){
+				s.v = false;
+			});*/
 			g.pl.n = $_("#mg_sd_inun").value(); //set the game player's name
 		},
 		ntfy: function(msg){ //show notification
@@ -201,6 +181,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		},
 		bg: { //the array for the background gradient
 			c: { //the list of colors
+				/* red tint:
+				0: $_.newColor(90,21,42,0.9),
+				0.1: $_.newColor(90,21,42,0.6),
+				0.8: $_.newColor(90,21,42,0)
+				*/ //blue tint:
 				0: $_.newColor(21,79,90,0.9),
 				0.1: $_.newColor(21,79,90,0.6),
 				0.8: $_.newColor(21,79,90,0)
@@ -270,7 +255,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		},
 		a: { //list of instanced animations
 			ls:[],
-			a: function(px,py,t,c){ //add
+			a: function(px,py,t,c) { //add
 				/*****
 				 * types:
 				 * 0 - sparkle effect
@@ -294,7 +279,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		kt: 0, //the type of key input used. 0 for WASD, and 1 for arrow keys
 		pk: [], //the list of pickups
 		lpa: 0, //the last time a pickup was added
-		ap: function(){ //function to add a new pickup to the game
+		ap: function() { //function to add a new pickup to the game
 			var pc = [];
 			for (var i=1; i<bd.gd().x-1; i++){
 				for (var j=1; j<bd.gd().y-1; j++){
@@ -394,7 +379,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		to: 0, //the time offset (current time - to)
 		glA: 1, //the global alpha value
 		glAat: 0, //time of global alpha animation start time
-		nl: function(){ //make preparations for the next level
+		nl: function() { //make preparations for the next level
 			if (gen.st=="interim") return false;
 			if (gen.st=="complete")
 				$_("#mg_lo").effects.fadeTo(0,1000);
@@ -403,7 +388,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			g.pl.cs=0;
 			g.cSt("interim");
 		},
-		slb: function(){ //show the leaderboards normally
+		slb: function() { //show the leaderboards normally
 			if ($_("#mg_lb_td").css('display')!='none')
 				$_("#mg_lb_td").effects.fadeTo(0,500);
 			$_("#mg_mmi").effects.fadeTo(0,500);
@@ -416,7 +401,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_lb").effects.toHeight(204,500);
 			g.glb(); //get leaderboards information
 		},
-		qlb: function(){ //quit leaderboards
+		qlb: function() { //quit leaderboards
 			if (gen.sst=="paused") {
 				$_("#mg_pd").effects.fadeTo(100,500, function(){
 					g.rSt(); //revert state
@@ -426,7 +411,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				});
 			} else g.qt(); //quit to main menu
 		},
-		qt: function(){ //quit to the main menu
+		qt: function() { //quit to the main menu
 			g.cSt("menu");
 			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
 			//hide other items, and reset values
@@ -486,7 +471,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			});
 		}, 
-		glb: function(){ //get leaderboards info from server
+		glb: function() { //get leaderboards info from server
 			$_("table#mg_lb_lst tbody").clear(); //remove previous list
 			try {
 				$_.req({
@@ -520,36 +505,32 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		}
 	};
-	bd.invalid = function(px,py){ //determine whether or not the point is invalid
+	if (typeof g.bg == "undefined") alert("g.bg is undefined");
+	bd.invalid = function(px,py) { //determine whether or not the point is invalid
 		var validity = true; //the validity, or invalidity
-		for (var a=0; a<mm.en.length; a++){
-			for (var b=0; b<mm.en[a].p.length; b++){
+		for (var a=0; a<mm.en.length; a++)
+			for (var b=0; b<mm.en[a].p.length; b++)
 				if (mm.en[a].p[b].x==px&&mm.en[a].p[b].y==py){
 					validity = false;
 					break;
 				}
-			}
-		}
-		for (var a=0; a<g.en.length; a++){
-			for (var b=0; b<g.en[a].p.length; b++){
-				if (g.en[a].p[b].x==px&&g.en[a].p[b].y==py){
+		for (var a=0; a<g.en.length; a++)
+			for (var b=0; b<g.en[a].p.length; b++)
+				if (g.en[a].p[b].x==px&&g.en[a].p[b].y==py) {
 					validity = false;
 					break;
 				}
-			}
-		}
-		for (var a=0; a<g.pl.p.length; a++){
-			if (g.pl.p[a].x==px&&g.pl.p[a].y==py){
+		for (var a=0; a<g.pl.p.length; a++)
+			if (g.pl.p[a].x==px&&g.pl.p[a].y==py) {
 				validity = false;
 				break;
 			}
-		}
 		if (px<0||px>bd.gd().x||py<0||py>bd.gd().y) validity = false;
 		if (typeof px=="undefined"||typeof py=="undefined") validity = false;
 		return !validity;
 	};
 	var ai = { //various artificial intelligence functions
-		createEnem: function(){
+		createEnem: function() {
 			var rDir = Mathf.randVal([0,1,2,3]); //generate a random direction, based on clockwise movement
 			/*****
 				0 -- up
@@ -569,7 +550,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				},
 				d: rDir,
 				m: 0, //the current mode of the enemy (0,1,2, or 3). Corresponds to different behaviors
-				p: (function(){ //the list of points (x, y)
+				p: (function() { //the list of points (x, y)
 					var pnts = [];
 					pnts[0] = {
 						x: Mathf.rand(20,bd.gd().x-20),
@@ -599,7 +580,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			};
 		},
-		nextPos: function(c){ //where c is the input enemy
+		nextPos: function(c) { //where c is the input enemy
 			var frst = c.p[0];
 			var newPos = {
 				x: frst.x+([0,1,0,-1][c.d]),
@@ -607,7 +588,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			};
 			return newPos;
 		},
-		nextDir: function(c){ //the modified version of ai.nextDir
+		nextDir: function(c) { //the modified version of ai.nextDir
 			var pkd = [];
 			//calculate the nearest distance of a pickup
 			for (var i=0; i<g.pk.length; i++)
@@ -626,12 +607,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				p: [],
 				oL: 0
 			};
-			for (var x=0; x<=bd.os().x; x++){
+			for (var x=0; x<=bd.os().x; x++)
 				for (var y=0; y<=bd.os().y; y++){
 					if (!bd.invalid(x,y)) pCrds.p.push({x:x,y:y,v:true,e:false}); //e is a true/false value, meaning "edge"; v has to do with validity
 					else pCrds.p.push({x:x,y:y,v:false,e:false});
 				}
-			}
 			for (var a=0; a<pCrds.p.length; a++){
 				if (pCrds.p[a].v) continue;
 				for (var b=0; b<pCrds.p.length; b++){
@@ -644,22 +624,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 			pCrds.oL=pCrds.p.length;
 			var cpcrds = [];
-			for (var a=0; a<pCrds.p.length; a++){
+			for (var a=0; a<pCrds.p.length; a++)
 				if ((Math.abs(c.p[0].x-pCrds.p[a].x)==1&&c.p[0].y==pCrds.p[a].y)||(Math.abs(c.p[0].y-pCrds.p[a].y)==1&&c.p[0].x==pCrds.p[a].x)){
 					cpcrds.push(pCrds.p[a]);
 					pCrds.p.splice(a,1);
 					a--;
 				}
-			}
-			for (var b=0; b<cpcrds.length; b++){
-				for (var a=0; a<pCrds.p.length; a++){
-					if ((Math.abs(cpcrds[b].x-pCrds.p[a].x)==1&&cpcrds[b].y==pCrds.p[a].y)||(Math.abs(cpcrds[b].y-pCrds.p[a].y)==1&&cpcrds[b].x==pCrds.p[a].x)){
+			for (var b=0; b<cpcrds.length; b++)
+				for (var a=0; a<pCrds.p.length; a++)
+					if ((Math.abs(cpcrds[b].x-pCrds.p[a].x)==1&&cpcrds[b].y==pCrds.p[a].y)||(Math.abs(cpcrds[b].y-pCrds.p[a].y)==1&&cpcrds[b].x==pCrds.p[a].x)) {
 						cpcrds.push(pCrds.p[a]);
 						pCrds.p.splice(a,1);
 						a--;
 					}
-				}
-			}
 			if (cpcrds.length/pCrds.oL <= 0.7) endangered = true;
 			var mode = 0;
 			/************
@@ -673,10 +650,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			c.m = mode;
 			//console.log("Current mode: "+["default","aggressive","economical"][c.m]);
 			var nDir = -1;
-			function inval(d){
+			function inval(d) {
 				return bd.invalid(c.p[0].x+[0,1,0,-1][d],c.p[0].y+[-1,0,1,0][d]);
 			}
-			function ppD(d){
+			function ppD(d) {
 				var pList = [];
 				var p = cpcrds;
 				for (var i=0; i<p.length; i++)
@@ -684,7 +661,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						pList.push(p[i]);
 				return pList.length;
 			}
-			switch(mode){
+			switch(mode) {
 				case 0: //default
 					var dList=[];
 					for (var d1=0; d1<4; d1++)
@@ -698,7 +675,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					var nwDir=[1,0,3,2,1][(Math.round(ang/90))];
 					if (!inval(nwDir))
 						nDir=nwDir;
-					else{
+					else {
 						var cDirs=[];
 						cDirs.push({d:(nwDir-1==-1?3:nwDir-1),c:ppD(nwDir-1==-1?3:nwDir-1)});
 						cDirs.push({d:(nwDir+1==4?0:nwDir+1),c:ppD(nwDir+1==4?0:nwDir+1)});
@@ -741,322 +718,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			return nDir;
 		}
 	};
-	this.init = function(){ //the main initialization function
-		if (!("width" in gThis.cnv && "style" in gThis.stdiv && "style" in gThis.mmdiv))
-			return false;
-		mm.str = (new Date()).getTime();
-		g.pl = (function(){ //the player
-			var dir = Mathf.rand(0,3); //create a random direction
-			var pnts = [];
-			var len = 10;
-			pnts[0] = {
-				x: Mathf.rand(20,bd.gd().x-20),
-				y: Mathf.rand(20,bd.gd().y-20)
-			};
-			var frst = pnts[0];
-			for (var i=1; i<=len-1; i++){
-				pnts.push({ //add the other coordinates to the player's coordinate list
-					x: frst.x+([0,-i,0,i][dir]), //note: these values are the REVERSE of any normal ones,
-					y: frst.y+([i,0,-i,0][dir])  //as point 0 shall be the starting point of the enemy
-				});								 //hence, the -, instead of a +
-			}
-			var hueColor = Math.random();
-			var rC=Hue(hueColor);
-			return {
-				p: pnts, //the list of points (x, y)
-				c: { //the color data (r, g, b, a). Is randomized on initialization
-					r: rC.r,
-					g: rC.g,
-					b: rC.b,
-					a: 1,
-					h: hueColor
-				},
-				d: dir, //the direction of the player, at move time
-				qd: dir, //the queued direction of the player, prior to move time
-				s: 0, //the score of the player
-				cs: 0, //the current, level-based score of the player
-				n: "", //the name of the player
-				lu: g.gt, //the last time the player's position was updated
-				l: len, //the length of the player
-				pn: { //poison info, if the player is poisoned
-					p: false, //whether or not the player is poisoned
-					pt: function(){ //poison time interval, for player, to decrease length
-						return (g.pl.pn.p&&!g.pl.dy)?Math.round(1+1000*Math.pow(g.pl.lv,-g.pl.lv/20)):false;
-					},
-					ipt: g.gt, //initial poison time
-					lpt: g.gt, //last poison time
-					af: function(){ //affect
-						if (!g.pl.pn.p||g.gt-g.pl.pn.lpt<g.pl.pn.pt()||g.pl.dy) return false;
-						g.pl.pn.lpt = g.gt;
-						g.pl.pn.lpt = g.gt;
-						g.pl.l--;
-						if (g.pl.l<=1){ //kill player
-							g.pl.dy = true;
-							g.pl.dt = g.gt;
-						}
-					}
-				},
-				dy: false, //whether or not the player is dying
-				dt: false, //the time (timestamp) when dying was initiated
-				irs: false, //whether or not the player is resurrecting
-				rt: 0, //the time of resurrection
-				rs: function(){ //resurrect the player after a death
-					g.pl.d = -1;
-					g.pl.irs = true;
-					g.pl.dy = false;
-					g.pl.p.splice(0,g.pl.p.length); //remove every point
-					g.pl.lv--;
-					if (g.pl.lv==0) return false;
-					/*
-					var safeCoords = [];
-					for (var x=10; x<=bd.gd().x-10; x++){
-						for (var y=10; y<=bd.gd().y-10; y++){
-							if (!bd.invalid(x,y)) safeCoords.push({x:x,y:y});
-						}
-					}
-					g.pl.p.push(Mathf.randVal(safeCoords));
-					*/
-					g.pl.p.push({x:Mathf.rand(10,bd.gd().x-10),y:Mathf.rand(10,bd.gd().y-10)});
-					g.pl.l = 10;
-					g.pl.rt = g.gt;
-					var dList = [];
-					function room(dir){
-						var x=g.pl.p[0].x+[0,1,0,-1][dir],y=g.pl.p[0].y+[-1,0,1,0][dir];
-						switch(dir){
-							case 0:
-								for (y;y>-2;y--)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
-								break;
-							case 1:
-								for (x;x<=bd.gd().x+1;x++)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
-								break;
-							case 2:
-								for (y;y<=bd.gd().y+1;y++)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
-								break;
-							case 3:
-								for (x;x>-2;x--)
-									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
-								break;
-						}
-					}
-					//for (var d=0; d<=3; d++) room(d);
-					g.pl.d = Mathf.rand(0,3);//$_.assort(dList,false,"d")[0].t;
-				},
-				hm: false, //whether or not the player has decided to move
-				mv: function(d){ //function to move the player according to direction
-					if (g.pl.dy || g.pl.irs) return false;
-					else if ([2,3,0,1][d]==g.pl.d){
-						if (gen.st=="interim")g.pl.hm = true;
-						return false;
-					}
-					if (gen.st=="interim")g.pl.hm = true;
-					g.pl.qd = d;
-				},
-				pf: function(){
-					if (g.pl.dy || g.pl.irs) return false;
-					var coord = {
-						x:g.pl.p[0].x+[0,1,0,-1][g.pl.qd],
-						y:g.pl.p[0].y+[-1,0,1,0][g.pl.qd]
-					};
-					var conflict = false;
-					for (var a=1; a<g.pl.p.length; a++){
-						if (coord.x==g.pl.p[a].x && coord.y==g.pl.p[a].y){
-							conflict = true;
-							break;
-						}
-					}
-					for (var a=0; a<g.en.length; a++){
-						var en = g.en[a];
-						for (var b=0; b<en.p.length; b++){
-							if (coord.x==en.p[b].x && coord.y==en.p[b].y){
-								conflict = true;
-								break;
-							}
-						}
-					}
-					if (coord.x<0||coord.x>bd.gd().x||coord.y<0||coord.y>bd.gd().y) conflict = true;
-					if (conflict){
-						g.pl.dy = true;
-						g.pl.dt = g.gt;
-					} else g.pl.p.splice(0,0,coord);
-				},
-				lv: 3 //the amount of lives left in the player
-			};
-		})();
-		g.bt[0].p = { //the position of the pause button
-			x: bd.os().x1+10,
-			y: bd.os().y1+bd.cv().y-g.bt[0].h-10
-		};
-		g.tb.d.w = gThis.cnv.width;
-		g.pg.p = {
-			x: gThis.cnv.width-10-g.pg.d.w, //position of progress bar
-			y: g.tb.p.y+g.tb.d.h+10
-		};
-		gThis.is.a("img/heart.png");
-		gThis.is.a("img/heart_gs.png");
-		$_("#mg_mmi").effects.fadeTo(100,200, function(){
-			intervs.draw = setInterval(gThis.draw, 1); //start the interval for the drawing of the main canvas
-		});
-		$_("#mg_mmpn").click(function(){
-			if (s.v) return false;
-			$_("#mg_mmi").effects.fadeTo(0,200);
-			if (g.pl.n == ""){
-				$_("#mg_np").effects.fadeTo(100,500);
-				$_("#mg_np_dun").value(g.pl.n);
-			} else g.cSt("interim"); //start at new level
-		});
-		$_("#mg_np_dc").click(function(){ //start the game, if there is a valid username
-			var rs = gThis.un.chk($_("#mg_np_dun").value());
-			if (!rs.v){
-				$_("#mg_np_d_e").effects.fadeTo(100,700);
-				$_("#mg_np_d_e").html(rs.r);
-				return;
-			}
-			$_("#mg_np").effects.fadeTo(0,500);
-			g.pl.n = $_("#mg_np_dun").value();
-			g.cSt("interim"); //start at new level
-		});
-		$_("#mg_mms").click(s.show); //start the settings div's appearance, and pause everything else
-		$_("#mg_sd_cb").click(s.hide); //close the settings div, and revert back to previous game state
-		if (Storage) {
-			if (localStorage.SGsnda) gen.snd.ambience.vol = parseFloat(localStorage.SGsnda);
-			if (localStorage.SGsndm) gen.snd.music.vol = parseFloat(localStorage.SGsndm);
-			if (localStorage.SGsnde) gen.snd.effects.vol = parseFloat(localStorage.SGsnde);
-			if (localStorage.SGpn) g.pl.n = localStorage.SGpn;
-			if (localStorage.SGkt) g.kt = parseFloat(localStorage.SGkt);
-		}
-		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
-		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
-		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
-		$get("mgAudio_music").volume = gen.snd.music.vol;
-		$get("mgAudio_effects").volume = gen.snd.effects.vol;
-		$_("#mg_sd_sl_cr .mg_sd_slh").css("margin-left", Math.round((g.pl.c.r/255)*parseInt($_("#mg_sd_sl_cr").css("width")))-8+"px");
-		$_("#mg_sd_sl_cg .mg_sd_slh").css("margin-left", Math.round((g.pl.c.g/255)*parseInt($_("#mg_sd_sl_cg").css("width")))-8+"px");
-		$_("#mg_sd_sl_cb .mg_sd_slh").css("margin-left", Math.round((g.pl.c.b/255)*parseInt($_("#mg_sd_sl_cb").css("width")))-8+"px");
-		$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
-		$_("#mg_sd_snd_ambience .mg_sd_slh").css("margin-left", Math.round(gen.snd.ambience.vol*parseInt($_("#mg_sd_snd_ambience").css("width")))-8+"px");
-		$_("#mg_sd_snd_music .mg_sd_slh").css("margin-left", Math.round(gen.snd.music.vol*parseInt($_("#mg_sd_snd_music").css("width")))-8+"px");
-		$_("#mg_sd_snd_effects .mg_sd_slh").css("margin-left", Math.round(gen.snd.effects.vol*parseInt($_("#mg_sd_snd_effects").css("width")))-8+"px");
-		$_(".mg_sd_sl .mg_sd_slh").mousedown(function(ev){
-			if (ev.preventDefault) ev.preventDefault();
-			else window.event.returnValue = false;
-			var cHandle = this;
-			var cBar = this.parentNode;
-			if ($_(cBar).attr("type")=="mg_snd"){
-				var sType = cBar.id.substring(10); //capture sound type
-			} else var cType = cBar.id.charAt(10);
-			window.onmousemove = function(e){
-				var off = $_(cBar).offset().x;
-				var offset = Mathf.limit(e.pageX-off, 0, $_(cBar).offsetWidth());
-				$_(cHandle).css("margin-left", (offset-8)+"px");
-				if ($_(cBar).attr("type")=="mg_snd"){
-					var nsnd = offset/$_(cBar).offsetWidth();
-					gen.snd[sType].vol = nsnd;
-				} else {
-					var cl = 25+Math.round((offset/$_(cBar).offsetWidth())*230);
-					g.pl.c[cType] = cl;
-					$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
-				}
-				return false;
-			};
-			window.onmouseup = function(){
-				window.onmousemove = null;
-				return false;
-			};
-		});
-		$_("#mg_sd_cnkow").click(function(){ //change the default input to WASD keys
-			$_("#mg_sd_cnk_1").html("W");
-			$_("#mg_sd_cnk_2").html("A");
-			$_("#mg_sd_cnk_3").html("S");
-			$_("#mg_sd_cnk_4").html("D");
-			g.kt=0;
-		});
-		$_("#mg_sd_cnkoa").click(function(){ //change the default input to arrow keys
-			$_("#mg_sd_cnk_1").html("&#x25B2");
-			$_("#mg_sd_cnk_2").html("&#x25C0");
-			$_("#mg_sd_cnk_3").html("&#x25BC");
-			$_("#mg_sd_cnk_4").html("&#x25B6");
-			g.kt=1;
-		});
-		if (g.kt==0){
-			$_("#mg_sd_cnk_1").html("W");
-			$_("#mg_sd_cnk_2").html("A");
-			$_("#mg_sd_cnk_3").html("S");
-			$_("#mg_sd_cnk_4").html("D");
-		} else if (g.kt==1){
-			$_("#mg_sd_cnk_1").html("&#x25B2");
-			$_("#mg_sd_cnk_2").html("&#x25C0");
-			$_("#mg_sd_cnk_3").html("&#x25BC");
-			$_("#mg_sd_cnk_4").html("&#x25B6");
-		}
-		$_("#mgpdbt_st").click(s.show);
-		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt);
-		$_("#mg_lb_bt_qt").click(g.qlb);
-		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb);
-		$_(window).keyCode(function(k){ //get the input of the user, while the actual game is running or paused, and move the player accordingly
-			switch(gen.st){
-				case "interim":
-				case "game":
-					switch(k){
-						case (g.kt ? "up" : "w"):
-							g.pl.mv(0);
-							break;
-						case (g.kt ? "right" : "d"):
-							g.pl.mv(1);
-							break;
-						case (g.kt ? "down" : "s"):
-							g.pl.mv(2);
-							break;
-						case (g.kt ? "left" : "a"):
-							g.pl.mv(3);
-							break;
-					}
-				case "paused":
-					switch(k){
-						case "p":
-							if ((gen.st == "game" || gen.st == "paused")&&!s.v) g.cSt(gen.st=="game" ? "paused" : "game");
-							break;
-					}				
-				break;
-			}
-		});
-		$_(gThis.cnv).mousemove(function(e){
-			var mouse = {
-				x: e.pageX-$_(gThis.cnv).offset().x,
-				y: e.pageY-$_(gThis.cnv).offset().y
-			};
-			for (var i=0; i<g.bt.length; i++){
-				var hovering = (mouse.y-g.bt[i].p.y >= 0 
-								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
-								&& mouse.x-g.bt[i].p.x >= 0
-								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
-				if (typeof g.bt[i].e.mouseover == "function" && hovering && !g.bt[i].e.ismouseover)
-					g.bt[i].e.mouseover(); //invoke mouseover event
-				else if (typeof g.bt[i].e.mouseout == "function" && g.bt[i].e.ismouseover && !hovering)
-					g.bt[i].e.mouseout(); //invoke mouseout event
-			}
-		});
-		$_(gThis.cnv).click(function(e){
-			var mouse = {
-				x: e.pageX-$_(gThis.cnv).offset().x,
-				y: e.pageY-$_(gThis.cnv).offset().y
-			};
-			for (var i=0; i<g.bt.length; i++){
-				var hovering = (mouse.y-g.bt[i].p.y >= 0 
-								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
-								&& mouse.x-g.bt[i].p.x >= 0
-								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
-				if (typeof g.bt[i].e.click == "function" && hovering)
-					g.bt[i].e.click(); //invoke click event
-			}
-		});
-	};
-	this.draw = function(){ //the main drawing function of the game, which renders everything on the canvas
+	function draw() { //the main drawing function of the game, which renders everything on the canvas
 		cx = $_(gThis.cnv).ctx("2d+"); //additional ScriJe "2d+" context for canvas
 		cx.clearRect(0, 0, gThis.cnv.width, gThis.cnv.height);
-		with(cx){ //resetting values...
+		with(cx) { //resetting values...
 			strokeStyle="rgba(0,0,0,0)";
 			fillStyle="rgba(0,0,0,0)";
 			shadowColor="rgba(0,0,0,0)";
@@ -1065,7 +730,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			lineWidth=0;
 			lineJoin="miter";
 		}
-		if (g.bg.v){
+		if (g.bg.v) {
 			if ((new Date()).getTime()-mm.str < 1000 && g.bg.dt==0)
 				g.bg.o = Math.pow(((new Date()).getTime()-mm.str)/1000,2);
 			if (gen.st != "menu" && g.bg.dt==0) g.bg.dt = (new Date()).getTime();
@@ -1081,24 +746,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			cx.fillStyle=rg;
 			cx.fillRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		}
-		if (gen.st == "menu"){ //render the main menu
+		if (gen.st == "menu") { //render the main menu
 			if ($_(gThis.mmdiv).css("display") != "block")
 				$_(gThis.mmdiv).effects.fadeTo(100,700);
-			//mm.am.pl(); 
 			$get("mgAudio_ambience").play();//play the ambient music
 			if (mm.en.length==0) //create more enemies, if none exist
 				mm.en.push(ai.createEnem()); //create a new random enemy, and store it
-			for (var i=0; i<mm.en.length; i++){
-				if ((new Date()).getTime()-mm.en[i].lu >= 50 || mm.en[i].dy){ //don't perform if the enemy's position has been updated recently, or if it is dying
+			for (var i=0; i<mm.en.length; i++) {
+				if ((new Date()).getTime()-mm.en[i].lu >= 50 || mm.en[i].dy) { //don't perform if the enemy's position has been updated recently, or if it is dying
 					mm.en[i].lu = (new Date()).getTime();
 						mm.en[i].d = ai.nextDir(mm.en[i]); //find the next direction, based on the AI
-					if (![1,1,1,1][(mm.en[i].d)]){ //if there are no more directions
+					if (![1,1,1,1][(mm.en[i].d)]) { //if there are no more directions
 						if (!mm.en[i].dy)
 							mm.en[i].dc = (new Date()).getTime(); //set the decay time
 						mm.en[i].dy = true; //set the dying attribute to be true
 						var delta = (new Date()).getTime()-mm.en[i].dc;
 						mm.en[i].c.a = 1-Math.pow(delta/1000,2);
-						if (delta >= 1000){
+						if (delta >= 1000) {
 							mm.en.splice(i,1); //remove the enemy
 							i--;
 							continue;
@@ -1110,23 +774,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 				}
 				var cl = mm.en[i].c;
-				for (var j=0; j<mm.en[i].p.length; j++){
+				for (var j=0; j<mm.en[i].p.length; j++) {
 					var p = mm.en[i].p[j];
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+cl.a+")";
 					cx.strokeStyle = "rgba(0,0,0,0)";
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 				}
 			}
-		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over"){ //render the main game, if currently running, paused, or over
+		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over") { //render the main game, if currently running, paused, or over
 			if (gen.st == "game") g.gt = (new Date()).getTime()-g.to;
-			if (g.pl.cs/20>=g.gl && !g.glc && g.gl!==0 && gen.st!=="complete"){ //level has been completed
+			if (g.pl.cs/20>=g.gl && !g.glc && g.gl!==0 && gen.st!=="complete") { //level has been completed
 				g.glc=true;
 				g.glct=(new Date()).getTime(); //set time for goal completion
 			} else if (g.glc && (new Date()).getTime()-g.glct<1000 && gen.st!=="complete")
 				g.glA = 1-Math.pow(((new Date()).getTime()-g.glct)/1000,2);
-			else if (g.glc && (new Date()).getTime()-g.glct>=1000 && gen.st!=="complete"){
+			else if (g.glc && (new Date()).getTime()-g.glct>=1000 && gen.st!=="complete") {
 				g.glA = 0;
-				for (var i=0;i<g.en.length;i++){
+				for (var i=0;i<g.en.length;i++) {
 					g.en.splice(i,1);
 					i--;
 				}
@@ -1139,12 +803,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				g.olv = g.lv;
 			} else if (g.glAat&&(new Date()).getTime()-g.glAat<1000)
 				g.glA = Math.pow(((new Date()).getTime()-g.glAat)/1000,2);
-			else if (g.glAat&&(new Date()).getTime()-g.glAat>=1000){
+			else if (g.glAat&&(new Date()).getTime()-g.glAat>=1000) {
 				g.glA = 1;
 				g.glAat = false;
 			}
-			if (gen.st=="interim"){ //if we're at the very start of the game's level
-				if ((g.lv==0||g.lv==g.olv)&&g.pl.n!==""){
+			if (gen.st=="interim") { //if we're at the very start of the game's level
+				if ((g.lv==0||g.lv==g.olv)&&g.pl.n!=="") {
 					if (g.en.length==0)g.en.push(ai.createEnem()); //create a new enemy
 					g.lv++;
 					g.olv=g.lv-1;
@@ -1155,41 +819,41 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (!g.tb.v) g.tb.s(); //show the top bar
 				$get("mgAudio_ambience").pause();
 				//$get("mgAudio_music").pause();
-				if (g.pl.hm){
+				if (g.pl.hm) {
 					gen.st="game";
 					g.pl.hm=false;
 				}
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
-			} else if (gen.st=="game"||gen.st=="paused"){ //otherwise, we're in the middle of the game, at an unknown level yet
+			} else if (gen.st=="game"||gen.st=="paused") { //otherwise, we're in the middle of the game, at an unknown level yet
 				if (g.en.length==0 && !g.glc) //if there are no current enemies
 					g.en.push(ai.createEnem());
 				if (g.gt-g.lpa >= 10000 && (g.pk.length==0||g.pk.length<=10) && !g.glc)
 					if (g.ap()) g.lpa = g.gt; //add a pickup, and set the last pickup addition time
-				for (var i=0;i<g.a.ls.length;i++){ //render all animations
-					switch(g.a.ls[i].t){
+				for (var i=0;i<g.a.ls.length;i++) { //render all animations
+					switch (g.a.ls[i].t) {
 						case 0: //sparkle animation
 							var pn={x:g.a.ls[i].p.x,y:g.a.ls[i].p.y};
 							var pnts=[]; //particles
-							if (g.a.ls[i].int==0){ //initialize
+							if (g.a.ls[i].int==0) { //initialize
 								g.a.ls[i].int=g.gt;
 								g.a.ls[i].r=10; //radius
 							}
-							if (g.gt-g.a.ls[i].int<=1700){
+							if (g.gt-g.a.ls[i].int<=1700) {
 								var dlt=(g.gt-g.a.ls[i].int)/1700;
 								var mr=100; //md=maximum diameter
 								g.a.ls[i].r=dlt*mr;
 								g.a.ls[i].cl.a=1-dlt;
-								function g(x,y,d,r){with(Math)return{x:x+r*parseFloat(cos(PI*d/180).toFixed(14)),y:y+r*parseFloat(sin(PI*d/180).toFixed(14))};}
+								function grad(x,y,d,r){with(Math)return{x:x+r*parseFloat(cos(PI*d/180).toFixed(14)),y:y+r*parseFloat(sin(PI*d/180).toFixed(14))};}
 								for (var deg=0;deg<360;deg+=360/30)
-									pnts.push(g(pn.x,pn.y,deg,g.a.ls[i].r));
-							} else if(g.gt-g.a.ls[i].int>1700){
+									pnts.push(grad(pn.x,pn.y,deg,g.a.ls[i].r));
+							} else if(g.gt-g.a.ls[i].int>1700) {
 								g.a.ls.splice(i,1);
 								i--;
 								continue;
 							}
 							var cl = g.a.ls[i].cl;
 							cx.fillStyle="rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
-							for (var j=0;j<pnts.length;j++){
+							for (var j=0;j<pnts.length;j++) {
 								cx.beginPath();
 								cx.arc(pnts[j].x,pnts[j].y,1,0,Math.PI*2,false);
 								cx.fill();
@@ -1198,13 +862,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}
 				}
-				for (var i=0; i<g.pk.length; i++){ //render all of the pickups
+				for (var i=0; i<g.pk.length; i++) { //render all of the pickups
 					if (g.gt-g.pk[i].i < 750)
 						g.pk[i].c.a = Math.pow((g.gt-g.pk[i].i)/750,3);
 					var eg = { g: false, e: 0 };
-					for (var j=0; j<g.en.length; j++){
+					for (var j=0; j<g.en.length; j++) {
 						if (g.pk[i].f) break;
-						if (g.en[j].p[0].x == g.pk[i].p.x && g.en[j].p[0].y == g.pk[i].p.y){
+						if (g.en[j].p[0].x == g.pk[i].p.x && g.en[j].p[0].y == g.pk[i].p.y) {
 							eg.g = true;
 							eg.e = j;
 							break;
@@ -1213,7 +877,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					var cl = g.pk[i].c;
 					var pk = { x: bd.os().x1+bd.ps(g.pk[i].p).x+5, y: bd.os().y1+bd.ps(g.pk[i].p).y+5 };
 					if (!g.pl.irs && !g.pl.dy && g.pl.p[0].x == g.pk[i].p.x && g.pl.p[0].y == g.pk[i].p.y && !g.pk[i].f && gen.st != "paused" && !g.pk[i].f){
-						switch (g.pk[i].t){
+						switch (g.pk[i].t) {
 							case 0: //pickup
 								g.pl.cs+=20; //increase the player's score
 								g.pl.l+=5; //increase the player's length
@@ -1235,8 +899,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
 						$get("mgAudio_effects").currentTime = 0;
 						$get("mgAudio_effects").play(); //play a sound
-					} else if (eg.g && gen.st != "paused" && !g.pk[i].f){ //if an enemy took the pickup instead
-						switch (g.pk[i].t){
+					} else if (eg.g && gen.st != "paused" && !g.pk[i].f) { //if an enemy took the pickup instead
+						switch (g.pk[i].t) {
 							case 0: //pickup
 								g.en[eg.e].l+=5; //increase the enemy's length
 								break;
@@ -1252,13 +916,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						g.pk[i].f = true; //set the item to fade away
 						g.pk[i].ft = g.gt;
 						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
-					} else if (g.gt-g.pk[i].i > 10000 && !g.pk[i].f){ //if existing time > 10 seconds
+					} else if (g.gt-g.pk[i].i > 10000 && !g.pk[i].f) { //if existing time > 10 seconds
 						g.pk[i].f = true; //set the item to fade away
 						g.pk[i].ft = g.gt;
 						g.pk[i].c.oa = g.pk[i].c.a; //save the old opacity
 					}
-					if (g.pk[i].f){
-						if (g.gt-g.pk[i].ft > 750){
+					if (g.pk[i].f) {
+						if (g.gt-g.pk[i].ft > 750) {
 							g.pk.splice(i,1); //remove the item
 							i--;
 							continue;
@@ -1266,7 +930,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					} else if (g.gt-g.pk[i].i >= 750 && gen.st != "paused")//render the fading in and out of the pickup
 						with(Math)g.pk[i].c.a = abs(parseFloat(sin((g.gt-g.pk[i].i)/1500*PI).toFixed(14)));
 					cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
-					function pkGradient(r1,r2){
+					function pkGradient(r1,r2) {
 						var pkrg = cx.createRadialGradient(
 							pk.x, 
 							pk.y, 
@@ -1281,8 +945,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillStyle=pkrg;
 						cx.fillRect(bd.os().x1+bd.ps(g.pk[i].p).x-10, bd.os().y1+bd.ps(g.pk[i].p).y-10, 30, 30);
 					}
-					function drawSquig(px,py,rd,fld,vr){
-						function squig(x,r,fl,v){with(Math)return sqrt(4*((4-v*4)+sin(fl*x))-pow(x,2));}
+					function drawSquig(px,py,rd,fld,vr) {
+						function squig(x,r,fl,v) {with(Math)return sqrt(4*((4-v*4)+sin(fl*x))-pow(x,2));}
 						cx.lineJoin="round";
 						cx.beginPath();
 						for (var x=px-rd*2;x<=px+rd*2;x++)
@@ -1294,7 +958,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.stroke();
 						cx.closePath();
 					}
-					switch (g.pk[i].t){
+					switch (g.pk[i].t) {
 						case 0: //normal
 							cx.beginPath();
 							cx.arc(pk.x, pk.y, 4, 0, 2*Math.PI, false);
@@ -1311,7 +975,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.closePath();
 							cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*g.glA)+")";
 							cx.lineWidth = 1;
-							for (var r=8; r<=16; r+=4){
+							for (var r=8; r<=16; r+=4) {
 								cx.strokeStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*0.5*((18-r)/16)*g.glA)+")";
 								cx.beginPath();
 								cx.arc(pk.x, pk.y, r, 0.618*Math.PI, 1.382*Math.PI, false);
@@ -1342,22 +1006,22 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if (g.pl.pn.p&&g.gt-g.pl.pn.lpt>=g.pl.pn.pt()&&g.gt-g.pl.pn.ipt<5000)
 					g.pl.pn.af(); //affect the player, if poisoned
 				else if (g.pl.pn.p&&g.gt-g.pl.pn.ipt>=5000) g.pl.pn.p = false;
-				if (!g.pl.irs && !g.pl.dy && g.gt-g.pl.lu >= 50 && gen.st != "paused" && !g.glc){ //update the player
+				if (!g.pl.irs && !g.pl.dy && g.gt-g.pl.lu >= 50 && gen.st != "paused" && !g.glc) { //update the player
 					g.pl.lu = g.gt;
 					g.pl.pf(); //update the player's coordinates
 					g.pl.d = g.pl.qd;
 					if (g.pl.p.length > g.pl.l) //sychronize player length with array length
 						g.pl.p.splice(g.pl.p.length-(g.pl.p.length-g.pl.l), g.pl.p.length-g.pl.l);
-				} else if (g.pl.dy && !g.pl.irs && !g.glc){ //if the player is dying
+				} else if (g.pl.dy && !g.pl.irs && !g.glc) { //if the player is dying
 					if (g.gt-g.pl.dt <= 500) g.pl.c.a = 1-Math.pow((g.gt-g.pl.dt)/500,2);
 					else {
 						g.pl.c.a = 0;
 						g.pl.rs(); //resurrect the player
 					}
-				} else if (g.pl.irs && !g.pl.dy && !g.glc){ //if the player is resurrecting
+				} else if (g.pl.irs && !g.pl.dy && !g.glc) { //if the player is resurrecting
 					if (g.gt-g.pl.rt <= 500) g.pl.c.a = Math.pow((g.gt-g.pl.rt)/500,2);
 					else {
-						if (g.pl.lv == 0){ //if we're out of lives, too, end the game
+						if (g.pl.lv == 0) { //if we're out of lives, too, end the game
 							g.cSt("over");
 						} else {
 							g.pl.c.a = 1;
@@ -1366,11 +1030,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					}
 				}
 				var pcl = g.pl.c;
-				for (var i=0; i<g.pl.p.length; i++){ //render the player
+				for (var i=0; i<g.pl.p.length; i++) { //render the player
 					var p = g.pl.p[i];
 					cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
 					cx.strokeStyle = "none";
-					if (g.pl.pn.p){ //poison rendering
+					if (g.pl.pn.p) { //poison rendering
 						with(Math)
 							cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((g.gt-g.pl.pn.ipt)/1000*PI).toFixed(14)))*g.glA)+")";
 						cx.shadowBlur = 20;
@@ -1381,44 +1045,44 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.shadowBlur = 0;
 					cx.shadowColor = "rgba(0,0,0,0)";
 				}
-				for (var i=0; i<g.en.length; i++){ //render all of the enemies
-					if (g.en[i].dy && !g.glc){
+				for (var i=0; i<g.en.length; i++) { //render all of the enemies
+					if (g.en[i].dy && !g.glc) {
 						var delta = g.gt-g.en[i].dc;
 						g.en[i].c.a = 1-Math.pow(delta/1000,2);
-						if (delta >= 1000){
+						if (delta >= 1000) {
 							g.en.splice(i,1); //remove the enemy
 							i--;
 							continue;
 						}
-					} else if (g.gt-g.en[i].lu >= 50 && !g.en[i].dy && gen.st != "paused" && !g.glc){ //update the enemy
-						if (g.en[i].pn.p&&g.gt-g.en[i].pn.lpt>g.en[i].pn.pt){ //if the enemy is poisoned
+					} else if (g.gt-g.en[i].lu >= 50 && !g.en[i].dy && gen.st != "paused" && !g.glc) { //update the enemy
+						if (g.en[i].pn.p&&g.gt-g.en[i].pn.lpt>g.en[i].pn.pt) { //if the enemy is poisoned
 							g.en[i].pn.lpt = g.gt;
 							g.en[i].l--;
-							if (g.en[i].l <= 1){
+							if (g.en[i].l <= 1) {
 								g.en[i].dc = g.gt; //set the decay time
 								g.en[i].dy = true; //set the dying attribute to be true
 							}								
 						} else if (g.gt-g.en[i].pn.ipt>5000) //if time is up
 							g.en[i].pn.p = false;
-						if ([1,1,1,1][(g.en[i].d)]&&!g.en[i].dy){ //if a valid point is reached
+						if ([1,1,1,1][(g.en[i].d)]&&!g.en[i].dy) { //if a valid point is reached
 							g.en[i].lu = g.gt; //set the last update time
 							g.en[i].d = ai.nextDir(g.en[i]); //generate next direction, based on the AI
-						} else if (![1,1,1,1][(g.en[i].d)]&&!g.en[i].dy){ //if there are no more directions
+						} else if (![1,1,1,1][(g.en[i].d)]&&!g.en[i].dy) { //if there are no more directions
 							g.en[i].dc = g.gt; //set the decay time
 							g.en[i].dy = true; //set the dying attribute to be true
 						}
-						if (!g.en[i].dy){
+						if (!g.en[i].dy) {
 							g.en[i].p.splice(0, 0, ai.nextPos(g.en[i])); //create a new position
 							if (g.en[i].p.length > g.en[i].l) //synchronize enemy length with array length
 								g.en[i].p.splice(g.en[i].p.length-(g.en[i].p.length-g.en[i].l), g.en[i].p.length-g.en[i].l);
 						}
 					}
 					var cl = g.en[i].c;
-					for (var j=0; j<g.en[i].p.length; j++){
+					for (var j=0; j<g.en[i].p.length; j++) {
 						var p = g.en[i].p[j];
 						cx.fillStyle = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*g.glA)+")";
 						cx.strokeStyle = "none";
-						if (g.en[i].pn.p){ //poison rendering
+						if (g.en[i].pn.p) { //poison rendering
 							with(Math)
 								cx.shadowColor = "rgba("+cl.r+","+cl.g+","+cl.b+","+(cl.a*abs(parseFloat(sin((g.gt-g.en[i].pn.ipt)/1000*PI).toFixed(14)))*g.glA)+")";
 							cx.shadowBlur = 20;
@@ -1437,7 +1101,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				if ($_("#mg_go").css("display")=="none") 
 					$_("#mg_go").effects.fadeTo(100,1000);
 			}
-			if (gen.st == "interim" || gen.st == "game" || gen.st == "paused"){ //some additional last-millisecond rendering
+			if (gen.st == "interim" || gen.st == "game" || gen.st == "paused") { //some additional last-millisecond rendering
 				//update the position of the pause button
 				var pbcflct = false;
 				if (!g.pl.irs && !g.pl.dy && bd.ps(g.pl.p[0]).x >= g.bt[0].p.x && bd.ps(g.pl.p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.pl.p[0]).y >= g.bt[0].p.y && bd.ps(g.pl.p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
@@ -1445,16 +1109,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				for (var i=0; i<g.en.length; i++)
 					if (bd.ps(g.en[i].p[0]).x >= g.bt[0].p.x && bd.ps(g.en[i].p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.en[i].p[0]).y >= g.bt[0].p.y && bd.ps(g.en[i].p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
 				*/
-				if (pbcflct && !g.bt[0].m){
+				if (pbcflct && !g.bt[0].m) {
 					g.bt[0].m = true;
 					g.bt[0].r = !g.bt[0].r; //switch orientations 
 				}
-				if (g.bt[0].m){ //if the pause button is moving
+				if (g.bt[0].m) { //if the pause button is moving
 					var rc = bd.os().x1+bd.cv().x-g.bt[0].w-10; //right coord
 					var lc = bd.os().x1+10; //left coord
 					if (g.bt[0].mt == 0)
 						g.bt[0].mt = g.gt;
-					else if (g.gt-g.bt[0].mt < 700){
+					else if (g.gt-g.bt[0].mt < 700) {
 						var dlt = (g.gt-g.bt[0].mt)/700;
 						dlt = Math.pow(dlt,1-dlt);
 						g.bt[0].p.x = (g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
@@ -1483,7 +1147,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				cx.shadowOffsetY = 0;
 				cx.shadowBlur = 5;
 				cx.shadowColor = "rgba(20,20,20,"+(pbcl.a*g.glA)+")";
-				if (gen.st == "paused"){
+				if (gen.st == "paused") {
 					var crds = [
 						{
 							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2),
@@ -1511,7 +1175,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 				cx.shadowBlur = 0;
 				cx.shadowColor = null;
-				if (g.tb.an!="" && (new Date()).getTime()-g.tb.at >= 700){//update the top bar
+				if (g.tb.an!="" && (new Date()).getTime()-g.tb.at >= 700) {//update the top bar
 					g.tb.p = {
 						x: g.tb.np.x,
 						y: g.tb.np.y
@@ -1525,7 +1189,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (g.tb.c.bg.a==0||g.tb.p.x<=-800||g.tb.p.y<=-24) g.tb.v = false;
 					else g.tb.v = true;
 					g.tb.an = "";
-				} else if (g.tb.an!="" && (new Date()).getTime()-g.tb.at < 700){
+				} else if (g.tb.an!="" && (new Date()).getTime()-g.tb.at < 700) {
 					var dlta = ((new Date()).getTime()-g.tb.at)/700;
 					var dc = {
 						r: g.tb.c.bg.r+Math.round(dlta*(g.tb.nc.bg.r-g.tb.c.bg.r)),
@@ -1557,7 +1221,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						for (var i=0; i<3; i++)
 							cx.drawImage(gThis.is.l[(i>2-g.pl.lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
 				}
-				if (g.tb.an==""){
+				if (g.tb.an=="") {
 					cx.fillStyle = "rgba("+g.tb.c.bg.r+","+g.tb.c.bg.g+","+g.tb.c.bg.b+","+(g.tb.c.bg.a*g.glA)+")";
 					cx.fillRect(g.tb.p.x, g.tb.p.y, g.tb.d.w, g.tb.d.h);
 					cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
@@ -1585,9 +1249,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				cx.lineWidth=1;
 				cx.lineJoin="round";
 				g.pg.ib.nd.w = Mathf.limit((g.pg.d.w-2)*g.pl.cs/20/g.gl,0,g.pg.d.w-2);
-				if (g.pg.ib.nd.w!==g.pg.ib.d.w){
+				if (g.pg.ib.nd.w!==g.pg.ib.d.w) {
 					if (!g.pg.an.iat) g.pg.an.iat=g.gt;
-					if (g.gt-g.pg.an.iat<700){
+					if (g.gt-g.pg.an.iat<700) {
 						with(Math)var delta = pow((g.gt-g.pg.an.iat)/700,2);
 						var nw = g.pg.ib.d.w+delta*(g.pg.ib.nd.w-g.pg.ib.d.w);
 						cx.strokeRect(g.pg.p.x+0.5,g.pg.p.y+0.5,g.pg.d.w,g.pg.d.h);
@@ -1596,7 +1260,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillRect(g.pg.p.x+1.5,g.pg.p.y+1.5,nw,g.pg.d.h-2);
 						cx.shadowColor="rgba(0,0,0,0)";
 						cx.shadowBlur=0;
-					} else if (g.gt-g.pg.an.iat>=700){
+					} else if (g.gt-g.pg.an.iat>=700) {
 						g.pg.ib.d.w = g.pg.ib.nd.w;
 						g.pg.an.iat = false;
 						cx.strokeRect(g.pg.p.x+0.5,g.pg.p.y+0.5,g.pg.d.w,g.pg.d.h);
@@ -1615,7 +1279,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					cx.shadowBlur=0;
 				}
 			}
-		} else if (gen.st == "help"){
+		} else if (gen.st == "help") {
 		}
 		/* else if (gen.st == "lboards"){
 		} */ //otherwise, there's nothing to do
@@ -1629,16 +1293,329 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			localStorage.SGpn = g.pl.n;
 			localStorage.SGkt = g.kt;
 		}
+	}
+	this.init = function() { //the main initialization function
+		if (!("width" in gThis.cnv && "style" in gThis.stdiv && "style" in gThis.mmdiv))
+			return false;
+		mm.str = (new Date()).getTime();
+		g.pl = (function() { //the player
+			var dir = Mathf.rand(0,3); //create a random direction
+			var pnts = [];
+			var len = 10;
+			pnts[0] = {
+				x: Mathf.rand(20,bd.gd().x-20),
+				y: Mathf.rand(20,bd.gd().y-20)
+			};
+			var frst = pnts[0];
+			for (var i=1; i<=len-1; i++) {
+				pnts.push({ //add the other coordinates to the player's coordinate list
+					x: frst.x+([0,-i,0,i][dir]), //note: these values are the REVERSE of any normal ones,
+					y: frst.y+([i,0,-i,0][dir])  //as point 0 shall be the starting point of the enemy
+				});								 //hence, the -, instead of a +
+			}
+			var hueColor = Math.random();
+			var rC=Hue(hueColor);
+			return {
+				p: pnts, //the list of points (x, y)
+				c: { //the color data (r, g, b, a). Is randomized on initialization
+					r: rC.r,
+					g: rC.g,
+					b: rC.b,
+					a: 1,
+					h: hueColor
+				},
+				d: dir, //the direction of the player, at move time
+				qd: dir, //the queued direction of the player, prior to move time
+				s: 0, //the score of the player
+				cs: 0, //the current, level-based score of the player
+				n: "", //the name of the player
+				lu: g.gt, //the last time the player's position was updated
+				l: len, //the length of the player
+				pn: { //poison info, if the player is poisoned
+					p: false, //whether or not the player is poisoned
+					pt: function() { //poison time interval, for player, to decrease length
+						return (g.pl.pn.p&&!g.pl.dy)?Math.round(1+1000*Math.pow(g.pl.lv,-g.pl.lv/20)):false;
+					},
+					ipt: g.gt, //initial poison time
+					lpt: g.gt, //last poison time
+					af: function() { //affect
+						if (!g.pl.pn.p||g.gt-g.pl.pn.lpt<g.pl.pn.pt()||g.pl.dy) return false;
+						g.pl.pn.lpt = g.gt;
+						g.pl.pn.lpt = g.gt;
+						g.pl.l--;
+						if (g.pl.l<=1) { //kill player
+							g.pl.dy = true;
+							g.pl.dt = g.gt;
+						}
+					}
+				},
+				dy: false, //whether or not the player is dying
+				dt: false, //the time (timestamp) when dying was initiated
+				irs: false, //whether or not the player is resurrecting
+				rt: 0, //the time of resurrection
+				rs: function() { //resurrect the player after a death
+					g.pl.d = -1;
+					g.pl.irs = true;
+					g.pl.dy = false;
+					g.pl.p.splice(0,g.pl.p.length); //remove every point
+					g.pl.lv--;
+					if (g.pl.lv==0) return false;
+					/* code for resurrecting in only safe areas
+					var safeCoords = [];
+					for (var x=10; x<=bd.gd().x-10; x++)
+						for (var y=10; y<=bd.gd().y-10; y++)
+							if (!bd.invalid(x,y)) safeCoords.push({x:x,y:y});
+					g.pl.p.push(Mathf.randVal(safeCoords));
+					*/
+					g.pl.p.push({x:Mathf.rand(10,bd.gd().x-10),y:Mathf.rand(10,bd.gd().y-10)});
+					g.pl.l = 10;
+					g.pl.rt = g.gt;
+					var dList = [];
+					function room(dir) {
+						var x=g.pl.p[0].x+[0,1,0,-1][dir],y=g.pl.p[0].y+[-1,0,1,0][dir];
+						switch(dir) {
+							case 0:
+								for (y;y>-2;y--)
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
+								break;
+							case 1:
+								for (x;x<=bd.gd().x+1;x++)
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
+								break;
+							case 2:
+								for (y;y<=bd.gd().y+1;y++)
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,x,g.pl.p[0].y)});
+								break;
+							case 3:
+								for (x;x>-2;x--)
+									if (bd.invalid(x,y)) return dList.push({t:dir, d:Mathf.distance(x,y,g.pl.p[0].x,y)});
+								break;
+						}
+					}
+					//for (var d=0; d<=3; d++) room(d);
+					g.pl.d = Mathf.rand(0,3);//$_.assort(dList,false,"d")[0].t;
+				},
+				hm: false, //whether or not the player has decided to move
+				mv: function(d) { //function to move the player according to direction
+					if (g.pl.dy || g.pl.irs) return false;
+					else if ([2,3,0,1][d]==g.pl.d) {
+						if (gen.st=="interim")g.pl.hm = true;
+						return false;
+					}
+					if (gen.st=="interim")g.pl.hm = true;
+					g.pl.qd = d;
+				},
+				pf: function() {
+					if (g.pl.dy || g.pl.irs) return false;
+					var coord = {
+						x:g.pl.p[0].x+[0,1,0,-1][g.pl.qd],
+						y:g.pl.p[0].y+[-1,0,1,0][g.pl.qd]
+					};
+					var conflict = false;
+					for (var a=1; a<g.pl.p.length; a++)
+						if (coord.x==g.pl.p[a].x && coord.y==g.pl.p[a].y) {
+							conflict = true;
+							break;
+						}
+					for (var a=0; a<g.en.length; a++) {
+						var en = g.en[a];
+						for (var b=0; b<en.p.length; b++) {
+							if (coord.x==en.p[b].x && coord.y==en.p[b].y) {
+								conflict = true;
+								break;
+							}
+						}
+					}
+					if (coord.x<0||coord.x>bd.gd().x||coord.y<0||coord.y>bd.gd().y) conflict = true;
+					if (conflict) {
+						g.pl.dy = true;
+						g.pl.dt = g.gt;
+					} else g.pl.p.splice(0,0,coord);
+				},
+				lv: 3 //the amount of lives left in the player
+			};
+		})();
+		if (typeof g.bg == "undefined") alert("g.bg is undefined");
+		g.bt[0].p = { //the position of the pause button
+			x: bd.os().x1+10,
+			y: bd.os().y1+bd.cv().y-g.bt[0].h-10
+		};
+		g.tb.d.w = gThis.cnv.width;
+		g.pg.p = {
+			x: gThis.cnv.width-10-g.pg.d.w, //position of progress bar
+			y: g.tb.p.y+g.tb.d.h+10
+		};
+		gThis.is.a("img/heart.png");
+		gThis.is.a("img/heart_gs.png");
+		$_("#mg_mmi").effects.fadeTo(100,200, function() {
+			if (typeof g.bg == "undefined") alert("g.bg is undefined");
+			intervs.draw = setInterval(draw, 1); //start the interval for the drawing of the main canvas
+		});
+		$_("#mg_mmpn").click(function() {
+			if (s.v) return false;
+			$_("#mg_mmi").effects.fadeTo(0,200);
+			if (g.pl.n == "") {
+				$_("#mg_np").effects.fadeTo(100,500);
+				$_("#mg_np_dun").value(g.pl.n);
+			} else g.cSt("interim"); //start at new level
+		});
+		$_("#mg_np_dc").click(function() { //start the game, if there is a valid username
+			var rs = gThis.un.chk($_("#mg_np_dun").value());
+			if (!rs.v) {
+				$_("#mg_np_d_e").effects.fadeTo(100,700);
+				$_("#mg_np_d_e").html(rs.r);
+				return;
+			}
+			$_("#mg_np").effects.fadeTo(0,500);
+			g.pl.n = $_("#mg_np_dun").value();
+			g.cSt("interim"); //start at new level
+		});
+		$_("#mg_mms").click(s.show); //start the settings div's appearance, and pause everything else
+		$_("#mg_sd_cb").click(s.hide); //close the settings div, and revert back to previous game state
+		if (Storage) {
+			if (localStorage.SGsnda) gen.snd.ambience.vol = parseFloat(localStorage.SGsnda);
+			if (localStorage.SGsndm) gen.snd.music.vol = parseFloat(localStorage.SGsndm);
+			if (localStorage.SGsnde) gen.snd.effects.vol = parseFloat(localStorage.SGsnde);
+			if (localStorage.SGpn) g.pl.n = localStorage.SGpn;
+			if (localStorage.SGkt) g.kt = parseFloat(localStorage.SGkt);
+		}
+		if (typeof g.bg == "undefined") alert("g.bg is undefined");
+		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
+		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
+		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
+		$get("mgAudio_music").volume = gen.snd.music.vol;
+		$get("mgAudio_effects").volume = gen.snd.effects.vol;
+		$_("#mg_sd_sl_cr .mg_sd_slh").css("margin-left", Math.round((g.pl.c.r/255)*parseInt($_("#mg_sd_sl_cr").css("width")))-8+"px");
+		$_("#mg_sd_sl_cg .mg_sd_slh").css("margin-left", Math.round((g.pl.c.g/255)*parseInt($_("#mg_sd_sl_cg").css("width")))-8+"px");
+		$_("#mg_sd_sl_cb .mg_sd_slh").css("margin-left", Math.round((g.pl.c.b/255)*parseInt($_("#mg_sd_sl_cb").css("width")))-8+"px");
+		$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
+		$_("#mg_sd_snd_ambience .mg_sd_slh").css("margin-left", Math.round(gen.snd.ambience.vol*parseInt($_("#mg_sd_snd_ambience").css("width")))-8+"px");
+		$_("#mg_sd_snd_music .mg_sd_slh").css("margin-left", Math.round(gen.snd.music.vol*parseInt($_("#mg_sd_snd_music").css("width")))-8+"px");
+		$_("#mg_sd_snd_effects .mg_sd_slh").css("margin-left", Math.round(gen.snd.effects.vol*parseInt($_("#mg_sd_snd_effects").css("width")))-8+"px");
+		$_(".mg_sd_sl .mg_sd_slh").mousedown(function(ev) {
+			if (ev.preventDefault) ev.preventDefault();
+			else window.event.returnValue = false;
+			var cHandle = this;
+			var cBar = this.parentNode;
+			if ($_(cBar).attr("type")=="mg_snd")
+				var sType = cBar.id.substring(10); //capture sound type
+			else var cType = cBar.id.charAt(10);
+			window.onmousemove = function(e) {
+				var off = $_(cBar).offset().x;
+				var offset = Mathf.limit(e.pageX-off, 0, $_(cBar).offsetWidth());
+				$_(cHandle).css("margin-left", (offset-8)+"px");
+				if ($_(cBar).attr("type")=="mg_snd") {
+					var nsnd = offset/$_(cBar).offsetWidth();
+					gen.snd[sType].vol = nsnd;
+				} else {
+					var cl = 25+Math.round((offset/$_(cBar).offsetWidth())*230);
+					g.pl.c[cType] = cl;
+					$_("#mg_sd_cl_l").css("background-color", "rgb("+g.pl.c.r+","+g.pl.c.g+","+g.pl.c.b+")");
+				}
+				return false;
+			};
+			window.onmouseup = function() {
+				window.onmousemove = null;
+				return false;
+			};
+		});
+		$_("#mg_sd_cnkow").click(function() { //change the default input to WASD keys
+			$_("#mg_sd_cnk_1").html("W");
+			$_("#mg_sd_cnk_2").html("A");
+			$_("#mg_sd_cnk_3").html("S");
+			$_("#mg_sd_cnk_4").html("D");
+			g.kt=0;
+		});
+		$_("#mg_sd_cnkoa").click(function() { //change the default input to arrow keys
+			$_("#mg_sd_cnk_1").html("&#x25B2");
+			$_("#mg_sd_cnk_2").html("&#x25C0");
+			$_("#mg_sd_cnk_3").html("&#x25BC");
+			$_("#mg_sd_cnk_4").html("&#x25B6");
+			g.kt=1;
+		});
+		if (g.kt==0) {
+			$_("#mg_sd_cnk_1").html("W");
+			$_("#mg_sd_cnk_2").html("A");
+			$_("#mg_sd_cnk_3").html("S");
+			$_("#mg_sd_cnk_4").html("D");
+		} else if (g.kt==1) {
+			$_("#mg_sd_cnk_1").html("&#x25B2");
+			$_("#mg_sd_cnk_2").html("&#x25C0");
+			$_("#mg_sd_cnk_3").html("&#x25BC");
+			$_("#mg_sd_cnk_4").html("&#x25B6");
+		}
+		$_("#mgpdbt_st").click(s.show);
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt);
+		$_("#mg_lb_bt_qt").click(g.qlb);
+		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb);
+		$_(window).keyCode(function(k) { //get the input of the user, while the actual game is running or paused, and move the player accordingly
+			switch(gen.st) {
+				case "interim":
+				case "game":
+					switch(k) {
+						case (g.kt ? "up" : "w"):
+							g.pl.mv(0);
+							break;
+						case (g.kt ? "right" : "d"):
+							g.pl.mv(1);
+							break;
+						case (g.kt ? "down" : "s"):
+							g.pl.mv(2);
+							break;
+						case (g.kt ? "left" : "a"):
+							g.pl.mv(3);
+							break;
+					}
+				case "paused":
+					switch(k) {
+						case "p":
+							if ((gen.st == "game" || gen.st == "paused")&&!s.v) g.cSt(gen.st=="game" ? "paused" : "game");
+							break;
+					}				
+				break;
+			}
+		});
+		$_(gThis.cnv).mousemove(function(e) {
+			var mouse = {
+				x: e.pageX-$_(gThis.cnv).offset().x,
+				y: e.pageY-$_(gThis.cnv).offset().y
+			};
+			for (var i=0; i<g.bt.length; i++) {
+				var hovering = (mouse.y-g.bt[i].p.y >= 0 
+								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
+								&& mouse.x-g.bt[i].p.x >= 0
+								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
+				if (typeof g.bt[i].e.mouseover == "function" && hovering && !g.bt[i].e.ismouseover)
+					g.bt[i].e.mouseover(); //invoke mouseover event
+				else if (typeof g.bt[i].e.mouseout == "function" && g.bt[i].e.ismouseover && !hovering)
+					g.bt[i].e.mouseout(); //invoke mouseout event
+			}
+		});
+		$_(gThis.cnv).click(function(e) {
+			var mouse = {
+				x: e.pageX-$_(gThis.cnv).offset().x,
+				y: e.pageY-$_(gThis.cnv).offset().y
+			};
+			for (var i=0; i<g.bt.length; i++) {
+				var hovering = (mouse.y-g.bt[i].p.y >= 0 
+								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
+								&& mouse.x-g.bt[i].p.x >= 0
+								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
+				if (typeof g.bt[i].e.click == "function" && hovering)
+					g.bt[i].e.click(); //invoke click event
+			}
+		});
+		if (typeof g.bg == "undefined") alert("g.bg is undefined");
 	};
-	this.intrvlist = function(){ //lists all current intervals, outputted to an array
+	this.intrvlist = function() { //lists all current intervals, outputted to an array
 		var list = [];
 		for (var a in intervs) list.push(a);
 		return list;
 	};
-	this.cInterv = function(i){ //the main function for clearing any interval currently in the intervals list
+	this.cInterv = function(i) { //the main function for clearing any interval currently in the intervals list
 		if (!i||typeof i=="undefined"||!(i in intervs)) return false;
 		clearInterval(intervs[i]);
-		delete intervs[i]; //remove the specific interval from the object list
+		intervs.splice(i,1); //remove the specific interval from the object list
 		return !(i in intervs); //should be true
 	};
 }
