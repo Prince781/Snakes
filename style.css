@@ -326,8 +326,8 @@ height: 14px;
 padding: 1px;
 border: 1px solid #080808;
 border-radius: 5px;
-background: #141414 url("img/mg_sd_check.png") no-repeat center;
-box-shadow: inset 0px 1px 0px #191919;
+background: #141414;/* url("img/mg_sd_check.png") no-repeat center;*/
+box-shadow: inset 0px 1px 0px #191919, 0px 1px 0px #282828;
 text-align: center;
 float: right;
 clear: none;
@@ -335,7 +335,13 @@ clear: none;
 
 .mg_sd_chkbx:active{
 background-color: #101010;
-box-shadow: inset 0px 1px 0px #151515;
+box-shadow: inset 0px 1px 0px #151515, 0px 1px 0px #282828;
+}
+
+.mg_sd_chkbx img{
+opacity: 0;
+display: block;
+visibility: hidden;
 }
 
 #mg_sd_inun_ntf{
@@ -839,8 +845,13 @@ left: 50%;
 top: 50%;
 margin-left: -150px;
 margin-top: -117px;
+/*
 background-color: rgba(11,25,29,0.7);
 box-shadow: 0px 0px 35px 10px rgba(11,25,29,0.7);
+	bluish color is $_.newColor(21,79,90,0)
+	reddish color is $_.newColor(90,21,42,0)*/
+background-color: rgba(29,11,15,0.9);
+box-shadow: 0px 0px 35px 10px rgba(21,8,11,0.9);
 border-radius: 7px;
 font-family: Arial;
 padding: 10px;
@@ -902,11 +913,11 @@ padding-bottom: 2px;
 }
 
 table#mg_lb_lst th, table#mg_lb_lst tr:nth-child(2n){
-background-color: rgba(31,59,49,0.7);
+background-color: rgba(59,31,39,0.8);
 }
 
 table#mg_lb_lst tr:nth-child(2n-1){
-background-color: rgba(1,29,19,0.7);
+background-color: rgba(24,12,16,0.8);
 }
 
 #mg_lb_bt_qt{

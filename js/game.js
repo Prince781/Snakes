@@ -77,7 +77,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		sst: "menu",
 		/* the previous state of the game. This is especially useful for transitions between
 		   pause menus and back to gameplay */
-		snd: {
+		snd: { //the sound array, for storing sound information
 			ambience: {
 				vol: 0.3,
 				on: false
@@ -90,7 +90,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				vol: 0.7,
 				on: false
 			}
-		}
+		},
+		//some configurable options for gameplay
+		ismultiplayer: false,
+		specialeffects: true,
+		hints: true
 	};
 	var mm = { //the main components of the main menu, when the game has not been started. Has a similar structure to this.g
 		str: (new Date()).getTime(), //the starting time of the appearance of the main menu
@@ -152,12 +156,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		}
 	};
 	g = { //the main components of the game, when started
-		pst: "single", //the play style of the game: single or multiplayer
-		cSt: function(s){ //function to change the current game state
-			if (s=="paused"){
+		cSt: function(s) { //function to change the current game state
+			if (s=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (s=="game"&&gen.st=="paused"){
+			} else if (s=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
@@ -165,12 +168,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			gen.sst = gen.st;
 			gen.st = s;
 		},
-		rSt: function(){ //function to revert the game state to the previous saved state
+		rSt: function() { //function to revert the game state to the previous saved state
 			var rv = gen.sst;
-			if (rv=="paused"){
+			if (rv=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-			} else if (rv=="game"&&gen.st=="paused"){
+			} else if (rv=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
@@ -180,19 +183,18 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			return rv;
 		},
 		bg: { //the array for the background gradient
-			c: { //the list of colors
-				/* red tint:
-				0: $_.newColor(90,21,42,0.9),
-				0.1: $_.newColor(90,21,42,0.6),
-				0.8: $_.newColor(90,21,42,0)
-				*/ //blue tint:
-				0: $_.newColor(21,79,90,0.9),
-				0.1: $_.newColor(21,79,90,0.6),
-				0.8: $_.newColor(21,79,90,0)
+			//reddish color is $_.newColor(90,21,42,0)
+			//bluish color is $_.newColor(21,79,90,0)
+			co: { //the list of color opacities, at different points in the gradient
+				0: 0.9,
+				0.1: 0.6,
+				0.8: 0
 			},
-			o: 0, //the overall opacity of the radial gradient
+			c: $_.newColor(21,79,90,0), //the current color of the gradient
+			olc: $_.newColor(21,79,90,0), //the old color of the gradient
+			nc: $_.newColor(21,79,90,0), //the new color of the gradient
 			v: true, //whether or not it is visible
-			dt: 0 //disappearance time
+			t: 0 //time at which color transition is initiated
 		},
 		tb: { //the array for the top bar
 			v: false, //visibility
@@ -219,14 +221,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			nc: { //new colors
 				bg: $_.newColor(32,45,52,0)
 			},
-			s: function(){ //show
+			s: function() { //show
 				if (g.tb.an=="show") return;
 				g.tb.an = "show";
 				g.tb.np.y = 0;
 				g.tb.nc.bg.a = 0.4;
 				g.tb.at = (new Date()).getTime();
 			},
-			h: function(){ //hide
+			h: function() { //hide
 				if (g.tb.an=="hide") return;
 				g.tb.an = "hide";
 				g.tb.np.y = -24;
@@ -281,8 +283,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		lpa: 0, //the last time a pickup was added
 		ap: function() { //function to add a new pickup to the game
 			var pc = [];
-			for (var i=1; i<bd.gd().x-1; i++){
-				for (var j=1; j<bd.gd().y-1; j++){
+			for (var i=1; i<bd.gd().x-1; i++)
+				for (var j=1; j<bd.gd().y-1; j++) {
 					var conflict = false;
 					for (var k=0; k<g.en.length; k++){
 						for (var l=0; l<g.en[k].p.length; l++)
@@ -294,7 +296,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						conflict = (g.pk[k].p.x == i && g.pk[k].p.y == j ? true : conflict);
 					if (!conflict) pc.push({x:i,y:j}); //if the coordinate is good
 				}
-			}
 			if (pc.length==0) return false;
 			//var pType = Mathf.rand(0,100)==50?2:(Mathf.rand(0,100)>85?1:0); 
 			var pType = Mathf.rand(0,100)>80+(g.pl.lv*6)?2:(Mathf.rand(0,100)>90?1:0);  //the type of pickup
@@ -355,13 +356,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				osr: 20, //the old shadow radius
 				e: {
 					ismouseover: false,
-					mouseover: function(){
+					mouseover: function() {
 						g.bt[0].srt = (new Date()).getTime();
 						g.bt[0].osr = g.bt[0].sr;
 						g.bt[0].nsr = 30;
 						g.bt[0].e.ismouseover = true;
 					},
-					mouseout: function(){
+					mouseout: function() {
 						g.bt[0].srt = (new Date()).getTime();
 						g.bt[0].osr = g.bt[0].sr;
 						g.bt[0].nsr = 20;
@@ -394,7 +395,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_mmi").effects.fadeTo(0,500);
 			g.cSt("lboards");
 			if ($_("#mg_pd").css('display')!='none')
-				$_("#mg_pd").effects.fadeTo(0,500, function(){
+				$_("#mg_pd").effects.fadeTo(0,500, function() {
 					$_("#mg_pd").css('display','none');
 				}); //hide pause div
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
@@ -403,10 +404,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		},
 		qlb: function() { //quit leaderboards
 			if (gen.sst=="paused") {
-				$_("#mg_pd").effects.fadeTo(100,500, function(){
+				$_("#mg_pd").effects.fadeTo(100,500, function() {
 					g.rSt(); //revert state
 				});
-				$_("#mg_lb").effects.fadeTo(0,500, function(){
+				$_("#mg_lb").effects.fadeTo(0,500, function() {
 					$_("#mg_lb").css('display','none');
 				});
 			} else g.qt(); //quit to main menu
@@ -415,25 +416,22 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			g.cSt("menu");
 			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
 			//hide other items, and reset values
-			$_("#mg_np").effects.fadeTo(0,500, function(){
+			$_("#mg_np").effects.fadeTo(0,500, function() {
 				$_("#mg_np").css('display','none');
 			});
-			$_("#mg_pd").effects.fadeTo(0,500, function(){
+			$_("#mg_pd").effects.fadeTo(0,500, function() {
 				$_("#mg_pd").css('display','none');
 			});
-			$_("#mg_lo").effects.fadeTo(0,500, function(){
+			$_("#mg_lo").effects.fadeTo(0,500, function() {
 				$_("#mg_lo").css('display','none');
 			});
-			$_("#mg_lb").effects.fadeTo(0,500, function(){
+			$_("#mg_lb").effects.fadeTo(0,500, function() {
 				$_("#mg_lb").css('display','none');
 			});
 			$_("#mg_go").effects.fadeTo(0,500, function(){
 				$_("#mg_go").css('display','none');
 			});
 			g.tb.h();
-			g.bg.v = true;
-			g.bg.dt = 0;
-			mm.str = (new Date()).getTime(); //reset visibility of radial gradient
 			g.pl.s = 0;
 			g.pl.cs = 0;
 			g.pl.hm = false; //change has_moved attribute
@@ -447,7 +445,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			g.pl.c.a = 1;
 			g.lv = 0;
 		},
-		end: function(){ //end the game; show leaderboards
+		end: function() { //end the game; show leaderboards
 			if (gen.st!="over") return false;
 			g.pl.s+=g.pl.cs; //add on score
 			g.cSt("lboards"); //change to leaderboards
@@ -460,7 +458,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_lb_td_btm span").html(g.pl.s);
 			g.sbm(g.pl.n, g.pl.s, g.lv, g.glb); //submit
 		},
-		sbm: function(name, score, level, onDone){ //submit leaderboards info to server
+		sbm: function(name, score, level, onDone) { //submit leaderboards info to server
 			$_.req({
 				method: "post",
 				url: "submit.php",
@@ -505,7 +503,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 		}
 	};
-	if (typeof g.bg == "undefined") alert("g.bg is undefined");
 	bd.invalid = function(px,py) { //determine whether or not the point is invalid
 		var validity = true; //the validity, or invalidity
 		for (var a=0; a<mm.en.length; a++)
@@ -730,23 +727,41 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			lineWidth=0;
 			lineJoin="miter";
 		}
+		//reddish color is $_.newColor(90,21,42,0)
+		//bluish color is $_.newColor(21,79,90,0)
+		function colorEquals(clr1, clr2) { //test equivalence between two colors
+			var equals = true;
+			for (var prop in clr1)
+				if (clr1[prop]!=clr2[prop]) equals = false;
+			return equals;
+		}
+		
 		if (g.bg.v) {
-			if ((new Date()).getTime()-mm.str < 1000 && g.bg.dt==0)
-				g.bg.o = Math.pow(((new Date()).getTime()-mm.str)/1000,2);
-			if (gen.st != "menu" && g.bg.dt==0) g.bg.dt = (new Date()).getTime();
-			if (g.bg.dt != 0 && (new Date()).getTime()-g.bg.dt < 1000)
-				g.bg.o = 1-Math.pow(((new Date()).getTime()-g.bg.dt)/1000,2);
-			else if ((new Date()).getTime()-g.bg.dt >= 1000 && g.bg.dt != 0)
-				g.bg.v = false;
-			var rg = cx.createRadialGradient(Math.round(gThis.cnv.width/2), Math.round(gThis.cnv.height/2), gThis.cnv.height*0.1, Math.round(gThis.cnv.width/2), Math.round(gThis.cnv.height/2), gThis.cnv.height);
-			for (var a in g.bg.c){
-				var col = g.bg.c[a];
-				rg.addColorStop(a,"rgba("+col.r+","+col.g+","+col.b+","+(col.a*g.bg.o)+")");
+			if (g.bg.t != 0) {
+				if ((new Date()).getTime()-g.bg.t > 1000) {
+					g.bg.t = 0;
+					g.bg.c = g.bg.nc;
+					g.bg.v = (g.bg.c.a == 0 ? false : true);
+				} else for (var cl in g.bg.c) {
+					var delta = (g.bg.nc[cl]-g.bg.olc[cl])*Math.pow(((new Date()).getTime()-g.bg.t)/1000,2);
+					if (cl != "a") delta = Math.round(delta);
+					g.bg.c[cl] = parseFloat((g.bg.olc[cl]+delta).toFixed(3));
+				}
 			}
+			with (Math)
+				var rg = cx.createRadialGradient(round(gThis.cnv.width/2), round(gThis.cnv.height/2), gThis.cnv.height*0.1, round(gThis.cnv.width/2), round(gThis.cnv.height/2), gThis.cnv.height);
+			for (var a in g.bg.co)
+				rg.addColorStop(a,"rgba("+g.bg.c.r+","+g.bg.c.g+","+g.bg.c.b+","+(g.bg.c.a*g.bg.co[a])+")");
 			cx.fillStyle=rg;
 			cx.fillRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		}
 		if (gen.st == "menu") { //render the main menu
+			if (!colorEquals(g.bg.c,$_.newColor(21,79,90,1)) && g.bg.t==0) {
+				g.bg.olc = (g.bg.v ? g.bg.c : $_.newColor(21,79,90,0));
+				g.bg.nc = $_.newColor(21,79,90,1);
+				g.bg.t = (new Date()).getTime();
+				g.bg.v = true;
+			}
 			if ($_(gThis.mmdiv).css("display") != "block")
 				$_(gThis.mmdiv).effects.fadeTo(100,700);
 			$get("mgAudio_ambience").play();//play the ambient music
@@ -782,6 +797,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over") { //render the main game, if currently running, paused, or over
+			if (g.bg.v && g.bg.t==0) {
+				g.bg.olc = g.bg.c;
+				g.bg.nc = {menu:$_.newColor(21,79,90,0),lboards:$_.newColor(90,21,42,0)}[gen.sst];
+				g.bg.t = (new Date()).getTime();
+			}
 			if (gen.st == "game") g.gt = (new Date()).getTime()-g.to;
 			if (g.pl.cs/20>=g.gl && !g.glc && g.gl!==0 && gen.st!=="complete") { //level has been completed
 				g.glc=true;
@@ -1280,9 +1300,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 			}
 		} else if (gen.st == "help") {
-		}
-		/* else if (gen.st == "lboards"){
-		} */ //otherwise, there's nothing to do
+		} else if (gen.st == "lboards") {
+			if (!colorEquals(g.bg.c,$_.newColor(90,21,42,1)) && g.bg.t==0) {
+				g.bg.olc = (g.bg.v ? g.bg.c : $_.newColor(90,21,42,0));
+				g.bg.nc = $_.newColor(90,21,42,1);
+				g.bg.t = (new Date()).getTime();
+				g.bg.v = true;
+			}
+		} 
 		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
 		$get("mgAudio_music").volume = gen.snd.music.vol;
 		$get("mgAudio_effects").volume = gen.snd.effects.vol;
@@ -1292,6 +1317,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			localStorage.SGsnde = gen.snd.effects.vol;
 			localStorage.SGpn = g.pl.n;
 			localStorage.SGkt = g.kt;
+			localStorage.SGhnt = String(gen.hints);
+			localStorage.SGism = String(gen.ismultiplayer);
+			localStorage.SGse = String(gen.specialeffects);
 		}
 	}
 	this.init = function() { //the main initialization function
@@ -1435,7 +1463,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				lv: 3 //the amount of lives left in the player
 			};
 		})();
-		if (typeof g.bg == "undefined") alert("g.bg is undefined");
 		g.bt[0].p = { //the position of the pause button
 			x: bd.os().x1+10,
 			y: bd.os().y1+bd.cv().y-g.bt[0].h-10
@@ -1448,7 +1475,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		gThis.is.a("img/heart.png");
 		gThis.is.a("img/heart_gs.png");
 		$_("#mg_mmi").effects.fadeTo(100,200, function() {
-			if (typeof g.bg == "undefined") alert("g.bg is undefined");
 			intervs.draw = setInterval(draw, 1); //start the interval for the drawing of the main canvas
 		});
 		$_("#mg_mmpn").click(function() {
@@ -1478,8 +1504,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (localStorage.SGsnde) gen.snd.effects.vol = parseFloat(localStorage.SGsnde);
 			if (localStorage.SGpn) g.pl.n = localStorage.SGpn;
 			if (localStorage.SGkt) g.kt = parseFloat(localStorage.SGkt);
+			if (localStorage.SGhnt) gen.hints = (localStorage.SGhnt=="true");
+			if (localStorage.SGism) gen.ismultiplayer = (localStorage.SGism=="true");
+			if (localStorage.SGse) gen.specialeffects = (localStorage.SGse=="true");
 		}
-		if (typeof g.bg == "undefined") alert("g.bg is undefined");
 		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
 		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
 		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
@@ -1548,6 +1576,22 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt);
 		$_("#mg_lb_bt_qt").click(g.qlb);
 		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb);
+		var chkbxes =  $_(".mg_sd_chkbx").div;
+		for (var j=0; j<chkbxes.length; j++) {
+			var prop_name = chkbxes[j].id.substring(12);
+			if (prop_name in gen && gen[prop_name])
+				$_(chkbxes[j].getElementsByTagName("img")[0]).css({
+					opacity: 1,
+					visibility: "visible"
+				});
+		}
+		$_(".mg_sd_chkbx").click(function() { //respond to checkbox toggle events
+			var prop_name = this.id.substring(12);
+			if (prop_name in gen) {
+				gen[prop_name] = !gen[prop_name];
+				$_(this.getElementsByTagName("img")[0]).effects.fadeTo(gen[prop_name]?100:0,200);
+			}
+		});
 		$_(window).keyCode(function(k) { //get the input of the user, while the actual game is running or paused, and move the player accordingly
 			switch(gen.st) {
 				case "interim":
@@ -1605,7 +1649,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					g.bt[i].e.click(); //invoke click event
 			}
 		});
-		if (typeof g.bg == "undefined") alert("g.bg is undefined");
 	};
 	this.intrvlist = function() { //lists all current intervals, outputted to an array
 		var list = [];

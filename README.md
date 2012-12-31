@@ -20,6 +20,6 @@ A list of features to implement:
   - Local multiplayer ( **started**)
   - Server multiplayer ( **todo** )
 * Music ( **todo** )
-* Special effects toggling ( **todo** )
+* Special effects toggling ( **started** )
 * More sound effects?
 * Level barriers/walls?
