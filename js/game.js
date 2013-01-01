@@ -9,6 +9,8 @@
  * --------------------------------------------
  * 2012 Princeton Ferro
  **********************************************/
+var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+window.requestAnimationFrame = requestAnimationFrame;
 
 function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	var gThis = this;
@@ -58,6 +60,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 	this.cnv = {}; //the game's canvas. MUST be defined before initialization
 	this.stdiv = {}; //the game's "Settings" <div> element. MUST be defined before initialization
 	this.mmdiv = {}; //the game's "Main Menu" <div> element. MUST be defined before initialization
+	var debugInfo = { //debug information for measuring performance and other variables
+		lu: 0, //last update - the last time at which the frame count was updated (within 1s)
+		fc: 0, //the frame count since the last update time
+		fps: 0 //the amount of frames per second
+	};
 	var gen = { //list of "general" variables, such as game states and audio
 		/*******************************************************************
 		* The current state of the game. Can be one of the following:
@@ -94,7 +101,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		//some configurable options for gameplay
 		ismultiplayer: false,
 		specialeffects: true,
-		hints: true
+		hints: true,
+		fps: false
 	};
 	var mm = { //the main components of the main menu, when the game has not been started. Has a similar structure to this.g
 		en: [] //the array of enemies, except as passive creatures
@@ -438,6 +446,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				g.pl[pln].hm = false; //change has_moved attribute
 				g.pl[pln].p.splice(0,g.pl[pln].p.length);
 				g.pl[pln].p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
+				g.pl[pln].l = 10;
 				g.en.splice(0,g.en.length);
 				g.pl[pln].lv = 3;
 				g.pl[pln].pn = false;
@@ -711,16 +720,24 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		}
 	};
 	function draw() { //the main drawing function of the game, which renders everything on the canvas
+		debugInfo.fc++; //increase the frame count
+		if ((new Date()).getTime() - debugInfo.lu > 1000) {
+			debugInfo.fps = parseFloat((debugInfo.fc/(((new Date()).getTime()-debugInfo.lu)/1000)).toFixed(1));
+			debugInfo.fc = 0; //reset the frame count
+			debugInfo.lu = (new Date()).getTime();
+		}
 		cx = $_(gThis.cnv).ctx("2d+"); //additional ScriJe "2d+" context for canvas
 		cx.clearRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		with(cx) { //resetting values...
-			strokeStyle="rgba(0,0,0,0)";
-			fillStyle="rgba(0,0,0,0)";
-			shadowColor="rgba(0,0,0,0)";
+			strokeStyle="#000000";
+			font="";
+			fillStyle="#000000";
+			shadowColor="#000000";
 			shadowOffsetX=0;
 			shadowOffsetY=0;
 			lineWidth=0;
 			lineJoin="miter";
+			textBaseline="alphabetic";
 		}
 		function colorEquals(clr1, clr2) { //test equivalence between two colors
 			var equals = true;
@@ -800,8 +817,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			}
 			if (gen.st == "game") g.gt = (new Date()).getTime()-g.to;
 			if (!gen.ismultiplayer) {
-				if (g.pl[0].cs/20>=g.gl && !g.glc && g.gl!==0 && gen.st!=="complete") { //level has been completed
+				if (g.pl[0].cs/20>=g.gl && g.gl>0 && !g.glc && g.gl!==0 && gen.st!=="complete") { //level has been completed
 					g.glc=true;
+					console.log("Completed level. Player score (for level) is "+g.pl[0].cs);
 					g.glct=(new Date()).getTime(); //set time for goal completion
 				} else if (g.glc && (new Date()).getTime()-g.glct<1000 && gen.st!=="complete")
 					g.glA = 1-Math.pow(((new Date()).getTime()-g.glct)/1000,2);
@@ -830,9 +848,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (g.en.length==0)g.en.push(ai.createEnem()); //create a new enemy
 					g.lv++;
 					g.olv=g.lv-1;
+					with(Math)g.gl = floor(5*(log(pow(g.lv,0.6))+1)); //set the goal for the current level
 				}
 				g.pl[0].lu = g.gt;
-				with(Math)g.gl = floor(5*(log(pow(g.lv,0.6))+1)); //set the goal for the current level
 				g.lpa = g.gt;
 				if (!g.tb.v) g.tb.s(); //show the top bar
 				$get("mgAudio_ambience").pause();
@@ -1234,6 +1252,13 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillStyle = "rgba(186,244,255,"+((dc.a+0.3)*g.glA)+")";
 						cx.fillText((g.pl[0].s+g.pl[0].cs), dp.x+54, dp.y+g.tb.to.y);
 					}
+					
+					if (gen.fps) {
+						cx.font = "12px Arial";
+						cx.fillStyle = "rgba(240,240,240,"+((dc.a+0.3)*g.glA)+")";
+						cx.fillText(debugInfo.fps+" FPS",dp.x+10, dp.y+g.tb.to.y+30);
+						cx.font = "14px Arial";
+					}
 					//else cx.fillText((g.pl[0].s+g.pl[0].cs)+" vs "+(g.pl[1].s+g.pl[1].cs), dp.x+54, dp.y+g.tb.to.y);
 					cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")";
 					cx.textAlign = "center";
@@ -1260,6 +1285,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillStyle = "rgba(186,244,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
 						cx.fillText((g.pl[0].s+g.pl[0].cs), g.tb.p.x+54, g.tb.p.y+g.tb.to.y);
 					}
+					if (gen.fps) {
+						cx.font = "12px Arial";
+						cx.fillStyle = "rgba(240,240,240,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
+						cx.fillText(debugInfo.fps+" FPS",g.tb.p.x+10,g.tb.p.y+g.tb.to.y+30);
+						cx.font = "14px Arial";
+					}
 					//else cx.fillText((g.pl[0].s+g.pl[0].cs)+" vs "+(g.pl[1].s+g.pl[1].cs), g.tb.p.x+54, g.tb.p.y+g.tb.to.y);
 					cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
 					cx.textAlign = "center";
@@ -1270,6 +1301,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (!gen.ismultiplayer)
 						cx.fillText(g.pl[0].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
 					//else cx.fillText(g.pl[0].n+" vs "+g.pl[1].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
+					//cx.textBaseline
 					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined" && !gen.ismultiplayer)
 						for (var i=0; i<3; i++)
 							cx.drawImage(gThis.is.l[(i>2-g.pl[0].lv?0:1)], g.tb.p.x+g.tb.d.w-30-(20*i), g.tb.p.y+2, 20, 20);
@@ -1323,7 +1355,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				g.bg.t = (new Date()).getTime();
 				g.bg.v = true;
 			}
-		} 
+		}		
 		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
 		$get("mgAudio_music").volume = gen.snd.music.vol;
 		$get("mgAudio_effects").volume = gen.snd.effects.vol;
@@ -1337,7 +1369,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			localStorage.SGhnt = String(gen.hints);
 			localStorage.SGism = String(gen.ismultiplayer);
 			localStorage.SGse = String(gen.specialeffects);
+			localStorage.SGfps = String(gen.fps);
 		}
+		if (window.requestAnimationFrame) window.requestAnimationFrame(draw);
 	}
 	this.init = function() { //the main initialization function
 		if (!("width" in gThis.cnv && "style" in gThis.stdiv && "style" in gThis.mmdiv))
@@ -1494,7 +1528,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		gThis.is.a("img/heart.png");
 		gThis.is.a("img/heart_gs.png");
 		$_("#mg_mmi").effects.fadeTo(100,200, function() {
-			intervs.draw = setInterval(draw, 1); //start the interval for the drawing of the main canvas
+			//start the interval for the drawing of the main canvas
+			if (window.requestAnimationFrame) window.requestAnimationFrame(draw);
+			else intervs.draw = setInterval(draw, 1); 
 		});
 		$_("#mg_mmpn").click(function() {
 			if (s.v) return false;
@@ -1530,6 +1566,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (localStorage.SGhnt) gen.hints = (localStorage.SGhnt=="true");
 			if (localStorage.SGism) gen.ismultiplayer = (localStorage.SGism=="true");
 			if (localStorage.SGse) gen.specialeffects = (localStorage.SGse=="true");
+			if (localStorage.SGfps) gen.fps = (localStorage.SGfps=="true");
 		}
 		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
 		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
