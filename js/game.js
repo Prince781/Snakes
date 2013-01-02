@@ -337,6 +337,15 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			});
 			return true;
 		},
+		hnts: { //game hints
+			key: {
+				p: {}, //coordinates defined at run time
+				ft: 0, //fade time
+				cK: 0, //the current key being faded
+				bw: 40, //box width, the width of the individual keys
+				sp: 4 //spacing between the keys
+			}
+		},
 		gt: 0, //the game time interval
 		pt: 0, //the time of pausing
 		rt: 0, //the time of resuming
@@ -779,7 +788,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (!gen.ismultiplayer) {
 				if (g.pl[0].cs/20>=g.gl && g.gl>0 && !g.glc && g.gl!==0 && gen.st!=="complete") { //level has been completed
 					g.glc=true;
-					console.log("Completed level. Player score (for level) is "+g.pl[0].cs);
 					g.glct=(new Date()).getTime(); //set time for goal completion
 				} else if (g.glc && (new Date()).getTime()-g.glct<1000 && gen.st!=="complete")
 					g.glA = 1-Math.pow(((new Date()).getTime()-g.glct)/1000,2);
@@ -820,6 +828,18 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					g.pl[0].hm=false;
 				}
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
+				if (gen.hints && !gen.ismultiplayer) { //show game starting hint
+					//render top "up" arrow/W key
+					cx.fillStyle = "rgba(212,234,255,0.4)";
+					cx.strokeStyle = "rgba(120,140,166,0.4)";
+					cx.lineWidth = 1;
+					cx.fillRoundedRect(g.hnts.key.p.x-g.hnts.key.bw/2,g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2,g.hnts.key.bw,g.hnts.key.bw, 6);
+					cx.strokeText(g.pl[0].kt?"W":"UP", g.hnts.key.p.x+g.hnts.key.bw/2, g.hnts.key.p.y+g.hnts.key.bw/2);
+					for (var k=0; k<3; k++) {
+						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1),g.hnts.key.p.y+g.hnts.key.sp/2,g.hnts.key.bw,g.hnts.key.bw, 6);
+						
+					}
+				}
 			} else if (gen.st=="game"||gen.st=="paused") { //otherwise, we're in the middle of the game, at an unknown level yet
 				g.sted = true;
 				if ($_("#mg_pb").css('display')=='none')
@@ -1409,6 +1429,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		g.pg.p = {
 			x: gThis.cnv.width-10-g.pg.d.w, //position of progress bar
 			y: g.tb.p.y+g.tb.d.h+10
+		};
+		g.hnts.key.p = {
+			x: gThis.cnv.width/2,
+			y: gThis.cnv.height/2
 		};
 		gThis.is.a("img/heart.png");
 		gThis.is.a("img/heart_gs.png");

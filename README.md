@@ -17,10 +17,10 @@ A list of features to implement:
 * More fluid/aesthetic Pause Menu UI ( **done** )
 * More fluid/aesthetic level transition menu ( **done** )
 * Multiplayer gameplay ( **started** )
-  - Local multiplayer ( **started**)
+  - Local multiplayer ( **mostly**)
   - Server multiplayer ( **todo** )
 * Music ( **todo** )
-* Special effects toggling ( **started** )
+* Special effects toggling ( **todo** )
 * Game hints ( **started** )
 * More sound effects?
 * Level barriers/walls?
