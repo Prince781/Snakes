@@ -268,7 +268,7 @@ float: right;
 .mg_sd_lb{
 font-family: Arial;
 font-size: 10px;
-color: #353535;
+color: #3B3B3B;
 margin-bottom: 3px;
 text-shadow: 0px -1px 0px #101010;
 width: 200px;
@@ -301,7 +301,7 @@ margin-right: auto;
 .mg_sd_lbl{ /* for labels below title labels */
 font-family: Arial;
 font-size: 10px;
-color: #414141;
+color: #4A4A4A;
 text-shadow: 0px -1px 0px #101010;
 margin-top: 3px;
 width: 140px;
@@ -313,7 +313,8 @@ clear: none;
 input.mg_sd_in{ /* input text entry */
 font-family: Arial;
 font-size: 12px;
-color: #0F0F0F;
+color: #5F5F5F;
+text-shadow: 0px 0px 4px #0F0F0F;
 width: 249px;
 height: 20px;
 padding: 3px;
