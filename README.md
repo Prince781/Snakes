@@ -21,5 +21,6 @@ A list of features to implement:
   - Server multiplayer ( **todo** )
 * Music ( **todo** )
 * Special effects toggling ( **started** )
+* Game hints ( **started** )
 * More sound effects?
 * Level barriers/walls?
