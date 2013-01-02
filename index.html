@@ -45,148 +45,153 @@
 						<div class="mg_mmb_bt" id="mg_mmb_bt_hlp">Help</div>
 						<div class="mg_mmb_bt" id="mg_mmb_bt_lbd">Leaderboards</div>
 					</div>
-					<div id="mg_pd"><!-- pause div -->
-						<div id="mg_pd_i">
-							<div class="mg_pd_bt" id="mgpdbt_st">Settings</div>
-							<div class="mg_pd_bt" id="mgpdbt_lb">Leaderboards</div>
-							<div class="mg_pd_bt" id="mgpdbt_hlp">Help</div>
-							<div class="mg_pd_bt" id="mgpdbt_qt">Quit</div>
-						</div>					
+				</div>
+				<div id="mg_pd"><!-- pause div -->
+					<div id="mg_pd_i">
+						<div class="mg_pd_bt" id="mgpdbt_st">Settings</div>
+						<div class="mg_pd_bt" id="mgpdbt_lb">Leaderboards</div>
+						<div class="mg_pd_bt" id="mgpdbt_hlp">Help</div>
+						<div class="mg_pd_bt" id="mgpdbt_qt">Quit</div>
+					</div>					
+				</div>
+				<div id="mg_lo"><!-- level ending -->
+					<div id="mg_lo_t">Level Up!</div>
+					<div id="mg_lo_d">
+						Level <span>0</span> has finished. Of course, the format of this game allows for infinite levels of increasing difficulty, so if you'd like to, you can quit now while you're ahead... :P
 					</div>
-					<div id="mg_lo"><!-- level ending -->
-						<div id="mg_lo_t">Level Up!</div>
-						<div id="mg_lo_d">
-							Level <span>0</span> has finished. Of course, the format of this game allows for infinite levels of increasing difficulty, so if you'd like to, you can quit now while you're ahead... :P
+					<div class="mg_lo_bt" id="mg_lo_bt_cntnu">Continue</div>
+					<div class="mg_lo_bt" id="mg_lo_bt_qt">Quit</div>
+				</div>
+				<div id="mg_go"><!-- game over -->
+					<div id="mg_go_t">Game Over</div>
+					<div id="mg_lo_d">
+						Well, apparently, all of your lives have been lost, and that means <strong>game over</strong>. Press &quot;Continue&quot; to move on to the leaderboards.
+					</div>
+					<div class="mg_go_bt" id="mg_bo_bt_cntnu">Continue</div>
+					<div class="mg_go_bt" id="mg_bo_bt_qt">Quit</div>
+				</div>
+				<div id="mg_sd"> <!--settings div-->
+					<div id="mg_sd_cb">Close</div>
+					<div id="mg_sd_t">Settings</div>
+					<div class="mg_sd_s" id="mg_sd_1">
+						<div id="mg_sd_inun_ntf">
+							<img src="img/mg_sd_inun_ntf_pnt.png">
+							<div></div>
+							<span></span>
 						</div>
-						<div class="mg_lo_bt" id="mg_lo_bt_cntnu">Continue</div>
-						<div class="mg_lo_bt" id="mg_lo_bt_qt">Quit</div>
-					</div>
-					<div id="mg_go"><!-- game over -->
-						<div id="mg_go_t">Game Over</div>
-						<div id="mg_lo_d">
-							Well, apparently, all of your lives have been lost, and that means <strong>game over</strong>. Press &quot;Continue&quot; to move on to the leaderboards.
-						</div>
-						<div class="mg_go_bt" id="mg_bo_bt_cntnu">Continue</div>
-						<div class="mg_go_bt" id="mg_bo_bt_qt">Quit</div>
-					</div>
-					<div id="mg_sd"> <!--settings div-->
-						<div id="mg_sd_cb">Close</div>
-						<div id="mg_sd_t">Settings</div>
-						<div class="mg_sd_s" id="mg_sd_1">
-							<div id="mg_sd_inun_ntf">
-								<img src="img/mg_sd_inun_ntf_pnt.png">
-								<div></div>
-								<span></span>
+						<div class="mg_sd_lb">Name</div>
+						<input id="mg_sd_inun" class="mg_sd_in" type="text">
+						<div class="mg_sd_lb" style="margin-top: 10px;">Color</div>
+						<div id="mg_sd_cl">
+							<div id="mg_sd_cl_l">
 							</div>
-							<div class="mg_sd_lb">Name</div>
-							<input id="mg_sd_inun" class="mg_sd_in" type="text">
-							<div class="mg_sd_lb" style="margin-top: 10px;">Color</div>
-							<div id="mg_sd_cl">
-								<div id="mg_sd_cl_l">
+							<div id="mg_sd_cl_r">
+								<div class="mg_sd_cl_h">
+									<div class="mg_sd_sll">r</div>
+									<div class="mg_sd_sl" id="mg_sd_sl_cr" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 								</div>
-								<div id="mg_sd_cl_r">
-									<div class="mg_sd_cl_h">
-										<div class="mg_sd_sll">r</div>
-										<div class="mg_sd_sl" id="mg_sd_sl_cr" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
-									</div>
-									<div class="mg_sd_cl_h">
-										<div class="mg_sd_sll">g</div>
-										<div class="mg_sd_sl" id="mg_sd_sl_cg" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
-									</div>
-									<div class="mg_sd_cl_h">
-										<div class="mg_sd_sll">b</div>
-										<div class="mg_sd_sl" id="mg_sd_sl_cb" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
-									</div>
+								<div class="mg_sd_cl_h">
+									<div class="mg_sd_sll">g</div>
+									<div class="mg_sd_sl" id="mg_sd_sl_cg" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 								</div>
-							</div>
-							<div class="mg_sd_lb" style="margin-top: 10px;">Primary Controls</div>
-							<div class="mg_sd_lb_descr">
-								When playing in multiplayer mode, secondary controls will be used for the opposing player.
-							</div>
-							<div id="mg_sd_cn">
-								<div class="mg_sd_cnk" id="mg_sd_cnk_1" style="margin-left: auto; margin-right: auto;">W</div>
-								<div class="mg_sd_cnk" id="mg_sd_cnk_2" style="margin-left: 47px; float: left; clear: none;">A</div>
-								<div class="mg_sd_cnk" id="mg_sd_cnk_3" style="margin-left: 5px; float: left; clear: none;">S</div>
-								<div class="mg_sd_cnk" id="mg_sd_cnk_4" style="margin-left: 5px; float: left; clear: none;">D</div>
-								<div id="mg_sd_cnb">
-									<div class="mg_sd_cnko" id="mg_sd_cnkoa">Arrow Keys</div>
-									<div class="mg_sd_cnko" id="mg_sd_cnkow" style="float: right;">WASD Keys</div>
+								<div class="mg_sd_cl_h">
+									<div class="mg_sd_sll">b</div>
+									<div class="mg_sd_sl" id="mg_sd_sl_cb" style="margin-top: 7px;"><div class="mg_sd_slh"></div></div>
 								</div>
 							</div>
 						</div>
-						<div class="mg_sd_s" id="mg_sd_2">
-							<div class="mg_sd_lb">Player 2's Name</div>
-							<input id="mg_sd_inun_2" class="mg_sd_in" type="text">
-							<div class="mg_sd_lb" style="margin-top: 10px;">Gameplay</div>
-							<div class="mg_sd_lblh">
-								<div class="mg_sd_lbl">Local Multiplayer</div>
-								<div class="mg_sd_chkbx" id="mg_sd_chkbx_ismultiplayer">
-									<img src="img/mg_sd_check.png">
-								</div>
-							</div>
-							<div class="mg_sd_lblh">
-								<div class="mg_sd_lbl">Special Effects</div>
-								<div class="mg_sd_chkbx" id="mg_sd_chkbx_specialeffects">
-									<img src="img/mg_sd_check.png">
-								</div>
-							</div>
-							<div class="mg_sd_lblh">
-								<div class="mg_sd_lbl">Hints</div>
-								<div class="mg_sd_chkbx" id="mg_sd_chkbx_hints">
-									<img src="img/mg_sd_check.png">
-								</div>
-							</div>
-							<div class="mg_sd_lb">Volume</div>
-							<div class="mg_sd_snh">
-								<div class="mg_sd_sll" style="text-indent: 4px;">Ambience</div>
-								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_ambience" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
-							</div>
-							<div class="mg_sd_snh">
-								<div class="mg_sd_sll" style="text-indent: 4px;">Music</div>
-								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_music" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
-							</div>
-							<div class="mg_sd_snh">
-								<div class="mg_sd_sll" style="text-indent: 4px;">Effects</div>
-								<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_effects" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
-							</div>
-							<div class="mg_sd_lb">Debug</div>
-							<div class="mg_sd_lblh">
-								<div class="mg_sd_lbl">Show FPS</div>
-								<div class="mg_sd_chkbx" id="mg_sd_chkbx_fps">
-									<img src="img/mg_sd_check.png">
-								</div>
+						<div class="mg_sd_lb" style="margin-top: 10px;">Primary Controls</div>
+						<div class="mg_sd_lb_descr">
+							When playing in multiplayer mode, secondary controls will be used for the opposing player.
+						</div>
+						<div id="mg_sd_cn">
+							<div class="mg_sd_cnk" id="mg_sd_cnk_1" style="margin-left: auto; margin-right: auto;">W</div>
+							<div class="mg_sd_cnk" id="mg_sd_cnk_2" style="margin-left: 47px; float: left; clear: none;">A</div>
+							<div class="mg_sd_cnk" id="mg_sd_cnk_3" style="margin-left: 5px; float: left; clear: none;">S</div>
+							<div class="mg_sd_cnk" id="mg_sd_cnk_4" style="margin-left: 5px; float: left; clear: none;">D</div>
+							<div id="mg_sd_cnb">
+								<div class="mg_sd_cnko" id="mg_sd_cnkoa">Arrow Keys</div>
+								<div class="mg_sd_cnko" id="mg_sd_cnkow" style="float: right;">WASD Keys</div>
 							</div>
 						</div>
 					</div>
-					<div id="mg_lb">
-						<div id="mg_lb_td">
-							<div id="mg_lb_td_top">
-								<span></span>, your score is:
-							</div>
-							<div id="mg_lb_td_btm">
-								<span></span>
+					<div class="mg_sd_s" id="mg_sd_2">
+						<div class="mg_sd_lb">Player 2's Name</div>
+						<input id="mg_sd_inun_2" class="mg_sd_in" type="text">
+						<div class="mg_sd_lb" style="margin-top: 10px;">Gameplay</div>
+						<div class="mg_sd_lblh">
+							<div class="mg_sd_lbl">Local Multiplayer</div>
+							<div class="mg_sd_chkbx" id="mg_sd_chkbx_ismultiplayer">
+								<img src="img/mg_sd_check.png">
 							</div>
 						</div>
-						<div id="mg_lb_lst_h">
-							<table id="mg_lb_lst">
-								<thead>
-									<th>Name</th>
-									<th>Score</th>
-									<th>Level</th>
-									<th>Rank</th>
-								</thead>
-								<tbody>
-									<tr>
-										<td>n&#47;a</td>
-										<td>n&#47;a</td>
-										<td>n&#47;a</td>
-										<td>1</td>
-									</tr>
-								</tbody>
-							</table>
+						<div class="mg_sd_lblh">
+							<div class="mg_sd_lbl">Special Effects</div>
+							<div class="mg_sd_chkbx" id="mg_sd_chkbx_specialeffects">
+								<img src="img/mg_sd_check.png">
+							</div>
 						</div>
-						<div class="mg_lb_bt" id="mg_lb_bt_qt">Okay</div>
+						<div class="mg_sd_lblh">
+							<div class="mg_sd_lbl">Hints</div>
+							<div class="mg_sd_chkbx" id="mg_sd_chkbx_hints">
+								<img src="img/mg_sd_check.png">
+							</div>
+						</div>
+						<div class="mg_sd_lb">Volume</div>
+						<div class="mg_sd_snh">
+							<div class="mg_sd_sll" style="text-indent: 4px;">Ambience</div>
+							<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_ambience" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
+						</div>
+						<div class="mg_sd_snh">
+							<div class="mg_sd_sll" style="text-indent: 4px;">Music</div>
+							<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_music" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
+						</div>
+						<div class="mg_sd_snh">
+							<div class="mg_sd_sll" style="text-indent: 4px;">Effects</div>
+							<div class="mg_sd_sl" type="mg_snd" id="mg_sd_snd_effects" style="margin-top: 7px; width: 186px;"><div class="mg_sd_slh"></div></div>
+						</div>
+						<div class="mg_sd_lb">Debug</div>
+						<div class="mg_sd_lblh">
+							<div class="mg_sd_lbl">Show FPS</div>
+							<div class="mg_sd_chkbx" id="mg_sd_chkbx_fps">
+								<img src="img/mg_sd_check.png">
+							</div>
+						</div>
 					</div>
+				</div>
+				<div id="mg_lb">
+					<div id="mg_lb_td">
+						<div id="mg_lb_td_top">
+							<span></span>, your score is:
+						</div>
+						<div id="mg_lb_td_btm">
+							<span></span>
+						</div>
+					</div>
+					<div id="mg_lb_lst_h">
+						<table id="mg_lb_lst">
+							<thead>
+								<th>Name</th>
+								<th>Score</th>
+								<th>Level</th>
+								<th>Rank</th>
+							</thead>
+							<tbody>
+								<tr>
+									<td>n&#47;a</td>
+									<td>n&#47;a</td>
+									<td>n&#47;a</td>
+									<td>1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="mg_lb_bt" id="mg_lb_bt_qt">Okay</div>
+				</div>
+				<div id="mg_pb"><!--pause button-->
+					<div class="mg_pb_p"></div>
+					<div class="mg_pb_p"></div>
+					<div class="mg_pb_pl"></div>
 				</div>
 			</div>
 			<div id="mm_descr">

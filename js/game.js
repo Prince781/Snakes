@@ -162,14 +162,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		}
 	};
 	g = { //the main components of the game, when started
+		sted: false, //whether or not the game has started
 		cSt: function(s) { //function to change the current game state
 			if (s=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
+				$_(".mg_pb_p").effects.fadeTo(0,300);
+				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			} else if (s=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
+				$_(".mg_pb_p").effects.fadeTo(100,300);
+				$_(".mg_pb_pl").effects.fadeTo(0,300);
 			}
 			gen.sst = gen.st;
 			gen.st = s;
@@ -179,10 +184,14 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (rv=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
+				$_(".mg_pb_p").effects.fadeTo(0,300);
+				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			} else if (rv=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
+				$_(".mg_pb_p").effects.fadeTo(100,300);
+				$_(".mg_pb_pl").effects.fadeTo(0,300);
 			}
 			gen.sst = gen.st;
 			gen.st = rv;
@@ -328,58 +337,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			});
 			return true;
 		},
-		bt: [ //the button array; used to store all current canvas-drawn UI elements conveniently
-		/************************************************
-		 * Five basic array keys:
-		 * n --> (name) useful label
-		 * w --> (width)
-		 * h --> (height)
-		 * p --> (position) object containing x and y
-		 * c --> (color) stores rgba data
-		 * e --> (event) list of interactive functions
-		 ************************************************/
-			{
-				n: "pauseButton",
-				w: 40,
-				h: 40,
-				p: {
-					x: 0, //to be later defined
-					y: 0  //in an additional function...
-				},
-				c: {
-					r: 24,
-					g: 24,
-					b: 24,
-					a: 0.6
-				},
-				r: false, //whether or not the button is to the right
-				m: false, //whether or not the button is moving
-				mt: 0, //the start of the button moving
-				mo: false, //whether or not the mouse is over the button
-				sr: 20, //the shadow radius
-				nsr: 20, //the new shadow radius
-				srt: 0,  //the shadow radius time
-				osr: 20, //the old shadow radius
-				e: {
-					ismouseover: false,
-					mouseover: function() {
-						g.bt[0].srt = (new Date()).getTime();
-						g.bt[0].osr = g.bt[0].sr;
-						g.bt[0].nsr = 30;
-						g.bt[0].e.ismouseover = true;
-					},
-					mouseout: function() {
-						g.bt[0].srt = (new Date()).getTime();
-						g.bt[0].osr = g.bt[0].sr;
-						g.bt[0].nsr = 20;
-						g.bt[0].e.ismouseover = false;
-					},
-					click: function(){
-						if ((gen.st == "game" || gen.st == "paused")&&!s.v) g.cSt(gen.st=="game" ? "paused" : "game");
-					}
-				}
-			}
-		],
 		gt: 0, //the game time interval
 		pt: 0, //the time of pausing
 		rt: 0, //the time of resuming
@@ -764,7 +721,10 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			cx.fillStyle=rg;
 			cx.fillRect(0, 0, gThis.cnv.width, gThis.cnv.height);
 		}
+		if (gen.st!="game" && gen.st!="paused" && $_("#mg_pb").css('opacity')=="1")
+			$_("#mg_pb").effects.fadeTo(0,400);
 		if (gen.st == "menu") { //render the main menu
+			g.sted = false;
 			if (!colorEquals(g.bg.c,$_.newColor(21,79,90,1)) && g.bg.t==0) {
 				g.bg.olc = (g.bg.v ? g.bg.c : $_.newColor(21,79,90,0));
 				g.bg.nc = $_.newColor(21,79,90,1);
@@ -861,6 +821,9 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
 			} else if (gen.st=="game"||gen.st=="paused") { //otherwise, we're in the middle of the game, at an unknown level yet
+				g.sted = true;
+				if ($_("#mg_pb").css('display')=='none')
+					$_("#mg_pb").effects.fadeTo(100,400);
 				if (g.en.length==0 && !g.glc && !gen.ismultiplayer) //if there are no current enemies
 					g.en.push(ai.createEnem());
 				if (g.gt-g.lpa >= 10000 && (g.pk.length==0||g.pk.length<=10) && !g.glc)
@@ -1039,7 +1002,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}
 				}
-				for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) {
+				for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) { //loop through all players in the game
 					if (g.pl[pln].pn.p&&g.gt-g.pl[pln].pn.lpt>=g.pl[pln].pn.pt(pln)&&g.gt-g.pl[pln].pn.ipt<5000)
 						g.pl[pln].pn.af(pln); //affect the player, if poisoned
 					else if (g.pl[pln].pn.p&&g.gt-g.pl[pln].pn.ipt>=5000) g.pl[pln].pn.p = false;
@@ -1058,22 +1021,21 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					} else if (g.pl[pln].irs && !g.pl[pln].dy && !g.glc) { //if the player is resurrecting
 						if (g.gt-g.pl[pln].rt <= 500) g.pl[pln].c.a = Math.pow((g.gt-g.pl[pln].rt)/500,2);
 						else {
-							if (g.pl[pln].lv == 0) { //if we're out of lives, too, end the game
-								g.cSt("over");
-							} else {
+							if (g.pl[pln].lv == 0) g.cSt("over"); //if we're out of lives, too, end the game
+							else {
 								g.pl[pln].c.a = 1;
 								g.pl[pln].irs = false;
 							}
 						}
 					}
 					var pcl = g.pl[pln].c;
-					for (var i=0; i<g.pl[pln].p.length; i++) { //render the player
+					for (var i=0; i<g.pl[pln].p.length; i++) { //render the player (or players)
 						var p = g.pl[pln].p[i];
 						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
-						cx.strokeStyle = "none";
+						cx.strokeStyle = "#000000";
 						if (g.pl[pln].pn.p) { //poison rendering
 							with(Math)
-								cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((g.gt-g.pl[pln].pn.ipt)/1000*PI).toFixed(14)))*g.glA)+")";
+								cx.shadowColor = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*abs(parseFloat(sin((g.gt-g.pl[pln].pn.ipt)/1000*PI).toFixed(4)))*g.glA)+")";
 							cx.shadowBlur = 20;
 							cx.shadowOffsetX = 0;
 							cx.shadowoffSetY = 0;
@@ -1140,79 +1102,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					$_("#mg_go").effects.fadeTo(100,1000);
 			}
 			if (gen.st == "interim" || gen.st == "game" || gen.st == "paused") { //some additional last-millisecond rendering
-				//update the position of the pause button
-				var pbcflct = false;
-				if (!gen.ismultiplayer && !g.pl[0].irs && !g.pl[0].dy && bd.ps(g.pl[0].p[0]).x >= g.bt[0].p.x && bd.ps(g.pl[0].p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.pl[0].p[0]).y >= g.bt[0].p.y && bd.ps(g.pl[0].p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
-				/* -- use the following below only for enemies -- *
-				for (var i=0; i<g.en.length; i++)
-					if (bd.ps(g.en[i].p[0]).x >= g.bt[0].p.x && bd.ps(g.en[i].p[0]).x <= g.bt[0].p.x+g.bt[0].w && bd.ps(g.en[i].p[0]).y >= g.bt[0].p.y && bd.ps(g.en[i].p[0]).y <= g.bt[0].p.y+g.bt[0].h) pbcflct = true;
-				*/
-				if (pbcflct && !g.bt[0].m) {
-					g.bt[0].m = true;
-					g.bt[0].r = !g.bt[0].r; //switch orientations 
-				}
-				if (g.bt[0].m) { //if the pause button is moving
-					var rc = bd.os().x1+bd.cv().x-g.bt[0].w-10; //right coord
-					var lc = bd.os().x1+10; //left coord
-					if (g.bt[0].mt == 0)
-						g.bt[0].mt = g.gt;
-					else if (g.gt-g.bt[0].mt < 700) {
-						var dlt = (g.gt-g.bt[0].mt)/700;
-						dlt = Math.pow(dlt,1-dlt);
-						g.bt[0].p.x = (g.bt[0].r ? lc+Math.round((rc-lc)*dlt) : rc-Math.round((rc-lc)*dlt));
-						with(Math)g.bt[0].c.a = 0.7*(1-abs(parseFloat(sin(dlt*PI).toFixed(14)))); //fade in and out the opacity
-					} else {
-						g.bt[0].m = false;
-						g.bt[0].mt = 0;
-						g.bt[0].p.x = (g.bt[0].r ? rc : lc);
-					}
-				}
-				if (g.bt[0].nsr != g.bt[0].sr && (new Date()).getTime()-g.bt[0].srt <= 700) //animate the shadow radius
-					g.bt[0].sr = g.bt[0].osr+Math.round((((new Date()).getTime()-g.bt[0].srt)/700)*(g.bt[0].nsr-g.bt[0].osr));
-				var pbcl = g.bt[0].c;
-				cx.fillStyle = "rgba("+pbcl.r+","+pbcl.g+","+pbcl.b+","+(pbcl.a*g.glA)+")";
-				cx.strokeStyle = "rgba(0,0,0,0)";
-				cx.fillRoundedRect(g.bt[0].p.x, g.bt[0].p.y, g.bt[0].w, g.bt[0].h, 10);
-				var r = {x:g.bt[0].p.x+g.bt[0].w/2,y:g.bt[0].p.y+g.bt[0].h/2};
-				var shdw = cx.createRadialGradient(r.x, r.y, 0, r.x, r.y, g.bt[0].sr);
-				shdw.addColorStop(0, "rgba("+pbcl.r+80+","+pbcl.g+80+","+pbcl.b+80+","+(pbcl.a*g.glA)+")");
-				shdw.addColorStop(0.82, "rgba(0,0,0,0)");
-				cx.fillStyle = shdw;
-				cx.fillRect(g.bt[0].p.x, g.bt[0].p.y, g.bt[0].w, g.bt[0].h);
-				cx.fillStyle = "rgba("+pbcl.r+100+","+pbcl.g+100+","+pbcl.b+100+","+(pbcl.a*g.glA)+")";
-				//pause rectangles
-				cx.shadowOffsetX = 0;
-				cx.shadowOffsetY = 0;
-				cx.shadowBlur = 5;
-				cx.shadowColor = "rgba(20,20,20,"+(pbcl.a*g.glA)+")";
-				if (gen.st == "paused") {
-					var crds = [
-						{
-							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2),
-							y: g.bt[0].p.y+10
-						},
-						{
-							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2),
-							y: g.bt[0].p.y+30
-						},
-						{
-							x: g.bt[0].p.x+Math.round((g.bt[0].w-18)/2)+18,
-							y: g.bt[0].p.y+20
-						}
-					];
-					cx.beginPath();
-					cx.moveTo(crds[0].x,crds[0].y);
-					for (var i=1; i<crds.length; i++)
-						cx.lineTo(crds[i].x,crds[i].y);
-					cx.lineTo(crds[(crds.length-1)].x,crds[(crds.length-1)].y);
-					cx.closePath();
-					cx.fill();	
-				} else {
-					cx.fillRect(g.bt[0].p.x+Math.round((g.bt[0].w-18)/2), g.bt[0].p.y+10, 6, 20); //distance of 6, inner width of 20
-					cx.fillRect(g.bt[0].p.x+Math.round((g.bt[0].w-18)/2)+12, g.bt[0].p.y+10, 6, 20);
-				}
-				cx.shadowBlur = 0;
-				cx.shadowColor = null;
 				if (g.tb.an!="" && (new Date()).getTime()-g.tb.at >= 700) {//update the top bar
 					g.tb.p = {
 						x: g.tb.np.x,
@@ -1516,10 +1405,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					kt: pl_num%2 //the type of key input used. 0 for WASD, and 1 for arrow keys
 				};
 			})());
-		g.bt[0].p = { //the position of the pause button
-			x: bd.os().x1+10,
-			y: bd.os().y1+bd.cv().y-g.bt[0].h-10
-		};
 		g.tb.d.w = gThis.cnv.width;
 		g.pg.p = {
 			x: gThis.cnv.width-10-g.pg.d.w, //position of progress bar
@@ -1553,7 +1438,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		});
 		$_("#mg_mms").click(s.show); //start the settings div's appearance, and pause everything else
 		$_("#mg_sd_cb").click(s.hide); //close the settings div, and revert back to previous game state
-		if (Storage) {
+		$_("#mg_pb").click(function() { //toggle the pause/play state of the game
+			if (gen.st == "paused") g.cSt("game");
+			else if (gen.st == "game") g.cSt("paused");
+		});
+		if (Storage) { //restore saved data
 			if (localStorage.SGsnda) gen.snd.ambience.vol = parseFloat(localStorage.SGsnda);
 			if (localStorage.SGsndm) gen.snd.music.vol = parseFloat(localStorage.SGsndm);
 			if (localStorage.SGsnde) gen.snd.effects.vol = parseFloat(localStorage.SGsnde);
@@ -1649,6 +1538,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		}
 		$_(".mg_sd_chkbx").click(function() { //respond to checkbox toggle events
 			var prop_name = this.id.substring(12);
+			if (prop_name == "ismultiplayer" && g.sted) return false;
 			if (prop_name in gen) {
 				gen[prop_name] = !gen[prop_name];
 				$_(this.getElementsByTagName("img")[0]).effects.fadeTo(gen[prop_name]?100:0,200);
@@ -1680,36 +1570,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}				
 				break;
-			}
-		});
-		$_(gThis.cnv).mousemove(function(e) {
-			var mouse = {
-				x: e.pageX-$_(gThis.cnv).offset().x,
-				y: e.pageY-$_(gThis.cnv).offset().y
-			};
-			for (var i=0; i<g.bt.length; i++) {
-				var hovering = (mouse.y-g.bt[i].p.y >= 0 
-								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
-								&& mouse.x-g.bt[i].p.x >= 0
-								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
-				if (typeof g.bt[i].e.mouseover == "function" && hovering && !g.bt[i].e.ismouseover)
-					g.bt[i].e.mouseover(); //invoke mouseover event
-				else if (typeof g.bt[i].e.mouseout == "function" && g.bt[i].e.ismouseover && !hovering)
-					g.bt[i].e.mouseout(); //invoke mouseout event
-			}
-		});
-		$_(gThis.cnv).click(function(e) {
-			var mouse = {
-				x: e.pageX-$_(gThis.cnv).offset().x,
-				y: e.pageY-$_(gThis.cnv).offset().y
-			};
-			for (var i=0; i<g.bt.length; i++) {
-				var hovering = (mouse.y-g.bt[i].p.y >= 0 
-								&& mouse.y-g.bt[i].p.y<=g.bt[i].h 
-								&& mouse.x-g.bt[i].p.x >= 0
-								&& mouse.x-g.bt[i].p.x<=g.bt[i].w);
-				if (typeof g.bt[i].e.click == "function" && hovering)
-					g.bt[i].e.click(); //invoke click event
 			}
 		});
 	};

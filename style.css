@@ -151,11 +151,11 @@ background-color: #494949;
 }
 
 #main_game{
-background-color: #010101;
+background-color: #000000;
 position: absolute;
 margin-top: -10px;
-margin-left: 390px;
-padding: 1px;
+margin-left: 400px;
+padding: 0px;
 display: none;
 opacity: 0;
 overflow: hidden;
@@ -172,11 +172,14 @@ height: 494px;
 }
 
 #mg_mm{
-margin-left: -2px;
-margin-top: -500px;
-width: 798px;
-height: 498px;
-padding: 1px;
+width: 100%;
+height: 100%;
+left: 50%;
+top: 0%;
+margin-left: -50%;
+margin-top: 0%;
+position: absolute;
+z-index: 900;
 }
 
 #mg_mmi{
@@ -203,7 +206,7 @@ background-color: #202020;
 box-shadow: 0px 0px 15px #000000;
 position: absolute;
 opacity: 0;
-z-index: 1001;
+z-index: 1400;
 display: none;
 }
 
@@ -693,14 +696,75 @@ clear: none;
 box-shadow: inset 0px -1px 1px rgba(43,43,43,0.8), 0px 0px 3px rgba(0,0,0,0.8);
 }
 
+#mg_pb{ /* pause button */
+width: 30px;
+height: 20px;
+padding: 10px;
+padding-left: 5px;
+padding-right: 5px;
+color: rgba(208,232,248,0.5);
+background-color: rgba(122,167,184,0.2);
+box-shadow: 0px 0px 5px rgba(32,77,94,0.5);
+border-radius: 10px;
+position: absolute;
+display: none;
+opacity: 0;
+left: 10px;
+top: 445px;
+z-index: 1700;
+cursor: pointer;
+}
+
+.mg_pb_p{
+float: left;
+clear: none;
+position: relative;
+background-color: rgba(255,255,255,0.8);
+width: 6px;
+height: 20px;
+cursor: pointer;
+transition: box-shadow 400ms;
+-ms-transition: box-shadow 400ms;
+-moz-transition: box-shadow 400ms;
+-webkit-transition: box-shadow 400ms;
+-o-transition: box-shadow 400ms;
+}
+
+.mg_pb_p:first-child{
+margin-left: 6px;
+}
+
+.mg_pb_p:nth-child(2){
+margin-left: 6px;
+}
+
+.mg_pb_pl{
+width: 0px;
+height: 0px;
+margin-left: auto;
+margin-right: auto;
+margin-top: 0px;
+display: none;
+opacity: 0;
+border-top: 10px solid transparent;
+border-bottom: 10px solid transparent;
+border-left: 18px solid rgba(255,255,255,0.8);
+}
+
+#mg_pb:hover .mg_pb_p{
+box-shadow: 0px 0px 5px rgba(0,10,15,1);
+}
+
+
 #mg_pd{
 width: 100%;
 height: 100%;
-margin-top: 0px;
-margin-left: 0px;
+top: 0px;
+left: 50%;
+margin-left: -50%;
 background-color: rgba(215,235,255,0.1);
 position: absolute;
-z-index: 1000;
+z-index: 1300;
 display: none;
 }
 
@@ -773,6 +837,7 @@ border-radius: 7px;
 opacity: 0;
 display: none;
 padding: 10px;
+z-index: 1400;
 }
 
 #mg_lo_t, #mg_go_t{
@@ -855,6 +920,7 @@ box-shadow: 0px 0px 35px 10px rgba(21,8,11,0.9);
 border-radius: 7px;
 font-family: Arial;
 padding: 10px;
+z-index: 1200;
 }
 
 #mg_lb_td{
