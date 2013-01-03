@@ -829,15 +829,27 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				}
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
 				if (gen.hints && !gen.ismultiplayer) { //show game starting hint
-					//render top "up" arrow/W key
+					/* Unicode characters:
+						\u2350 = up arrow
+						\u2357 = down arrow
+						\u2347 = left arrow
+						\u2348 = right arrow
+					*/
+					//render keys
+					cx.textBaseline = "middle";
+					cx.textAlign = "center";
 					cx.fillStyle = "rgba(212,234,255,0.4)";
 					cx.strokeStyle = "rgba(120,140,166,0.4)";
+					cx.font = "18px Arial bold";
 					cx.lineWidth = 1;
-					cx.fillRoundedRect(g.hnts.key.p.x-g.hnts.key.bw/2,g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2,g.hnts.key.bw,g.hnts.key.bw, 6);
-					cx.strokeText(g.pl[0].kt?"W":"UP", g.hnts.key.p.x+g.hnts.key.bw/2, g.hnts.key.p.y+g.hnts.key.bw/2);
+					cx.fillRoundedRect(0.5+g.hnts.key.p.x-g.hnts.key.bw/2, 0.5+g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
+					cx.fillStyle = "rgba(10,22,27,0.8)";
+					cx.fillText(!g.pl[0].kt?"W":"\u2350", 0.5+g.hnts.key.p.x, 0.5+g.hnts.key.p.y-g.hnts.key.bw/2-g.hnts.key.sp/2);
 					for (var k=0; k<3; k++) {
-						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1),g.hnts.key.p.y+g.hnts.key.sp/2,g.hnts.key.bw,g.hnts.key.bw, 6);
-						
+						cx.fillStyle = "rgba(212,234,255,0.4)";
+						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
+						cx.fillStyle = "rgba(10,22,27,0.8)";
+						cx.fillText(!g.pl[0].kt?["A","S","D"][k]:["\u2347","\u2357","\u2348"][k], 0.5+g.hnts.key.p.x+g.hnts.key.bw*(k-1)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.bw/2+g.hnts.key.sp/2);
 					}
 				}
 			} else if (gen.st=="game"||gen.st=="paused") { //otherwise, we're in the middle of the game, at an unknown level yet
