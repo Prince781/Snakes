@@ -167,14 +167,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (s=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-				$_(".mg_pb_p").effects.fadeTo(0,300);
-				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			} else if (s=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
+			}
+			if (s!="paused") {
 				$_(".mg_pb_p").effects.fadeTo(100,300);
 				$_(".mg_pb_pl").effects.fadeTo(0,300);
+			} else {
+				$_(".mg_pb_p").effects.fadeTo(0,300);
+				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			}
 			gen.sst = gen.st;
 			gen.st = s;
@@ -184,14 +187,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			if (rv=="paused") {
 				g.pt=(new Date()).getTime();
 				$_("#mg_pd").effects.fadeTo(100,300);
-				$_(".mg_pb_p").effects.fadeTo(0,300);
-				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			} else if (rv=="game"&&gen.st=="paused") {
 				g.rt=(new Date()).getTime();
 				g.to += g.rt-g.pt;
 				$_("#mg_pd").effects.fadeTo(0,300);
+			}
+			if (s!="paused") {
 				$_(".mg_pb_p").effects.fadeTo(100,300);
 				$_(".mg_pb_pl").effects.fadeTo(0,300);
+			} else {
+				$_(".mg_pb_p").effects.fadeTo(0,300);
+				$_(".mg_pb_pl").effects.fadeTo(100,300);
 			}
 			gen.sst = gen.st;
 			gen.st = rv;
