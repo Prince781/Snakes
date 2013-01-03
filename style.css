@@ -1,16 +1,23 @@
-/* style.css
+/**********************************************
+ * style.css
  * For the main page of the Snakes game...
+ * DISCLAIMER:
+ * --------------------------------------------
+ * This code is free to redistribution and 
+ * modification, as long as this statement
+ * remains intact.
+ * --------------------------------------------
  * March 2012, Princeton Ferro
- */
+***********************************************/
  
-html{
+html {
 padding: 0px;
 margin: 0px;
 height: 100%;
 box-shadow: inset 0px 0px 5px #000000;
 }
 
-body{
+body {
 background-color: #686868;
 background-image: url("img/noise.png");
 padding: 1px;
@@ -21,7 +28,7 @@ input:focus { /* disable Safari and Google Chrome's annoying highlighting */
 outline: none;
 }
 
-#main_container{
+#main_container {
 width: 760px;
 height: 560px;
 background-color: #333333;
@@ -787,6 +794,7 @@ width: 120px;
 font-family: Arial;
 font-size: 20px;
 color: rgba(188,212,228,0.7);
+text-shadow: 0px 0px 3px rgba(32,39,35,0.7);
 background-color: rgba(102,129,141,0.7);
 box-shadow: 0px 0px 15px rgba(12,47,54,0.6), inset 0px 14px 10px rgba(82,117,124,0.4);
 height: 20px;

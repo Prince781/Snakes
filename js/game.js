@@ -7,17 +7,19 @@
  * modification, as long as this statement
  * remains intact.
  * --------------------------------------------
- * 2012 Princeton Ferro
+ * March 2012, Princeton Ferro
  **********************************************/
 var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
 window.requestAnimationFrame = requestAnimationFrame;
 
-function SnakesGame(){ //must be called using the "new" JavaScript keyword
-	var gThis = this;
-	var intervs = []; //the intervals, used for looping all functions. Specifically a private variable for ease
+function SnakesGame() { //must be called using the "new" JavaScript keyword
+	var gThis = this; //global reference to this object
+	var intervs = []; //the intervals, used for looping all functions
 	var cx = {}; //additional ScriJe "2d+" context for canvas
-	var g = {};
-	function Hue(hue){ //hue=0->1
+	var g = {};  //the main game component
+	var is = {}; //image source loader
+	var un = {}; //username validity information
+	function Hue(hue) { //hue=0->1
 		//generates a hsv color, with saturation and value at 1
 		var h=hue*360;
 		with(Math)
@@ -29,8 +31,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			};
 	}
 	var bd = { //various functions pertaining to the geometry of the canvas
-		os: function(){ //the offsets, in x and y, of the coordinates of the board within the canvas
-			with(Math)
+		os: function() { //the offsets, in x and y, of the coordinates of the board within the canvas
+			with (Math)
 				return {
 					x1: floor((gThis.cnv.width % 10)/2),
 					x2: ceil((gThis.cnv.width % 10)/2),
@@ -38,19 +40,19 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					y2: ceil((gThis.cnv.height % 10)/2)
 				};
 		},
-		cv: function(){ //the dimensions of the board within the canvas
+		cv: function() { //the dimensions of the board within the canvas
 			return {
 				x: gThis.cnv.width-bd.os().x1-bd.os().x2,
 				y: gThis.cnv.height-bd.os().y1-bd.os().y2
 			};
 		},
-		gd: function(){ //the amound of grids, for x and y, of the board within the canvas. SHOULD BE A WHOLE NUMBER
+		gd: function() { //the amound of grids, for x and y, of the board within the canvas. SHOULD BE A WHOLE NUMBER
 			return {
 				x: bd.cv().x/10 - 1,
 				y: bd.cv().y/10 - 1
 			};
 		},
-		ps: function(c){ //the pixel-coordinates on the board, for x and y, of an input grid point
+		ps: function(c) { //the pixel-coordinates on the board, for x and y, of an input grid point
 			return {
 				x: bd.os().x1+(c.x*10),
 				y: bd.os().y1+(c.y*10)
@@ -117,8 +119,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_inun_2").value(g.pl[1].n);
 		},
 		hide: function() {
-			var rs = gThis.un.chk($_("#mg_sd_inun").value());
-			var rs2 = gThis.un.chk($_("#mg_sd_inun_2").value());
+			var rs = un.chk($_("#mg_sd_inun").value());
+			var rs2 = un.chk($_("#mg_sd_inun_2").value());
 			if (!s.v) return false;
 			else if (!rs.v){
 				s.ntfy(rs.r);
@@ -140,8 +142,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 		},
 		t: [] //array of timers
 	};
-	this.un = { //info for username
-		chk: function(username){ //validation
+	un = { //info for username validity
+		chk: function(username) { //validation
 			if (!username||typeof username=="undefined"||username=="")
 				return {r:"The text field is currently blank. Please provide a username.",v:false};
 			else if (username.length<3)
@@ -153,12 +155,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			else return {r:"",v:true};
 		}
 	};
-	this.is = { //info for the image array
-		l: [], //list
-		a: function(loc){
+	is = { //info for the image array
+		l: [], //list of loaded images
+		a: function(loc) {
 			var img = new Image();
 			img.src = loc;
-			gThis.is.l.push(img);
+			is.l.push(img);
 		}
 	};
 	g = { //the main components of the game, when started
@@ -1056,7 +1058,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							break;
 					}
 				}
-				for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) { //loop through all players in the game
+				for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) { //render and loop through all players in the game
 					if (g.pl[pln].pn.p&&g.gt-g.pl[pln].pn.lpt>=g.pl[pln].pn.pt(pln)&&g.gt-g.pl[pln].pn.ipt<5000)
 						g.pl[pln].pn.af(pln); //affect the player, if poisoned
 					else if (g.pl[pln].pn.p&&g.gt-g.pl[pln].pn.ipt>=5000) g.pl[pln].pn.p = false;
@@ -1095,8 +1097,11 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 							cx.shadowoffSetY = 0;
 						}
 						cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
+						/*
+							
+						*/
 						cx.shadowBlur = 0;
-						cx.shadowColor = "rgba(0,0,0,0)";
+						cx.shadowColor = "#000000";
 					}
 				}
 				for (var i=0; i<g.en.length; i++) { //render all of the enemies
@@ -1209,12 +1214,17 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillText("Level "+g.lv, dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
 					else cx.fillText("Multiplayer Mode", dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
 					cx.textAlign = "right";
-					if (!gen.ismultiplayer)
+					if (!gen.ismultiplayer) {
+						var pcl = g.pl[0].c;
+						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
+						cx.fillRoundedRect(dp.x+g.tb.d.w-160, dp.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
+					}
 					//else cx.fillText(g.pl[0].n+" vs "+g.pl[1].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
-					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined" && !gen.ismultiplayer)
+					if (is.l.length>0 && typeof is.l[0].src !== "undefined" && !gen.ismultiplayer)
 						for (var i=0; i<3; i++)
-							cx.drawImage(gThis.is.l[(i>2-g.pl[0].lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
+							cx.drawImage(is.l[(i>2-g.pl[0].lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
 				}
 				if (g.tb.an=="") {
 					cx.fillStyle = "rgba("+g.tb.c.bg.r+","+g.tb.c.bg.g+","+g.tb.c.bg.b+","+(g.tb.c.bg.a*g.glA)+")";
@@ -1241,13 +1251,16 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						cx.fillText("Level "+g.lv, g.tb.p.x+(g.tb.d.w/2), g.tb.p.y+g.tb.to.y);
 					else cx.fillText("Multiplayer Mode", g.tb.p.x+(g.tb.d.w/2), g.tb.p.y+g.tb.to.y);
 					cx.textAlign = "right";
-					if (!gen.ismultiplayer)
+					if (!gen.ismultiplayer) {
+						var pcl = g.pl[0].c;
+						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
+						cx.fillRoundedRect(g.tb.p.x+g.tb.d.w-160, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
-					//else cx.fillText(g.pl[0].n+" vs "+g.pl[1].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
-					//cx.textBaseline
-					if (gThis.is.l.length>0 && typeof gThis.is.l[0].src !== "undefined" && !gen.ismultiplayer)
+					}
+					if (is.l.length>0 && typeof is.l[0].src !== "undefined" && !gen.ismultiplayer)
 						for (var i=0; i<3; i++)
-							cx.drawImage(gThis.is.l[(i>2-g.pl[0].lv?0:1)], g.tb.p.x+g.tb.d.w-30-(20*i), g.tb.p.y+2, 20, 20);
+							cx.drawImage(is.l[(i>2-g.pl[0].lv?0:1)], g.tb.p.x+g.tb.d.w-30-(20*i), g.tb.p.y+2, 20, 20);
 				}
 				if (!gen.ismultiplayer) { //drawing progress bar
 					g.pg.p.y=(g.tb.an!=""?dp.y+g.tb.d.h+10:g.tb.p.y+g.tb.d.h+10);
@@ -1468,8 +1481,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			x: gThis.cnv.width/2,
 			y: gThis.cnv.height/2
 		};
-		gThis.is.a("img/heart.png");
-		gThis.is.a("img/heart_gs.png");
+		is.a("img/heart.png");
+		is.a("img/heart_gs.png");
 		$_("#mg_mmi").effects.fadeTo(100,200, function() {
 			//start the interval for the drawing of the main canvas
 			if (window.requestAnimationFrame) window.requestAnimationFrame(draw);
@@ -1484,7 +1497,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			} else g.cSt("interim"); //start at new level
 		});
 		$_("#mg_np_dc").click(function() { //start the game, if there is a valid username
-			var rs = gThis.un.chk($_("#mg_np_dun").value());
+			var rs = un.chk($_("#mg_np_dun").value());
 			if (!rs.v) {
 				$_("#mg_np_d_e").effects.fadeTo(100,700);
 				$_("#mg_np_d_e").html(rs.r);
