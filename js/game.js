@@ -344,7 +344,8 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				cK: 0, //the current key being faded
 				o: 0, //current opacity (of fading key)
 				bw: 40, //box width, the width of the individual keys
-				sp: 4 //spacing between the keys
+				sp: 4, //spacing between the keys
+				lmod: 0 //the last mod value
 			}
 		},
 		gt: 0, //the game time interval
@@ -705,6 +706,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 			lineWidth=0;
 			lineJoin="miter";
 			textBaseline="alphabetic";
+			textAlign="center";
 		}
 		function colorEquals(clr1, clr2) { //test equivalence between two colors
 			var equals = true;
@@ -829,7 +831,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					g.pl[0].hm=false;
 				}
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
-				if (gen.hints && !gen.ismultiplayer) { //show game starting hint
+				if (gen.hints) { //show game starting hint
 					/* Unicode characters:
 						\u2350 = up arrow
 						\u2357 = down arrow
@@ -839,20 +841,23 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					//render keys
 					if (!g.hnts.key.ft) g.hnts.key.ft = (new Date()).getTime();
 					with (Math) {
-						g.hnts.key.o = parseFloat(sin(PI*((new Date()).getTime()-g.hnts.key.ft)/2).toFixed(2));
-						g.hnts.key.cK = round(4*parseFloat(sin(PI*((new Date()).getTime()-g.hnts.key.ft)/2).toFixed(0)));
+						g.hnts.key.o = 0.4+0.6*parseFloat(abs(sin(PI/2 * ((new Date()).getTime()-g.hnts.key.ft)/1000).toFixed(2)));
+						//g.hnts.key.cK = round(3*abs(sin(PI/2 * ((new Date()).getTime()-g.hnts.key.ft)/2000).toFixed(4)));
+						if (((new Date()).getTime()-g.hnts.key.ft)%2000 < g.hnts.key.lmod)
+							g.hnts.key.cK = g.hnts.key.cK==3?0:g.hnts.key.cK+1;
+						g.hnts.key.lmod = ((new Date()).getTime()-g.hnts.key.ft)%2000;
 					}
 					cx.textBaseline = "middle";
 					cx.textAlign = "center";
-					cx.fillStyle = "rgba(212,234,255,"+(g.hnts.key.o)+")";
+					cx.fillStyle = "rgba(212,234,255,"+(g.hnts.key.cK==0?g.hnts.key.o:"0.4")+")";
 					cx.strokeStyle = "rgba(120,140,166,0.4)";
-					cx.font = "18px Arial bold";
+					cx.font = "18px Arial";
 					cx.lineWidth = 1;
 					cx.fillRoundedRect(0.5+g.hnts.key.p.x-g.hnts.key.bw/2, 0.5+g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
 					cx.fillStyle = "rgba(10,22,27,"+(g.hnts.key.cK==0?Mathf.limit(g.hnts.key.o*2,0,1):"0.8")+")";
 					cx.fillText(!g.pl[0].kt?"W":"\u2350", 0.5+g.hnts.key.p.x, 0.5+g.hnts.key.p.y-g.hnts.key.bw/2-g.hnts.key.sp/2);
 					for (var k=0; k<3; k++) {
-						cx.fillStyle = "rgba(212,234,255,"+g.hnts.key.o+")";
+						cx.fillStyle = "rgba(212,234,255,"+(g.hnts.key.cK-1==k?g.hnts.key.o:"0.4")+")";
 						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
 						cx.fillStyle = "rgba(10,22,27,0.8)";
 						cx.fillText(!g.pl[0].kt?["A","S","D"][k]:["\u2347","\u2357","\u2348"][k], 0.5+g.hnts.key.p.x+g.hnts.key.bw*(k-1)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.bw/2+g.hnts.key.sp/2);
