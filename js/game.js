@@ -820,6 +820,12 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					g.glAat = false;
 				}
 			}
+			if (gen.st!="interim") { //reset g.hnts.key values
+				g.hnts.key.o = 0.4;
+				g.hnts.key.cK = 0;
+				g.hnts.key.ft = 0;
+				g.hnts.key.lmod = 0;
+			}
 			if (gen.st=="interim") { //if we're at the very start of the game's level
 				if ((g.lv==0||g.lv==g.olv)&&g.pl[0].n!==""&&!gen.ismultiplayer) {
 					if (g.en.length==0)g.en.push(ai.createEnem()); //create a new enemy
@@ -848,7 +854,6 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 					if (!g.hnts.key.ft) g.hnts.key.ft = (new Date()).getTime();
 					with (Math) {
 						g.hnts.key.o = 0.4+0.6*parseFloat(abs(sin(PI/2 * ((new Date()).getTime()-g.hnts.key.ft)/1000).toFixed(2)));
-						//g.hnts.key.cK = round(3*abs(sin(PI/2 * ((new Date()).getTime()-g.hnts.key.ft)/2000).toFixed(4)));
 						if (((new Date()).getTime()-g.hnts.key.ft)%2000 < g.hnts.key.lmod)
 							g.hnts.key.cK = g.hnts.key.cK==3?0:g.hnts.key.cK+1;
 						g.hnts.key.lmod = ((new Date()).getTime()-g.hnts.key.ft)%2000;
