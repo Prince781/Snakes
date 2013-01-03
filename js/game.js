@@ -342,6 +342,7 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 				p: {}, //coordinates defined at run time
 				ft: 0, //fade time
 				cK: 0, //the current key being faded
+				o: 0, //current opacity (of fading key)
 				bw: 40, //box width, the width of the individual keys
 				sp: 4 //spacing between the keys
 			}
@@ -836,17 +837,22 @@ function SnakesGame(){ //must be called using the "new" JavaScript keyword
 						\u2348 = right arrow
 					*/
 					//render keys
+					if (!g.hnts.key.ft) g.hnts.key.ft = (new Date()).getTime();
+					with (Math) {
+						g.hnts.key.o = parseFloat(sin(PI*((new Date()).getTime()-g.hnts.key.ft)/2).toFixed(2));
+						g.hnts.key.cK = round(4*parseFloat(sin(PI*((new Date()).getTime()-g.hnts.key.ft)/2).toFixed(0)));
+					}
 					cx.textBaseline = "middle";
 					cx.textAlign = "center";
-					cx.fillStyle = "rgba(212,234,255,0.4)";
+					cx.fillStyle = "rgba(212,234,255,"+(g.hnts.key.o)+")";
 					cx.strokeStyle = "rgba(120,140,166,0.4)";
 					cx.font = "18px Arial bold";
 					cx.lineWidth = 1;
 					cx.fillRoundedRect(0.5+g.hnts.key.p.x-g.hnts.key.bw/2, 0.5+g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
-					cx.fillStyle = "rgba(10,22,27,0.8)";
+					cx.fillStyle = "rgba(10,22,27,"+(g.hnts.key.cK==0?Mathf.limit(g.hnts.key.o*2,0,1):"0.8")+")";
 					cx.fillText(!g.pl[0].kt?"W":"\u2350", 0.5+g.hnts.key.p.x, 0.5+g.hnts.key.p.y-g.hnts.key.bw/2-g.hnts.key.sp/2);
 					for (var k=0; k<3; k++) {
-						cx.fillStyle = "rgba(212,234,255,0.4)";
+						cx.fillStyle = "rgba(212,234,255,"+g.hnts.key.o+")";
 						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
 						cx.fillStyle = "rgba(10,22,27,0.8)";
 						cx.fillText(!g.pl[0].kt?["A","S","D"][k]:["\u2347","\u2357","\u2348"][k], 0.5+g.hnts.key.p.x+g.hnts.key.bw*(k-1)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.bw/2+g.hnts.key.sp/2);
