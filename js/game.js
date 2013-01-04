@@ -389,7 +389,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				}); //hide pause div
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
 			$_("#mg_lb").effects.toHeight(204,500);
-			g.glb(); //get leaderboards information
+			intervs.lbrds = setTimeout(g.glb,1000); //get leaderboards information
 		},
 		qlb: function() { //quit leaderboards
 			if (gen.sst=="paused") {
@@ -831,7 +831,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over") { //render the main game, if currently running, paused, or over
 			if (g.bg.v && g.bg.t==0 && !gen.ismultiplayer) {
 				g.bg.olc = g.bg.c;
-				g.bg.nc = {menu:$_.newColor(21,79,90,0),lboards:$_.newColor(90,21,42,0)}[gen.sst];
+				g.bg.nc = {menu:$_.newColor(21,79,90,0),lboards:$_.newColor(90,21,42,0),help:$_.newColor(117,80,123,0)}[gen.sst];
 				g.bg.t = (new Date()).getTime();
 			} else if (!colorEquals(g.bg.c,$_.newColor(8,18,10,1)) && g.bg.t==0 && gen.ismultiplayer) {
 				g.bg.olc = g.bg.c;
