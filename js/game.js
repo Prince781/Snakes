@@ -1215,9 +1215,10 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 					else cx.fillText("Multiplayer Mode", dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
 					cx.textAlign = "right";
 					if (!gen.ismultiplayer) {
+						cx.strokeStyle = "#000000";
 						var pcl = g.pl[0].c;
 						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
-						cx.fillRoundedRect(dp.x+g.tb.d.w-160, dp.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillRoundedRect(dp.x+g.tb.d.w-94-cx.measureText(g.pl[0].n).width, dp.y+g.tb.to.y+2, 8, 8, 2);
 						cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
 					}
@@ -1244,7 +1245,6 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 						cx.fillText(debugInfo.fps+" FPS",g.tb.p.x+10,g.tb.p.y+g.tb.to.y+30);
 						cx.font = "14px Arial";
 					}
-					//else cx.fillText((g.pl[0].s+g.pl[0].cs)+" vs "+(g.pl[1].s+g.pl[1].cs), g.tb.p.x+54, g.tb.p.y+g.tb.to.y);
 					cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")";
 					cx.textAlign = "center";
 					if (!gen.ismultiplayer)
@@ -1252,9 +1252,10 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 					else cx.fillText("Multiplayer Mode", g.tb.p.x+(g.tb.d.w/2), g.tb.p.y+g.tb.to.y);
 					cx.textAlign = "right";
 					if (!gen.ismultiplayer) {
+						cx.strokeStyle = "#000000";
 						var pcl = g.pl[0].c;
 						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
-						cx.fillRoundedRect(g.tb.p.x+g.tb.d.w-160, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillRoundedRect(g.tb.p.x+g.tb.d.w-94-cx.measureText(g.pl[0].n).width, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
 						cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
 					}
