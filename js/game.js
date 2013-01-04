@@ -164,6 +164,11 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		}
 	};
 	g = { //the main components of the game, when started
+		vStr: { //the version string of the game
+			c: $_.newColor(122,167,184,0), //the render color
+			ft: 0, //the last fade time
+			text: "Version 1.1"
+		},
 		sted: false, //whether or not the game has started
 		cSt: function(s) { //function to change the current game state
 			if (s=="paused") {
@@ -430,9 +435,13 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			$_("#mg_go").effects.fadeTo(0,500,function() {
 				$_("#mg_go").css('display','none');
 			});
+			$_("#mg_go_m").effects.fadeTo(0,500,function() {
+				$_("#mg_go_m").css('display','none');
+			});
 			$_("#mg_hlp").effects.fadeTo(0,500,function() {
 				$_("#mg_hlp").css('display','none');
 			});
+			$_("#mg_go_m_tbl td").html(""); //clear html
 			g.tb.h();
 			for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) {
 				g.pl[pln].s = 0;
@@ -455,17 +464,24 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			if (gen.st!="over") return false;
 			for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++)
 				g.pl[pln].s+=g.pl[pln].cs; //add on score
-			g.cSt("lboards"); //change to leaderboards
-			if ($_("#mg_lb_td").css('display')=='none')
-				$_("#mg_lb_td").effects.fadeTo(100,500);
-			$_("#mg_lb").effects.fadeTo(100,500,function() {
-				$_("#mg_lb").effects.toHeight(254,500);
-			}); //show the leaderboards
-			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
-			for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) {
-				$_("#mg_lb_td_top span").html(g.pl[pln].n);
-				$_("#mg_lb_td_btm span").html(g.pl[pln].s);
-				g.sbm(g.pl[pln].n, g.pl[pln].s, g.lv, g.glb); //submit
+			if (!gen.ismultiplayer) {
+				g.cSt("lboards"); //change to leaderboards
+				if ($_("#mg_lb_td").css('display')=='none')
+					$_("#mg_lb_td").effects.fadeTo(100,500);
+				$_("#mg_lb").effects.fadeTo(100,500,function() {
+					$_("#mg_lb").effects.toHeight(254,500);
+				}); //show the leaderboards
+				$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
+				$_("#mg_lb_td_top span").html(g.pl[0].n);
+				$_("#mg_lb_td_btm span").html(g.pl[0].s);
+				g.sbm(g.pl[0].n, g.pl[0].s, g.lv, g.glb); //submit
+			} else {
+				var tdL = $_("#mg_go_m_tbl td").div;
+				for (var tl=0; tl+2<tdL.length; tl+=3) {
+					tdL[tl].innerHTML = g.pl[tl/3].n;
+					tdL[tl+1].innerHTML = g.pl[tl/3].lv;
+					tdL[tl+2].innerHTML = g.pl[tl/3].s;
+				}
 			}
 		},
 		sbm: function(name, score, level, onDone) { //submit leaderboards info to server
@@ -774,9 +790,9 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			if ($_(gThis.mmdiv).css("display") != "block")
 				$_(gThis.mmdiv).effects.fadeTo(100,700);
 			$get("mgAudio_ambience").play();//play the ambient music
-			if (mm.en.length==0) //create more enemies, if none exist
+			if (mm.en.length<2) //create more enemies, if none exist
 				mm.en.push(ai.createEnem()); //create a new random enemy, and store it
-			for (var i=0; i<mm.en.length; i++) {
+			for (var i=0; i<mm.en.length; i++) { //render the main menu's enemies
 				if ((new Date()).getTime()-mm.en[i].lu >= 50 || mm.en[i].dy) { //don't perform if the enemy's position has been updated recently, or if it is dying
 					mm.en[i].lu = (new Date()).getTime();
 						mm.en[i].d = ai.nextDir(mm.en[i]); //find the next direction, based on the AI
@@ -805,6 +821,13 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 					cx.fillRoundedRect(bd.os().x1+bd.ps(p).x+1, bd.os().y1+bd.ps(p).y+1, 8, 8, 2);
 				}
 			}
+			cx.textAlign = "center";
+			if (g.vStr.ft==0) g.vStr.ft = (new Date()).getTime();
+			with (Math)
+				g.vStr.c.a = abs(parseFloat(sin(PI/2 * ((new Date()).getTime()-g.vStr.ft)/1500).toFixed(4)));
+			cx.fillStyle = "rgba("+g.vStr.c.r+","+g.vStr.c.g+","+g.vStr.c.b+","+g.vStr.c.a+")";
+			cx.font = "10px Arial";
+			cx.fillText(g.vStr.text,gThis.cnv.width/2,gThis.cnv.height-10);
 		} else if (gen.st == "game" || gen.st == "paused" || gen.st == "interim" || gen.st == "complete" || gen.st == "over") { //render the main game, if currently running, paused, or over
 			if (g.bg.v && g.bg.t==0 && !gen.ismultiplayer) {
 				g.bg.olc = g.bg.c;
@@ -1177,8 +1200,12 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				if ($_("#mg_lo").css("display")=="none") 
 					$_("#mg_lo").effects.fadeTo(100,1000);
 			} else if (gen.st == "over") { //if the game is over
-				if ($_("#mg_go").css("display")=="none") 
+				if ($_("#mg_go").css("display")=="none" && !gen.ismultiplayer) 
 					$_("#mg_go").effects.fadeTo(100,1000);
+				else if ($_("#mg_go_m").css("display")=="none" && gen.ismultiplayer) {
+					g.end();
+					$_("#mg_go_m").effects.fadeTo(100,1000);
+				}
 			}
 			if (gen.st == "interim" || gen.st == "game" || gen.st == "paused") { //some additional last-millisecond rendering
 				if (g.tb.an!="" && (new Date()).getTime()-g.tb.at >= 700) {//update the top bar
@@ -1233,19 +1260,39 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 					if (!gen.ismultiplayer)
 						cx.fillText("Level "+g.lv, dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
 					else cx.fillText("Multiplayer Mode", dp.x+(g.tb.d.w/2), dp.y+g.tb.to.y);
-					cx.textAlign = "right";
+					cx.strokeStyle = "#000000";
 					if (!gen.ismultiplayer) {
-						cx.strokeStyle = "#000000";
+						cx.textAlign = "right";
 						var pcl = g.pl[0].c;
 						cx.fillStyle = "rgba("+pcl.r+","+pcl.g+","+pcl.b+","+(pcl.a*g.glA)+")";
 						cx.fillRoundedRect(dp.x+g.tb.d.w-94-cx.measureText(g.pl[0].n).width, dp.y+g.tb.to.y+2, 8, 8, 2);
 						cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
+					} else {
+						var pcl = [g.pl[0].c,g.pl[1].c];
+						//draw info for first player
+						cx.textAlign = "left";
+						cx.fillStyle = "rgba("+pcl[0].r+","+pcl[0].g+","+pcl[0].b+","+(pcl[0].a*g.glA)+")";
+						cx.fillRoundedRect(dp.x+10, dp.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")"; //reset back to text
+						cx.fillText(g.pl[0].n, dp.x+24, dp.y+g.tb.to.y);
+						if (is.l.length>0 && typeof is.l[0].src !== "undefined")
+							for (var i=0; i<3; i++)
+								cx.drawImage(is.l[(i<g.pl[0].lv?0:1)], dp.x+30+cx.measureText(g.pl[0].n).width+(20*i), dp.y+2, 20, 20);
+						//draw info for second player
+						cx.textAlign = "right";
+						cx.fillStyle = "rgba("+pcl[1].r+","+pcl[1].g+","+pcl[1].b+","+(pcl[1].a*g.glA)+")";
+						cx.fillRoundedRect(dp.x+g.tb.d.w-94-cx.measureText(g.pl[1].n).width, dp.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((dc.a+0.3)*g.glA)+")"; //reset back to text
+						cx.fillText(g.pl[1].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
+						if (is.l.length>0 && typeof is.l[0].src !== "undefined")
+							for (var i=0; i<3; i++)
+								cx.drawImage(is.l[(i>2-g.pl[1].lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
 					}
-					//else cx.fillText(g.pl[0].n+" vs "+g.pl[1].n, dp.x+g.tb.d.w-80, dp.y+g.tb.to.y);
 					if (is.l.length>0 && typeof is.l[0].src !== "undefined" && !gen.ismultiplayer)
 						for (var i=0; i<3; i++)
 							cx.drawImage(is.l[(i>2-g.pl[0].lv?0:1)], dp.x+g.tb.d.w-30-(20*i), dp.y+2, 20, 20);
+					
 				}
 				if (g.tb.an=="") {
 					cx.fillStyle = "rgba("+g.tb.c.bg.r+","+g.tb.c.bg.g+","+g.tb.c.bg.b+","+(g.tb.c.bg.a*g.glA)+")";
@@ -1278,6 +1325,26 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 						cx.fillRoundedRect(g.tb.p.x+g.tb.d.w-94-cx.measureText(g.pl[0].n).width, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
 						cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")"; //reset back to text
 						cx.fillText(g.pl[0].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
+					} else {
+						var pcl = [g.pl[0].c,g.pl[1].c];
+						//draw info for first player
+						cx.textAlign = "left";
+						cx.fillStyle = "rgba("+pcl[0].r+","+pcl[0].g+","+pcl[0].b+","+(pcl[0].a*g.glA)+")";
+						cx.fillRoundedRect(g.tb.p.x+10, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")"; //reset back to text
+						cx.fillText(g.pl[0].n, g.tb.p.x+24, g.tb.p.y+g.tb.to.y);
+						if (is.l.length>0 && typeof is.l[0].src !== "undefined")
+							for (var i=0; i<3; i++)
+								cx.drawImage(is.l[(i<g.pl[0].lv?0:1)], g.tb.p.x+30+cx.measureText(g.pl[0].n).width+(20*i), g.tb.p.y+2, 20, 20);
+						//draw info for second player
+						cx.textAlign = "right";
+						cx.fillStyle = "rgba("+pcl[1].r+","+pcl[1].g+","+pcl[1].b+","+(pcl[1].a*g.glA)+")";
+						cx.fillRoundedRect(g.tb.p.x+g.tb.d.w-94-cx.measureText(g.pl[1].n).width, g.tb.p.y+g.tb.to.y+2, 8, 8, 2);
+						cx.fillStyle = "rgba(240,255,255,"+((g.tb.c.bg.a+0.3)*g.glA)+")"; //reset back to text
+						cx.fillText(g.pl[1].n, g.tb.p.x+g.tb.d.w-80, g.tb.p.y+g.tb.to.y);
+						if (is.l.length>0 && typeof is.l[0].src !== "undefined")
+							for (var i=0; i<3; i++)
+								cx.drawImage(is.l[(i>2-g.pl[1].lv?0:1)], g.tb.p.x+g.tb.d.w-30-(20*i), g.tb.p.y+2, 20, 20);
 					}
 					if (is.l.length>0 && typeof is.l[0].src !== "undefined" && !gen.ismultiplayer)
 						for (var i=0; i<3; i++)
@@ -1557,7 +1624,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			if (localStorage.SGfps) gen.fps = (localStorage.SGfps=="true");
 		}
 		$_("#mg_lo_bt_cntnu").click(g.nl); //prepare for the next level, when clicked
-		$_("#mg_bo_bt_cntnu").click(g.end); //end the level
+		$_("#mg_go_bt_cntnu").click(g.end); //end the level
 		$get("mgAudio_ambience").volume = gen.snd.ambience.vol;
 		$get("mgAudio_music").volume = gen.snd.music.vol;
 		$get("mgAudio_effects").volume = gen.snd.effects.vol;
@@ -1623,7 +1690,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_4").html("&#x25B6;");
 		}
 		$_("#mgpdbt_st").click(s.show); //show settings
-		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt); //quit game
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_go_bt_qt, #mg_go_m_bt_qt").click(g.qt); //quit game
 		$_("#mg_lb_bt_qt").click(g.qlb); //quit leaderboards
 		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb); //show leaderboards
 		$_("#mg_mmb_bt_hlp, #mgpdbt_hlp").click(g.shlp); //show help

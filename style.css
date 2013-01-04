@@ -862,7 +862,7 @@ padding: 10px;
 z-index: 1400;
 }
 
-#mg_lo_t, #mg_go_t{
+#mg_lo_t, .mg_go_t{
 font-family: Arial;
 font-size: 24px;
 font-weight: bold;
@@ -874,7 +874,7 @@ margin-top: 0px;
 text-align: left;
 }
 
-#mg_lo_d, #mg_go_d{
+#mg_lo_d, #mg_go_d {
 width: 370px;
 height: 50px;
 margin-left: auto;
@@ -884,6 +884,49 @@ font-family: Arial;
 font-size: 13px;
 color: rgba(198,198,198,0.7);
 text-align: left;
+}
+
+#mg_go_m { /* for multiplayer game over occurrences */
+width: 280px;
+height: 140px;
+position: absolute;
+left: 50%;
+top: 50%;
+margin-left: -150px;
+margin-top: -70px;
+background-color: rgba(11,25,29,0.7);
+box-shadow: 0px 0px 35px 10px rgba(11,25,29,0.7);
+border-radius: 7px;
+opacity: 0;
+display: none;
+padding: 10px;
+z-index: 1400;
+}
+
+table#mg_go_m_tbl {
+width: 280px;
+margin-top: 10px;
+text-align: center;
+color: #F0F0F0;
+font-family: Arial;
+font-size: 10px;
+}
+
+table#mg_go_m_tbl th, table#mg_go_m_tbl td {
+padding-top: 2px;
+padding-bottom: 2px;
+}
+
+table#mg_go_m_tbl th, table#mg_go_m_tbl td:nth-child(2n) {
+background-color: rgba(71,85,89,0.7);
+}
+
+table#mg_go_m_tbl td:nth-child(2n-1) {
+background-color: rgba(51,65,69,0.7);
+}
+
+#mg_go_m_bt_qt {
+margin-top: 15px;
 }
 
 .mg_lo_bt, .mg_go_bt, .mg_lb_bt{

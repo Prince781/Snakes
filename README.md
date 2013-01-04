@@ -10,17 +10,16 @@ A list of features to implement:
 * Various pickups and other items ( **done** )
 * Player lives ( **done** )
 * Fully challenging, aggressive and defensive enemy AI ( **done** )
-* Introductive tutorial and help menu ( **todo** )
+* Help menu ( **done** )
 * Full settings menu and customization ( **done** )
 * Leaderboards ( **done** )
 * Game state management (between pausing, playing, etc...) ( **done** )
 * More fluid/aesthetic Pause Menu UI ( **done** )
 * More fluid/aesthetic level transition menu ( **done** )
-* Multiplayer gameplay ( **started** )
-  - Local multiplayer ( **mostly**)
+* Multiplayer gameplay ( **mostly** )
+  - Local multiplayer ( **done**)
   - Server multiplayer ( **todo** )
-* Music ( **todo** )
-* Special effects toggling ( **todo** )
-* Game hints ( **started** )
+* Music?
+* Game hints ( **done** )
 * More sound effects?
 * Level barriers/walls?
