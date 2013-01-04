@@ -14,7 +14,7 @@ window.requestAnimationFrame = requestAnimationFrame;
 
 function SnakesGame() { //must be called using the "new" JavaScript keyword
 	var gThis = this; //global reference to this object
-	var intervs = []; //the intervals, used for looping all functions
+	var intervs = {}; //the intervals, used for looping all functions
 	var cx = {}; //additional ScriJe "2d+" context for canvas
 	var g = {};  //the main game component
 	var is = {}; //image source loader
@@ -379,7 +379,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			$_("#mg_mmi").effects.fadeTo(0,500);
 			g.cSt("lboards");
 			if ($_("#mg_pd").css('display')!='none')
-				$_("#mg_pd").effects.fadeTo(0,500, function() {
+				$_("#mg_pd").effects.fadeTo(0,500,function() {
 					$_("#mg_pd").css('display','none');
 				}); //hide pause div
 			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
@@ -388,11 +388,26 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		},
 		qlb: function() { //quit leaderboards
 			if (gen.sst=="paused") {
-				$_("#mg_pd").effects.fadeTo(100,500, function() {
-					g.rSt(); //revert state
-				});
-				$_("#mg_lb").effects.fadeTo(0,500, function() {
+				$_("#mg_pd").effects.fadeTo(100,500,g.rSt); //revert state
+				$_("#mg_lb").effects.fadeTo(0,500,function() {
 					$_("#mg_lb").css('display','none');
+				});
+			} else g.qt(); //quit to main menu
+		},
+		shlp: function() { //show help
+			$_("#mg_mmi").effects.fadeTo(0,500);
+			g.cSt("help");
+			if ($_("#mg_pd").css('display')!='none')
+				$_("#mg_pd").effects.fadeTo(0,500,function() {
+					$_("#mg_pd").css('display','none');
+				}); //hide pause div
+			$_("#mg_hlp").effects.fadeTo(100,500); //show help menu
+		},
+		qhlp: function() { //quit help
+			if (gen.sst=="paused") {
+				$_("#mg_pd").effects.fadeTo(100,500,g.rSt); //revert state
+				$_("#mg_hlp").effects.fadeTo(0,500,function() {
+					$_("#mg_hlp").css('display','none');
 				});
 			} else g.qt(); //quit to main menu
 		},
@@ -400,20 +415,23 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			g.cSt("menu");
 			$_("#mg_mmi").effects.fadeTo(100,500); //show the main menu
 			//hide other items, and reset values
-			$_("#mg_np").effects.fadeTo(0,500, function() {
+			$_("#mg_np").effects.fadeTo(0,500,function() {
 				$_("#mg_np").css('display','none');
 			});
-			$_("#mg_pd").effects.fadeTo(0,500, function() {
+			$_("#mg_pd").effects.fadeTo(0,500,function() {
 				$_("#mg_pd").css('display','none');
 			});
-			$_("#mg_lo").effects.fadeTo(0,500, function() {
+			$_("#mg_lo").effects.fadeTo(0,500,function() {
 				$_("#mg_lo").css('display','none');
 			});
-			$_("#mg_lb").effects.fadeTo(0,500, function() {
-				$_("#mg_lb").css('display','none');
+			$_("#mg_lb").effects.fadeTo(0,500,function() {
+				$_("#mg_lb").css('display','none');	
 			});
-			$_("#mg_go").effects.fadeTo(0,500, function(){
+			$_("#mg_go").effects.fadeTo(0,500,function() {
 				$_("#mg_go").css('display','none');
+			});
+			$_("#mg_hlp").effects.fadeTo(0,500,function() {
+				$_("#mg_hlp").css('display','none');
 			});
 			g.tb.h();
 			for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) {
@@ -423,14 +441,15 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				g.pl[pln].p.splice(0,g.pl[pln].p.length);
 				g.pl[pln].p.push({x:Mathf.rand(5,bd.gd().x-5),y:Mathf.rand(5,bd.gd().y-5)});
 				g.pl[pln].l = 10;
-				g.en.splice(0,g.en.length);
 				g.pl[pln].lv = 3;
 				g.pl[pln].pn = false;
 				g.pl[pln].dy = false;
 				g.pl[pln].irs = false;
 				g.pl[pln].c.a = 1;
 			}
+			g.en.splice(0,g.en.length);
 			g.lv = 0;
+			g.pk.splice(0,g.pk.length);
 		},
 		end: function() { //end the game; show leaderboards
 			if (gen.st!="over") return false;
@@ -439,8 +458,9 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			g.cSt("lboards"); //change to leaderboards
 			if ($_("#mg_lb_td").css('display')=='none')
 				$_("#mg_lb_td").effects.fadeTo(100,500);
-			$_("#mg_lb").effects.fadeTo(100,500); //show the leaderboards
-			$_("#mg_lb").effects.toHeight(254,500);
+			$_("#mg_lb").effects.fadeTo(100,500,function() {
+				$_("#mg_lb").effects.toHeight(254,500);
+			}); //show the leaderboards
 			$_("#mg_go").effects.fadeTo(0,500); //hide the game over div
 			for (var pln=0; pln<(gen.ismultiplayer?g.plc:1); pln++) {
 				$_("#mg_lb_td_top span").html(g.pl[pln].n);
@@ -847,10 +867,10 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				if (!g.glAat&&g.glA!==1) g.glAat = (new Date()).getTime();
 				if (gen.hints) { //show game starting hint
 					/* Unicode characters:
-						\u2350 = up arrow
-						\u2357 = down arrow
-						\u2347 = left arrow
-						\u2348 = right arrow
+						\u25B2 = up arrow
+						\u25C0 = down arrow
+						\u25BC = left arrow
+						\u25B6 = right arrow
 					*/
 					//render keys
 					if (!g.hnts.key.ft) g.hnts.key.ft = (new Date()).getTime();
@@ -868,12 +888,12 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 					cx.lineWidth = 1;
 					cx.fillRoundedRect(0.5+g.hnts.key.p.x-g.hnts.key.bw/2, 0.5+g.hnts.key.p.y-g.hnts.key.bw-g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
 					cx.fillStyle = "rgba(10,22,27,"+(g.hnts.key.cK==0?Mathf.limit(g.hnts.key.o*2,0,1):"0.8")+")";
-					cx.fillText(!g.pl[0].kt?"W":"\u2350", 0.5+g.hnts.key.p.x, 0.5+g.hnts.key.p.y-g.hnts.key.bw/2-g.hnts.key.sp/2);
+					cx.fillText(!g.pl[0].kt?"W":"\u25B2", 0.5+g.hnts.key.p.x, 0.5+g.hnts.key.p.y-g.hnts.key.bw/2-g.hnts.key.sp/2);
 					for (var k=0; k<3; k++) {
 						cx.fillStyle = "rgba(212,234,255,"+(g.hnts.key.cK-1==k?g.hnts.key.o:"0.4")+")";
 						cx.fillRoundedRect(g.hnts.key.p.x+g.hnts.key.bw*(k-3/2)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.sp/2, g.hnts.key.bw, g.hnts.key.bw, 6);
 						cx.fillStyle = "rgba(10,22,27,0.8)";
-						cx.fillText(!g.pl[0].kt?["A","S","D"][k]:["\u2347","\u2357","\u2348"][k], 0.5+g.hnts.key.p.x+g.hnts.key.bw*(k-1)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.bw/2+g.hnts.key.sp/2);
+						cx.fillText(!g.pl[0].kt?["A","S","D"][k]:["\u25C0","\u25BC","\u25B6"][k], 0.5+g.hnts.key.p.x+g.hnts.key.bw*(k-1)+g.hnts.key.sp*(k-1), 0.5+g.hnts.key.p.y+g.hnts.key.bw/2+g.hnts.key.sp/2);
 					}
 				}
 			} else if (gen.st=="game"||gen.st=="paused") { //otherwise, we're in the middle of the game, at an unknown level yet
@@ -1305,6 +1325,12 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				}
 			}
 		} else if (gen.st == "help") {
+			if (!colorEquals(g.bg.c,$_.newColor(117,80,123,1)) && g.bg.t==0) {
+				g.bg.olc = (g.bg.v ? g.bg.c : $_.newColor(117,80,123,0));
+				g.bg.nc = $_.newColor(117,80,123,1);
+				g.bg.t = (new Date()).getTime();
+				g.bg.v = true;
+			}
 		} else if (gen.st == "lboards") {
 			if (!colorEquals(g.bg.c,$_.newColor(90,21,42,1)) && g.bg.t==0) {
 				g.bg.olc = (g.bg.v ? g.bg.c : $_.newColor(90,21,42,0));
@@ -1511,6 +1537,7 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		$_("#mg_mms").click(s.show); //start the settings div's appearance, and pause everything else
 		$_("#mg_sd_cb").click(s.hide); //close the settings div, and revert back to previous game state
 		$_("#mg_pb").click(function() { //toggle the pause/play state of the game
+			if ($_("#mg_sd").css('display')=="block") return false;
 			if (gen.st == "paused") g.cSt("game");
 			else if (gen.st == "game") g.cSt("paused");
 		});
@@ -1577,10 +1604,10 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			g.pl[1].kt=1;
 		});
 		$_("#mg_sd_cnkoa").click(function() { //change the default input to arrow keys
-			$_("#mg_sd_cnk_1").html("&#x25B2");
-			$_("#mg_sd_cnk_2").html("&#x25C0");
-			$_("#mg_sd_cnk_3").html("&#x25BC");
-			$_("#mg_sd_cnk_4").html("&#x25B6");
+			$_("#mg_sd_cnk_1").html("&#x25B2;");
+			$_("#mg_sd_cnk_2").html("&#x25C0;");
+			$_("#mg_sd_cnk_3").html("&#x25BC;");
+			$_("#mg_sd_cnk_4").html("&#x25B6;");
 			g.pl[0].kt=1;
 			g.pl[1].kt=0;
 		});
@@ -1590,15 +1617,17 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 			$_("#mg_sd_cnk_3").html("S");
 			$_("#mg_sd_cnk_4").html("D");
 		} else if (g.pl[0].kt==1) {
-			$_("#mg_sd_cnk_1").html("&#x25B2");
-			$_("#mg_sd_cnk_2").html("&#x25C0");
-			$_("#mg_sd_cnk_3").html("&#x25BC");
-			$_("#mg_sd_cnk_4").html("&#x25B6");
+			$_("#mg_sd_cnk_1").html("&#x25B2;");
+			$_("#mg_sd_cnk_2").html("&#x25C0;");
+			$_("#mg_sd_cnk_3").html("&#x25BC;");
+			$_("#mg_sd_cnk_4").html("&#x25B6;");
 		}
-		$_("#mgpdbt_st").click(s.show);
-		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt);
-		$_("#mg_lb_bt_qt").click(g.qlb);
-		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb);
+		$_("#mgpdbt_st").click(s.show); //show settings
+		$_("#mgpdbt_qt, #mg_lo_bt_qt, #mg_bo_bt_qt").click(g.qt); //quit game
+		$_("#mg_lb_bt_qt").click(g.qlb); //quit leaderboards
+		$_("#mg_mmb_bt_lbd, #mgpdbt_lb").click(g.slb); //show leaderboards
+		$_("#mg_mmb_bt_hlp, #mgpdbt_hlp").click(g.shlp); //show help
+		$_("#mg_hlp_qt").click(g.qhlp); //quit help menu
 		var chkbxes =  $_(".mg_sd_chkbx").div;
 		for (var j=0; j<chkbxes.length; j++) {
 			var prop_name = chkbxes[j].id.substring(12);
@@ -1610,7 +1639,15 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		}
 		$_(".mg_sd_chkbx").click(function() { //respond to checkbox toggle events
 			var prop_name = this.id.substring(12);
-			if (prop_name == "ismultiplayer" && g.sted) return false;
+			if (prop_name == "ismultiplayer" && g.sted) {
+				$_("#mg_sd_ismultiplayer_ntf span").html("You cannot change this in the middle of a game.");
+				$_("#mg_sd_ismultiplayer_ntf").effects.fadeTo(100,700,function() {
+					intervs.ism_ntf = setTimeout(function() {
+						$_("#mg_sd_ismultiplayer_ntf").effects.fadeTo(0,700);
+					}, 3000);
+				});
+				return false;
+			}
 			if (prop_name in gen) {
 				gen[prop_name] = !gen[prop_name];
 				$_(this.getElementsByTagName("img")[0]).effects.fadeTo(gen[prop_name]?100:0,200);
@@ -1649,11 +1686,5 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 		var list = [];
 		for (var a in intervs) list.push(a);
 		return list;
-	};
-	this.cInterv = function(i) { //the main function for clearing any interval currently in the intervals list
-		if (!i||typeof i=="undefined"||!(i in intervs)) return false;
-		clearInterval(intervs[i]);
-		intervs.splice(i,1); //remove the specific interval from the object list
-		return !(i in intervs); //should be true
 	};
 }
