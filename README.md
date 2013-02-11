@@ -24,5 +24,5 @@ A list of features to implement:
 * More sound effects?
 * Level barriers/walls?
 
-##Native Port
+###Native Port
 Work has started on a native version of Snakes, programmed in Java.
