@@ -7,7 +7,7 @@ JC = javac
 # a custom macro to clean up some things
 
 # clear default definitions for these targets
-.SUFFIXES: .java .class
+.SUFFIXES: .java .class .jar
 
 # Here is our target entry for creating .class files from .java files 
 # This is a target entry that uses the suffix rule syntax:
@@ -27,7 +27,8 @@ CLASSES = \
 # default make target entry
 default: classes; \
 	if [ ! -e build ]; then mkdir build; fi; \
-	rm -f build/*.class; find . -name "*.class" -exec mv -if {} -t build \;
+	rm -f build/*.class; find . -name "*.class" -exec mv -if {} -t build \;; \
+	jar cvf Snakes.jar -C build/ .;
 
 # This target entry uses Suffix Replacement within a macro: 
 # $(name:string1=string2)
