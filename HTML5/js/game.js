@@ -491,7 +491,10 @@ function SnakesGame() { //must be called using the "new" JavaScript keyword
 				headers: ["Content-Type", "application/x-www-form-urlencoded"],
 				data: { username: name, score: score, level: level },
 				readystatechange: function(ajax) {
-					if (ajax.readyState == 4) onDone();
+					if (ajax.readyState == 4 &&
+					 ajax.responseText ==  "Successfully updated information.")
+					onDone();
+					else console.log("Was not able to update information:" + ajax.responseText);
 				}
 			});
 		}, 
