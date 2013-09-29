@@ -13,8 +13,9 @@ public class QuasiEngine extends Thread {
 	}
 	
 	public void run() {
-		main: while (running) {
-		} do (screenUpdate()); //update the screen contents
+		main: do {
+			screenupdate();
+		} while (running); //update the screen contents
 	}
 
 	public boolean screenUpdate() {
