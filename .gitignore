@@ -1,3 +1,6 @@
-# GEdit Backup Files #
-######################
+# GEdit backup files #
 *~
+# Anjuta backup files #
+.anjuta
+.anjuta*
+
