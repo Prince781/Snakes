@@ -1,15 +1,15 @@
 [Anjuta]
 Geometry=1617x850+132+115
 
-[Execution]
-Run in terminal=2
-Working directories=../../../native
-
 [File Loader]
-Files=../../src/GameObject.java#38%%%../../src/SnakesGame.java#123%%%../../src/Material.java#5%%%../../src/QuasiEngine.java#14
+Files=../../src/GameObject.java#38%%%../../src/SnakesGame.java#123%%%../../src/Material.java#5%%%../../src/QuasiEngine.java#8
 
 [Document Manager]
 bookmarks=<?xml version="1.0" encoding="UTF-8"?>\n<bookmarks/>\n
+
+[Execution]
+Run in terminal=2
+Working directories=../../../native
 
 [Project Manager]
 Expand=native%%%native//src

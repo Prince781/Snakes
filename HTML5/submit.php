@@ -3,12 +3,13 @@
 header("Cache-Control: no-store, no-cache, must-revalidate");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
+if (!$_SERVER['SERVER_ADDR'] == $_SERVER['REMOTE_ADDR'])
+	exit("Hmm....so you thought you could hack using this method?");
 if (isset($_POST["username"]) && isset($_POST["score"]) && isset($_POST["level"])) {
 	$username = $_POST["username"];
 	$score = $_POST["score"];
 	$level = $_POST["level"];
-} elseif (!$_SERVER['SERVER_ADDR'] == $_SERVER['REMOTE_ADDR'])
-	exit("Hmm....so you thought you could hack using this method?");
+}
 else exit("There's nothing to see here...");
 //otherwise, perform
 session_start(); //start or resume session
