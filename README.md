@@ -1,10 +1,15 @@
-#Snakes
+# Snakes
 
-A minimalistic 2D game using HTML5, modelled somewhat after the original 1970 arcade video game, Snake.
+Like the game Snake, but with an adversary!
+
+![Main Menu](peeks/Main%20Menu.png)
+
+![To the Light](peeks/To%20the%20Light.png)
 
 Some history of the game can be found [here](http://en.wikipedia.org/wiki/Snake_%28video_game%29).
 
 A list of features to implement:
+
 * Infinite levels ( **done** )
 * Various pickups and other items ( **done** )
 * Player lives ( **done** )
@@ -22,6 +27,3 @@ A list of features to implement:
 * Game hints ( **done** )
 * More sound effects?
 * Level barriers/walls?
-
-###Native Port
-Work has started on a native version of Snakes, programmed in Java.
