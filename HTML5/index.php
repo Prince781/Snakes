@@ -10,7 +10,7 @@ if (!isset($_SESSION)) {
 <title>Snakes: The Game</title>
 <meta charset="UTF-8">
 <link rel="StyleSheet" type="text/css" href="style.css">
-<script type="text/javascript" src="http://bumbuu.com/files/js/scrije.lib.js"></script>
+<script type="text/javascript" src="js/scrije.lib.js"></script>
 <script type="text/javascript" src="js/game.js"></script>
 <script type="text/javascript" src="js/main.js"></script>
 </head>
